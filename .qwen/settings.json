@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm start)",
+      "Bash(timeout *)",
+      "Bash(tasklist)",
+      "Bash(findstr *)",
+      "Bash(netstat *)",
+      "Bash(taskkill *)",
+      "Bash(curl *)",
+      "Bash(\"c:\\program files\\git\\bin\\git.exe\" *)",
+      "Bash(\"c:\\program files\\git\\cmd\\git.exe\" *)",
+      "Bash(c:\\progra~1\\git\\cmd\\git.exe *)"
+    ]
+  },
+  "$version": 3
+}

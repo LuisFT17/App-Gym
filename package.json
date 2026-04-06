@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "start": "npx http-server . -p 3000 -o --proxy http://localhost:3000/App%20Gym.html"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}
