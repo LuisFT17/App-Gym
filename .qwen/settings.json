@@ -10,7 +10,12 @@
       "Bash(curl *)",
       "Bash(\"c:\\program files\\git\\bin\\git.exe\" *)",
       "Bash(\"c:\\program files\\git\\cmd\\git.exe\" *)",
-      "Bash(c:\\progra~1\\git\\cmd\\git.exe *)"
+      "Bash(c:\\progra~1\\git\\cmd\\git.exe *)",
+      "Bash(node *)",
+      "Bash(del *)",
+      "Bash(mkdir *)",
+      "Bash(copy *)",
+      "Bash(start *)"
     ]
   },
   "$version": 3

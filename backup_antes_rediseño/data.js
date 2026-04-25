@@ -832,6 +832,7 @@ const EXERCISE_DB = {
     progression: 'Sube peso cuando completes 12 reps perfectas',
     restRecommended: 60
   },
+  },
 
   // === TRÍCEPS ===
   extension_triceps_sobre_cabeza: {

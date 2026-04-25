@@ -53,137 +53,23 @@ const state = {
   },
   builder: {
     days: [] // [{title: '', exercises: []}]
-  },
-
-  // Post-workout summary
-  postWorkout: {
-    active: false,
-    feedback: null,
-    notes: '',
-    sessionData: null
   }
 };
 
 // ── Inicialización ──
 document.addEventListener('DOMContentLoaded', () => {
-  // Check if localStorage has valid data
-  const savedState = localStorage.getItem('gymcoach_state');
-  let hasValidData = false;
-
-  if (savedState) {
-    try {
-      const parsed = JSON.parse(savedState);
-      // Check if routine exists AND has days with exercises
-      hasValidData = parsed.routine &&
-        Array.isArray(parsed.routine.days) &&
-        parsed.routine.days.length > 0 &&
-        parsed.routine.days.some(d => d.exercises && d.exercises.length > 0);
-    } catch (e) {
-      console.error('Error parsing saved state:', e);
-    }
+  if (!localStorage.getItem('gymcoach_state') || !JSON.parse(localStorage.getItem('gymcoach_state')).routine) {
+    state.routine = JSON.parse(JSON.stringify(ROUTINE)); // Deep copy from data.js
   }
+  loadState();
+  if (!state.routine) state.routine = JSON.parse(JSON.stringify(ROUTINE)); // Fallback
 
-  // If no valid data, load fresh default routine
-  if (!hasValidData) {
-    console.log('No valid saved data, loading default routine');
-    state.routine = JSON.parse(JSON.stringify(ROUTINE));
-    state.currentDay = 0;
-    state.completedSets = {};
-    state.history = [];
-    // Clear corrupted localStorage
-    localStorage.removeItem('gymcoach_state');
-  } else {
-    loadState();
-  }
-
-  if (!state.routine) state.routine = JSON.parse(JSON.stringify(ROUTINE));
-
-  // Register global functions for inline onclick
-  window.startSelectedDay = startSelectedDay;
-  window.startEmptyWorkout = startEmptyWorkout;
-  window.startRoutineBuilder = startRoutineBuilder;
-  window.navigateHome = navigateHome;
-  window.openExerciseSelector = openExerciseSelector;
-  window.closeExerciseSelector = closeExerciseSelector;
-  window.openExerciseDetailFromSelector = openExerciseDetailFromSelector;
-  window.addExerciseFromDetailAndBack = addExerciseFromDetailAndBack;
-  window.navigateBackFromExerciseDetail = navigateBackFromExerciseDetail;
-  window.finishWorkout = finishWorkout;
-  window.resetWorkout = resetWorkout;
-  window.changeTab = changeTab;
-  window.navigateToView = navigateToView;
-  window.selectPostWorkoutFeedback = selectPostWorkoutFeedback;
-  window.submitPostWorkout = submitPostWorkout;
-  window.openExerciseSelectorForBuilder = openExerciseSelectorForBuilder;
-  window.navigateBackFromSubview = navigateBackFromSubview;
-  window.addBuilderDay = addBuilderDay;
-  window.removeBuilderDay = removeBuilderDay;
-  window.updateBuilderDayTitle = updateBuilderDayTitle;
-  window.updateBuilderExSets = updateBuilderExSets;
-  window.removeBuilderEx = removeBuilderEx;
-  window.generateAIRoutine = generateAIRoutine;
-  window.finalizeRoutineBuilder = finalizeRoutineBuilder;
-  window.addSet = addSet;
-  window.removeSet = removeSet;
-  window.removeExercise = removeExercise;
-  window.openExerciseDetail = openExerciseDetail;
-  window.updateExerciseNote = updateExerciseNote;
-  window.toggleSet = toggleSet;
-  window.updateSetType = updateSetType;
-  window.updateSetData = updateSetData;
-
-  // Add touch feedback for better mobile UX
-  setupTouchFeedback();
-
-  console.log('GymCoach initialized');
   renderApp();
 });
 
-// ── Touch Feedback (Mobile UX Enhancement) ──
-function setupTouchFeedback() {
-  // Add ripple effect on tap for mobile devices
-  document.addEventListener('touchstart', function (e) {
-    const target = e.target.closest('button, .exercise-card, .home-action-card, .nav-item');
-    if (target) {
-      target.style.transform = 'scale(0.98)';
-      setTimeout(() => {
-        target.style.transform = '';
-      }, 150);
-    }
-  }, { passive: true });
-
-  // Prevent double-tap zoom on iOS
-  let lastTouchEnd = 0;
-  document.addEventListener('touchend', function (event) {
-    const now = (new Date()).getTime();
-    if (now - lastTouchEnd <= 300) {
-      event.preventDefault();
-    }
-    lastTouchEnd = now;
-  }, false);
-}
-
-// ── Haptic Feedback Simulation ──
-function hapticFeedback(type = 'light') {
-  // Use navigator.vibrate if available (Android)
-  if (navigator.vibrate) {
-    if (type === 'light') {
-      navigator.vibrate(10);
-    } else if (type === 'medium') {
-      navigator.vibrate(20);
-    } else if (type === 'success') {
-      navigator.vibrate([50, 50, 50]);
-    }
-  }
-  // iOS doesn't support navigator.vibrate, but we can use visual feedback
-}
-
 // ── Renderizado de la App (controlador de vistas) ──
 function renderApp() {
-  if (state.currentView === 'post_workout') {
-    renderHeader();
-    renderPostWorkout();
-  } else if (state.currentView === 'workout' || state.currentView === 'empty_workout') {
+  if (state.currentView === 'workout' || state.currentView === 'empty_workout') {
     renderHeader();
     if (state.currentView === 'workout') renderDayTabs();
     renderContent();
@@ -243,26 +129,18 @@ function renderBottomNav() {
     document.getElementById('app').appendChild(nav);
   }
 
-  // SVG Icons for tabs
-  const homeIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`;
-  const workoutIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h1m16 0h1M5.5 6.5v11M18.5 6.5v11"/><rect x="5.5" y="9" width="13" height="6" rx="1"/></svg>`;
-  const profileIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-
-  const hideNav = ['post_workout'].includes(state.currentView);
-  nav.className = hideNav ? 'bottom-nav hidden' : 'bottom-nav';
-
   nav.innerHTML = `
     <button class="nav-item ${state.activeTab === 'inicio' ? 'active' : ''}" onclick="changeTab('inicio')">
-      ${homeIcon}
-      <span class="nav-label">Inicio</span>
+      <span class="nav-icon" style="font-size:0.75rem; font-weight:900;">INICIO</span>
+      <span class="nav-label">Historial</span>
     </button>
     <button class="nav-item ${state.activeTab === 'entreno' ? 'active' : ''}" onclick="changeTab('entreno')">
-      ${workoutIcon}
-      <span class="nav-label">Entrenar</span>
+      <span class="nav-icon" style="font-size:0.75rem; font-weight:900;">ENTRENAR</span>
+      <span class="nav-label">Entrenamiento</span>
     </button>
     <button class="nav-item ${state.activeTab === 'perfil' ? 'active' : ''}" onclick="changeTab('perfil')">
-      ${profileIcon}
-      <span class="nav-label">Perfil</span>
+      <span class="nav-icon" style="font-size:0.75rem; font-weight:900;">PERFIL</span>
+      <span class="nav-label">Yo</span>
     </button>
   `;
 }
@@ -388,52 +266,31 @@ function calculateOverallProgress() {
 
 function renderHome() {
   const mainContent = document.getElementById('mainContent');
-
-  // Quick stats
-  const lastWorkout = state.history.length > 0 ? state.history[state.history.length - 1] : null;
-  const weekWorkouts = state.history.filter(h => {
-    const daysAgo = (Date.now() - new Date(h.date).getTime()) / (1000 * 60 * 60 * 24);
-    return daysAgo <= 7;
-  }).length;
-  const totalVolume = state.history.reduce((acc, h) => acc + (h.volume || 0), 0);
+  const overallProgress = calculateOverallProgress();
 
   mainContent.innerHTML = `
     <div class="home-screen">
-      <!-- Quick Stats Bar -->
-      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1px; background:rgba(0,0,0,0.05); margin-bottom:0;">
-        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
-          <div style="font-size:1.3rem; font-weight:800; color:var(--accent-primary);">${weekWorkouts}</div>
-          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Esta semana</div>
-        </div>
-        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
-          <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${state.history.length}</div>
-          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Total</div>
-        </div>
-        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
-          <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${totalVolume >= 1000 ? (totalVolume / 1000).toFixed(1) + 't' : totalVolume + 'kg'}</div>
-          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Volumen</div>
-        </div>
+      <div class="home-section-header" style="margin-bottom: 20px;">
+        <h2>Entrenamiento</h2>
       </div>
-      
-      ${lastWorkout ? `
-        <div style="padding:12px 16px; background:var(--bg-surface); border-bottom:0.5px solid rgba(0,0,0,0.05); display:flex; align-items:center; gap:10px;">
-          <div style="font-size:1.2rem;">📊</div>
-          <div style="flex:1;">
-            <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary);">Último: ${lastWorkout.name}</div>
-            <div style="font-size:0.65rem; color:var(--text-muted);">${new Date(lastWorkout.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })} · ${formatTime(lastWorkout.duration)} · ${lastWorkout.volume >= 1000 ? (lastWorkout.volume / 1000).toFixed(1) + 't' : lastWorkout.volume + 'kg'}</div>
-          </div>
-        </div>
-      ` : ''}
 
-      <!-- Action Buttons -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background:rgba(0,0,0,0.05); margin: 0;">
-        <button class="home-action-card" onclick="startEmptyWorkout()" style="flex-direction: column; padding: 18px 12px; text-align: center; gap: 6px; background:var(--bg-card); border-radius:0;">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          <div style="font-size: 0.7rem; font-weight:700; text-transform:uppercase;">Vacío</div>
+      <!-- Workout Options Requested -->
+      <div class="home-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 30px;">
+        <button class="home-action-card" onclick="showComingSoon('Explorar')" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px; background:#fff; border:1px solid #000; border-radius:0;">
+          <div style="font-size: 0.8rem; font-weight:900;">EXPLORAR</div>
+          <div style="width:20px; height:2px; background:#ff0000; margin:0 auto;"></div>
         </button>
-        <button class="home-action-card" onclick="startRoutineBuilder()" style="flex-direction: column; padding: 18px 12px; text-align: center; gap: 6px; background:var(--bg-card); border-radius:0;">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          <div style="font-size: 0.7rem; font-weight:700; text-transform:uppercase;">Nueva</div>
+        <button class="home-action-card" onclick="startEmptyWorkout()" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px; background:#fff; border:1px solid #000; border-radius:0;">
+          <div style="font-size: 0.8rem; font-weight:900;">VACÍO</div>
+          <div style="width:20px; height:2px; background:#ff0000; margin:0 auto;"></div>
+        </button>
+        <button class="home-action-card" onclick="startRoutineBuilder()" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px; background:#fff; border:1px solid #000; border-radius:0;">
+          <div style="font-size: 0.8rem; font-weight:900;">NUEVA</div>
+          <div style="width:20px; height:2px; background:#ff0000; margin:0 auto;"></div>
+        </button>
+        <button class="home-action-card" onclick="navigateToView('ai_coach')" style="flex-direction: column; padding: 15px; text-align: center; gap: 8px; background:#fff; border:1px solid #000; border-radius:0;">
+          <div style="font-size: 0.8rem; font-weight:900;">COACH IA</div>
+          <div style="width:20px; height:2px; background:#ff0000; margin:0 auto;"></div>
         </button>
       </div>
 
@@ -442,35 +299,21 @@ function renderHome() {
         <span class="home-section-count">${state.routine.days.length} planes</span>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:1px; margin-top:0; background: rgba(0,0,0,0.05);">
+      <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
         ${state.routine.days.map((day, i) => {
     const isNext = state.currentDay === i;
     const totalExercises = day.exercises.length;
-    const completedExercises = day.exercises.filter((ex, exIdx) => {
-      const key = `day${i}_ex${exIdx}`;
-      const sets = state.completedSets[key] || [];
-      return sets.length > 0 && sets.every(s => s.done);
-    }).length;
-    const progress = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
+    const colors = ['#ff0000', '#000000', '#333333', '#666666'];
+    const color = colors[i % colors.length];
 
     return `
-            <button onclick="startSelectedDay(${i})" style="background:var(--bg-card); padding:16px; display:flex; align-items:center; gap:14px; cursor:pointer; border:none; width:100%; font-family:var(--font-family); text-align:left; transition: all 0.2s; -webkit-appearance:none;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
-               <div style="width:44px; height:44px; border-radius:var(--radius-sm); background:var(--accent-gradient); display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:0.9rem; flex-shrink:0; pointer-events:none;">
-                 ${i + 1}
+            <div class="home-action-card" onclick="startSelectedDay(${i})" style="padding:20px; border-bottom:1px solid var(--border-subtle); background:var(--bg-card); display:flex; align-items:center; gap:16px; border-radius:0;">
+               <div style="flex:1;">
+                  <h3 style="font-size:1.1rem; font-weight:900; margin-bottom:2px; color:#000; text-transform:uppercase;">${day.title}</h3>
+                  <p style="font-size:0.75rem; color:#444; font-weight:700;">${totalExercises} EJERCICIOS</p>
                </div>
-               <div style="flex:1; min-width:0;">
-                  <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:4px; color:var(--text-primary); text-transform:uppercase; pointer-events:none;">${day.title}</h3>
-                  <p style="font-size:0.7rem; color:var(--text-muted); font-weight:600; pointer-events:none;">${totalExercises} ejercicios · ${progress}% completado</p>
-                  <div style="width:100%; height:3px; background:var(--bg-surface); border-radius:2px; margin-top:6px; overflow:hidden; pointer-events:none;">
-                    <div style="width:${progress}%; height:100%; background:var(--accent-gradient); border-radius:2px; transition:width 0.3s; pointer-events:none;"></div>
-                  </div>
-               </div>
-               <div style="color:var(--text-muted); font-size:1.2rem; flex-shrink:0; pointer-events:none;">›</div>
-            </button>
-            <div style="background:var(--bg-card); padding:0 16px 12px; display:flex; gap:8px;">
-              <button onclick="startSelectedDay(${i})" style="flex:1; padding:10px; background:var(--accent-gradient); color:#fff; border:none; font-weight:600; font-size:0.75rem; cursor:pointer; border-radius:var(--radius-sm); box-shadow:var(--accent-glow); text-transform:uppercase; letter-spacing:0.3px;">
-                ▶ Empezar rutina
-              </button>
+               ${isNext ? `<div style="background:#ff0000; color:#fff; font-size:0.6rem; font-weight:900; padding:4px 8px; border-radius:0;">Siguiente</div>` : ''}
+               <div style="font-size:1.2rem; color:#000; font-weight:900;">→</div>
             </div>
           `;
   }).join('')}
@@ -526,38 +369,14 @@ function openDaySelector() {
 }
 
 function startSelectedDay(idx) {
-  console.log('startSelectedDay called with idx:', idx);
-
   state.currentDay = idx;
-  state.currentView = 'workout';
-  state.activeTab = 'entreno';
-  state.expandedExercise = null;
-  state.expandedInfo = null;
-  state.postWorkout.active = false;
-
-  // Start session timer immediately
-  if (!state.sessionActive) {
-    state.sessionElapsed = 0;
-    state.sessionStartTime = Date.now();
-    state.sessionActive = true;
-  }
-
   saveState();
 
-  // Close modal if open
+  // Close modal
   const overlay = document.getElementById('daySelectorOverlay');
   if (overlay) document.body.removeChild(overlay);
 
-  renderApp();
-
-  // Add transition class
-  const main = document.getElementById('mainContent');
-  if (main) {
-    main.classList.add('view-transition-enter');
-    setTimeout(() => main.classList.remove('view-transition-enter'), 300);
-  }
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  navigateToWorkout();
 }
 
 function renderInicio(container) {
@@ -919,31 +738,30 @@ function renderExerciseDetail(container) {
 
   container.innerHTML = `
     <div class="home-screen">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; padding: 12px 16px; background: var(--bg-primary); border-bottom: 0.5px solid rgba(0,0,0,0.05);">
-        <button onclick="navigateBackFromExerciseDetail()" style="background:transparent; border:none; color:var(--accent-primary); width:44px; height:44px; cursor:pointer; font-weight:700; font-size:1.3rem;">←</button>
-        <h2 style="font-size:1rem; font-weight:800; text-transform:uppercase; flex:1;">${exerciseData.name}</h2>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+        <button onclick="navigateBackFromExerciseDetail()" style="background:#000; border:none; color:#fff; width:36px; height:36px; border-radius:0; cursor:pointer; font-weight:900;">←</button>
+        <h2 style="font-size:1.5rem; font-weight:900; text-transform:uppercase;">${exerciseData.name.toUpperCase()}</h2>
       </div>
 
-      <div style="padding: 0 16px;">
       <!-- Muscle Group Info -->
-      <div style="background:var(--bg-surface); padding:14px 16px; margin-bottom:12px; border-radius: var(--radius-md);">
-        <div style="font-size:0.6rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">MÚSCULO PRINCIPAL</div>
-        <div style="font-size:0.95rem; font-weight:700; color:var(--text-primary);">${muscleGroup.name}</div>
+      <div style="background:#fff; border:2px solid #000; padding:16px; margin-bottom:20px;">
+        <div style="font-size:0.7rem; font-weight:900; color:#000; text-transform:uppercase; margin-bottom:8px;">MÚSCULO PRINCIPAL</div>
+        <div style="font-size:1rem; font-weight:900; color:#000;">${muscleGroup.name.toUpperCase()}</div>
         ${exerciseData.secondaryMuscles && exerciseData.secondaryMuscles.length > 0 ? `
-          <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:6px; font-weight:600;">
-            Secundario: ${exerciseData.secondaryMuscles.join(', ')}
+          <div style="font-size:0.8rem; color:#555; margin-top:8px; font-weight:700;">
+            SECUNDARIO: ${exerciseData.secondaryMuscles.join(', ').toUpperCase()}
           </div>
         ` : ''}
       </div>
 
       <!-- Tips Section -->
       ${exerciseData.tips && exerciseData.tips.length > 0 ? `
-        <h3 style="font-weight:700; text-transform:uppercase; margin:20px 0 12px; font-size:0.75rem; color:var(--text-muted); letter-spacing:0.5px;">CONSEJOS DE TÉCNICA</h3>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+        <h3 style="font-weight:900; text-transform:uppercase; margin:25px 0 15px; font-size:1rem;">CONSEJOS DE TÉCNICA</h3>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
           ${exerciseData.tips.map((tip, i) => `
-            <div style="background:var(--bg-surface); padding:12px 14px; display:flex; gap:10px; align-items:flex-start; border-radius: var(--radius-sm);">
-              <div style="background:var(--accent-primary); color:#fff; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; flex-shrink:0; border-radius: 6px;">${i + 1}</div>
-              <div style="font-size:0.8rem; color:var(--text-secondary); font-weight:500; line-height:1.5;">${tip}</div>
+            <div style="background:#fff; border:1px solid #000; padding:12px; display:flex; gap:12px; align-items:flex-start;">
+              <div style="background:#000; color:#fff; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:900; flex-shrink:0;">${i + 1}</div>
+              <div style="font-size:0.8rem; color:#000; font-weight:700; line-height:1.4;">${tip}</div>
             </div>
           `).join('')}
         </div>
@@ -951,12 +769,12 @@ function renderExerciseDetail(container) {
 
       <!-- Common Mistakes -->
       ${exerciseData.commonMistakes && exerciseData.commonMistakes.length > 0 ? `
-        <h3 style="font-weight:700; text-transform:uppercase; margin:20px 0 12px; font-size:0.75rem; color:var(--accent-primary); letter-spacing:0.5px;">ERRORES COMUNES</h3>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+        <h3 style="font-weight:900; text-transform:uppercase; margin:25px 0 15px; font-size:1rem; color:#ff0000;">ERRORES COMUNES</h3>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
           ${exerciseData.commonMistakes.map((mistake, i) => `
-            <div style="background:rgba(255,59,48,0.05); border:0.5px solid rgba(255,59,48,0.15); padding:12px 14px; display:flex; gap:10px; align-items:flex-start; border-radius: var(--radius-sm);">
-              <div style="background:var(--accent-primary); color:#fff; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:800; flex-shrink:0; border-radius: 6px;">✕</div>
-              <div style="font-size:0.8rem; color:var(--text-secondary); font-weight:500; line-height:1.5;">${mistake}</div>
+            <div style="background:#fff; border:1px solid #ff0000; padding:12px; display:flex; gap:12px; align-items:flex-start;">
+              <div style="background:#ff0000; color:#fff; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:900; flex-shrink:0;">✕</div>
+              <div style="font-size:0.8rem; color:#000; font-weight:700; line-height:1.4;">${mistake}</div>
             </div>
           `).join('')}
         </div>
@@ -964,38 +782,37 @@ function renderExerciseDetail(container) {
 
       <!-- Progression -->
       ${exerciseData.progression ? `
-        <h3 style="font-weight:700; text-transform:uppercase; margin:20px 0 12px; font-size:0.75rem; color:var(--text-muted); letter-spacing:0.5px;">PROGRESIÓN</h3>
-        <div style="background:var(--bg-surface); padding:14px 16px; margin-bottom:16px; border-radius: var(--radius-sm);">
-          <div style="font-size:0.8rem; color:var(--text-secondary); font-weight:500; line-height:1.5;">${exerciseData.progression}</div>
+        <h3 style="font-weight:900; text-transform:uppercase; margin:25px 0 15px; font-size:1rem;">PROGRESIÓN</h3>
+        <div style="background:#fff; border:2px solid #000; padding:16px; margin-bottom:20px;">
+          <div style="font-size:0.8rem; color:#000; font-weight:700; line-height:1.5;">${exerciseData.progression}</div>
         </div>
       ` : ''}
 
       <!-- Warm-up -->
       ${exerciseData.warmup ? `
-        <h3 style="font-weight:700; text-transform:uppercase; margin:20px 0 12px; font-size:0.75rem; color:var(--text-muted); letter-spacing:0.5px;">CALENTAMIENTO</h3>
-        <div style="background:var(--bg-surface); padding:14px 16px; margin-bottom:16px; border-radius: var(--radius-sm);">
-          <div style="font-size:0.8rem; color:var(--text-secondary); font-weight:500; line-height:1.5;">${exerciseData.warmup}</div>
+        <h3 style="font-weight:900; text-transform:uppercase; margin:25px 0 15px; font-size:1rem;">CALENTAMIENTO</h3>
+        <div style="background:#fff; border:2px solid #000; padding:16px; margin-bottom:20px;">
+          <div style="font-size:0.8rem; color:#000; font-weight:700; line-height:1.5;">${exerciseData.warmup}</div>
         </div>
       ` : ''}
 
       <!-- Rest Time -->
       ${exerciseData.restRecommended ? `
-        <h3 style="font-weight:700; text-transform:uppercase; margin:20px 0 12px; font-size:0.75rem; color:var(--text-muted); letter-spacing:0.5px;">DESCANSO RECOMENDADO</h3>
-        <div style="background:var(--bg-surface); padding:16px; text-align:center; border-radius: var(--radius-md);">
-          <div style="font-size:1.8rem; font-weight:800; color:var(--text-primary);">${exerciseData.restRecommended}s</div>
-          <div style="font-size:0.65rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-top:4px; letter-spacing:0.5px;">Descanso entre series</div>
+        <h3 style="font-weight:900; text-transform:uppercase; margin:25px 0 15px; font-size:1rem;">DESCANSO RECOMENDADO</h3>
+        <div style="background:#fff; border:2px solid #000; padding:16px; text-align:center;">
+          <div style="font-size:2rem; font-weight:900; color:#000;">${exerciseData.restRecommended}s</div>
+          <div style="font-size:0.7rem; color:#555; font-weight:700; text-transform:uppercase; margin-top:5px;">TIEMPO DE DESCANSO ENTRE SERIES</div>
         </div>
       ` : ''}
 
       <!-- Botón Añadir al Entrenamiento (solo si viene del selector) -->
       ${state.exerciseDetailSource ? `
-        <div style="margin-top:24px; margin-bottom:20px;">
-          <button onclick="addExerciseFromDetailAndBack('${exerciseConfig.exerciseId}')" style="width:100%; padding:16px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; text-transform:uppercase; border-radius: var(--radius-md); box-shadow: var(--accent-glow);">
+        <div style="margin-top:30px; margin-bottom:20px;">
+          <button onclick="addExerciseFromDetailAndBack('${exerciseConfig.exerciseId}')" style="width:100%; padding:18px; background:#ff0000; color:#fff; border:none; font-weight:900; font-size:1rem; cursor:pointer; text-transform:uppercase;">
             + AÑADIR AL ENTRENAMIENTO
           </button>
         </div>
       ` : ''}
-      </div>
     </div>
   `;
 }
@@ -1204,16 +1021,16 @@ let collapsedGroups = {}; // Estado de grupos colapsados
 function renderExerciseSelectorView(container) {
   container.innerHTML = `
      <div class="home-screen">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding: 12px 16px; background: var(--bg-primary); border-bottom: 0.5px solid rgba(0,0,0,0.05);">
-           <div style="display:flex; align-items:center; gap:10px;">
-              <button onclick="closeExerciseSelector()" style="background:transparent; border:none; color:var(--accent-primary); width:44px; height:44px; cursor:pointer; font-weight:700; font-size:1.3rem;">←</button>
-              <h3 style="font-weight:800; text-transform:uppercase; font-size:0.95rem;">AGREGAR EJERCICIO</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:#fff; z-index:10; padding-bottom:10px; border-bottom:2px solid #000;">
+           <div style="display:flex; align-items:center; gap:12px;">
+              <button onclick="closeExerciseSelector()" style="background:#000; border:none; color:#fff; width:36px; height:36px; border-radius:0; cursor:pointer; font-weight:900;">←</button>
+              <h3 style="font-weight:900; text-transform:uppercase;">AGREGAR EJERCICIO</h3>
            </div>
         </div>
 
-        <input type="text" id="exSearchFull" placeholder="Buscar ejercicio..." oninput="filterExerciseList(this.value)" value="${selectorQuery}" style="width:100%; padding:12px 16px; margin: 0 0 12px 0; border:0.5px solid var(--border-subtle); background:var(--bg-surface); color:var(--text-primary); outline:none; font-size:0.9rem; font-weight:600;">
+        <input type="text" id="exSearchFull" placeholder="BUSCAR EJERCICIO..." oninput="filterExerciseList(this.value)" value="${selectorQuery}" style="width:100%; padding:15px; margin-bottom:20px; border-radius:0; border:2px solid #000; background:#f9f9f9; color:#000; outline:none; font-weight:900; font-size:0.9rem; text-transform:uppercase;">
 
-        <div id="exSelectorList" style="display:flex; flex-direction:column; gap:1px; background: rgba(0,0,0,0.05);">
+        <div id="exSelectorList" style="display:flex; flex-direction:column; gap:8px;">
            ${renderExerciseListForSelector(selectorQuery)}
         </div>
      </div>
@@ -1243,12 +1060,12 @@ function renderExerciseListForSelector(query = '') {
       const ex = EXERCISE_DB[id];
       const m = MUSCLE_GROUPS[ex.muscleGroup] || { color: '#000', name: 'Otro' };
       return `
-        <div class="exercise-card" onclick="openExerciseDetailFromSelector('${id}')" style="background:var(--bg-card); cursor:pointer; padding:14px 16px; display:flex; gap:12px; align-items:center;">
-           <div style="flex:1;">
-             <h3 style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin-bottom:4px;">${ex.name}</h3>
-             <p style="font-size:0.7rem; font-weight:600; color:var(--text-muted); text-transform:uppercase;">${m.name}</p>
+        <div class="home-action-card" onclick="openExerciseDetailFromSelector('${id}')" style="margin-bottom:0px; cursor:pointer; padding:15px; border:2px solid #000; background:#fff; border-radius:0; display:flex; gap:15px; align-items:center;">
+           <div class="home-action-info" style="flex:1;">
+             <h3 style="font-size:0.95rem; font-weight:900; text-transform:uppercase; color:#000;">${ex.name}</h3>
+             <p style="font-size:0.75rem; font-weight:900; color:#ff0000; text-transform:uppercase; margin-top:4px;">${m.name}</p>
            </div>
-           <div style="color:var(--text-muted); font-size:1.2rem;">›</div>
+           <div style="font-weight:900; font-size:1.5rem; color:#000;">›</div>
         </div>
       `;
     }).join('');
@@ -1273,23 +1090,23 @@ function renderExerciseListForSelector(query = '') {
     const isCollapsed = collapsedGroups[mg];
 
     html += `
-      <div style="margin-bottom:0;">
-        <div onclick="toggleGroupCollapse('${mg}')" style="background:var(--bg-surface); color:var(--text-primary); padding:12px 16px; font-weight:700; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-bottom:0.5px solid var(--border-subtle);">
-          <span>${m.name}</span>
+      <div style="margin-bottom:10px;">
+        <div onclick="toggleGroupCollapse('${mg}')" style="background:#000; color:#fff; padding:12px 16px; font-weight:900; font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <span>${m.name.toUpperCase()}</span>
           <span style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">${groups[mg].length} ejercicios</span>
-            <span style="font-size:0.9rem; color:var(--text-muted); transform:${isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'}; transition:transform 0.2s;">▼</span>
+            <span style="font-size:0.7rem; opacity:0.7;">${groups[mg].length} ejercicios</span>
+            <span style="font-size:1rem; transform:${isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'}; transition:transform 0.2s;">▼</span>
           </span>
         </div>
         <div style="overflow:hidden; max-height:${isCollapsed ? '0' : '2000px'}; transition:max-height 0.3s ease;">
           ${groups[mg].map(id => {
       const ex = EXERCISE_DB[id];
       return `
-              <div class="exercise-card" onclick="openExerciseDetailFromSelector('${id}')" style="background:var(--bg-card); cursor:pointer; padding:14px 16px; display:flex; gap:12px; align-items:center;">
-                 <div style="flex:1;">
-                   <h3 style="font-size:0.9rem; font-weight:700; color:var(--text-primary); margin-bottom:4px;">${ex.name}</h3>
+              <div class="home-action-card" onclick="openExerciseDetailFromSelector('${id}')" style="margin-bottom:0px; cursor:pointer; padding:15px; border:1px solid #000; border-top:none; background:#fff; border-radius:0; display:flex; gap:15px; align-items:center;">
+                 <div class="home-action-info" style="flex:1;">
+                   <h3 style="font-size:0.85rem; font-weight:900; text-transform:uppercase; color:#000;">${ex.name}</h3>
                  </div>
-                 <div style="color:var(--text-muted); font-size:1.2rem;">›</div>
+                 <div style="font-weight:900; font-size:1.5rem; color:#000;">›</div>
               </div>
             `;
     }).join('')}
@@ -1316,41 +1133,41 @@ function startRoutineBuilder() {
 function renderRoutineBuilder(container) {
   container.innerHTML = `
     <div class="home-screen">
-       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0; padding: 12px 16px; background: var(--bg-primary); border-bottom: 0.5px solid rgba(0,0,0,0.05);">
-          <div style="display:flex; align-items:center; gap:10px;">
-             <button onclick="navigateBackFromSubview()" style="background:transparent; border:none; color:var(--accent-primary); width:44px; height:44px; cursor:pointer; font-weight:700; font-size:1.3rem;">←</button>
-             <h2 style="font-size:1rem; font-weight:800; text-transform:uppercase;">Nueva Rutina</h2>
+       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+             <button onclick="navigateBackFromSubview()" style="background:#000; border:none; color:#fff; width:36px; height:36px; border-radius:0; cursor:pointer; font-weight:900;">←</button>
+             <h2 style="font-size:1.5rem; font-weight:900; text-transform:uppercase;">NUEVA RUTINA</h2>
           </div>
-          <button onclick="generateAIRoutine()" style="background:var(--accent-gradient); color:#fff; border:none; padding:8px 14px; font-weight:700; cursor:pointer; font-size:0.75rem; border-radius:var(--radius-sm); box-shadow:var(--accent-glow);">⚡ IA</button>
+          <button onclick="generateAIRoutine()" style="background:#ff0000; color:#fff; border:none; padding:8px 12px; font-weight:900; cursor:pointer; font-size:0.75rem;">⚡ IA PRESET</button>
        </div>
 
-       <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05);">
+       <div style="display:flex; flex-direction:column; gap:20px;">
           ${state.builder.days.map((day, dIdx) => `
-             <div style="background:var(--bg-card); padding:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                   <input type="text" value="${day.title}" onchange="updateBuilderDayTitle(${dIdx}, this.value)" style="background:transparent; border:none; color:var(--text-primary); font-weight:700; font-size:0.95rem; width:150px; outline:none;">
-                   <button onclick="removeBuilderDay(${dIdx})" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-weight:600; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">✕</button>
+             <div style="background:#fff; border:2px solid #000; padding:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:2px solid #000; padding-bottom:8px;">
+                   <input type="text" value="${day.title}" onchange="updateBuilderDayTitle(${dIdx}, this.value)" style="background:transparent; border:none; color:#000; font-weight:900; font-size:1rem; width:150px; outline:none; text-transform:uppercase;">
+                   <button onclick="removeBuilderDay(${dIdx})" style="background:transparent; border:none; color:#ff0000; cursor:pointer; font-weight:900;">✕</button>
                 </div>
-
-                <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05); margin-bottom:12px;">
+                
+                <div style="display:flex; flex-direction:column; gap:8px;">
                    ${day.exercises.map((ex, eIdx) => `
-                      <div style="padding:12px 14px; background:var(--bg-card); display:flex; justify-content:space-between; align-items:center;">
-                         <div style="font-size:0.85rem; font-weight:600; color:var(--text-primary);">${EXERCISE_DB[ex.exerciseId]?.name || 'Unknown'}</div>
-                         <div style="display:flex; align-items:center; gap:8px;">
-                            <input type="number" value="${ex.sets}" onchange="updateBuilderExSets(${dIdx}, ${eIdx}, this.value)" style="width:45px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); text-align:center; font-size:0.8rem; padding:6px; font-weight:600; border-radius:6px;">
-                            <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">series</span>
-                            <button onclick="removeBuilderEx(${dIdx}, ${eIdx})" style="background:transparent; border:none; color:var(--accent-primary); width:36px; height:36px; cursor:pointer; font-weight:600; font-size:0.9rem; display:flex; align-items:center; justify-content:center;">✕</button>
+                      <div class="history-card" style="padding:10px; display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; border:1px solid #000; border-radius:0; margin-bottom:0;">
+                         <div style="font-size:0.85rem; font-weight:900;">${EXERCISE_DB[ex.exerciseId].name}</div>
+                         <div style="display:flex; align-items:center; gap:10px;">
+                            <input type="number" value="${ex.sets}" onchange="updateBuilderExSets(${dIdx}, ${eIdx}, this.value)" style="width:40px; background:#fff; border:1px solid #000; color:#000; text-align:center; font-size:0.8rem; padding:4px; font-weight:900;">
+                            <span style="font-size:0.7rem; color:#000; font-weight:900;">SER.</span>
+                            <button onclick="removeBuilderEx(${dIdx}, ${eIdx})" style="background:#000; border:none; color:#fff; width:24px; height:24px; cursor:pointer; font-weight:900; font-size:0.8rem;">✕</button>
                          </div>
                       </div>
                    `).join('')}
+                   <button onclick="openExerciseSelectorForBuilder(${dIdx})" style="width:100%; padding:12px; background:#000; color:#fff; border:none; font-size:0.8rem; font-weight:900; cursor:pointer; margin-top:10px;">+ AÑADIR EJERCICIO</button>
                 </div>
-                <button onclick="openExerciseSelectorForBuilder(${dIdx})" style="width:100%; padding:12px; background:var(--bg-surface); color:var(--text-secondary); border:1px dashed var(--border-subtle); font-size:0.8rem; font-weight:600; cursor:pointer; border-radius:var(--radius-sm);">+ Añadir ejercicio</button>
              </div>
           `).join('')}
-
-          <button onclick="addBuilderDay()" style="width:100%; padding:14px; border:2px dashed var(--border-light); background:var(--bg-card); color:var(--text-secondary); cursor:pointer; font-weight:600; font-size:0.85rem; border-radius:var(--radius-md); margin: 16px;">+ Añadir día</button>
-
-          <button onclick="finalizeRoutineBuilder()" style="width:100%; padding:16px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; margin: 0 16px 20px; border-radius:var(--radius-md); box-shadow:var(--accent-glow);">Guardar y Activar Rutina</button>
+          
+          <button onclick="addBuilderDay()" style="width:100%; padding:15px; border:2px dashed #000; background:transparent; color:#000; cursor:pointer; font-weight:900;">+ AÑADIR OTRO DÍA</button>
+          
+          <button onclick="finalizeRoutineBuilder()" style="width:100%; padding:18px; background:#ff0000; color:#fff; border:none; font-weight:900; font-size:1rem; cursor:pointer; margin-top:20px;">GUARDAR Y ACTIVAR RUTINA</button>
        </div>
     </div>
   `;
@@ -1530,44 +1347,67 @@ function renderExerciseCard(exerciseConfig, index, day) {
   const isCompleted = setsData.every(s => s.done) && setsData.length > 0;
 
   return `
-    <div class="exercise-card ${isCompleted ? 'completed' : ''}" id="exerciseCard${index}" style="background:var(--bg-card); border-bottom:0.5px solid rgba(0,0,0,0.05);">
-
+    <div class="exercise-card ${isCompleted ? 'completed' : ''}" id="exerciseCard${index}" style="background:#fff; border:1px solid var(--border-subtle); color:#000;">
+      
       <!-- CARD HEADER -->
-      <div class="ex-card-header" style="cursor:default; padding:12px 16px;">
+      <div class="ex-card-header" style="cursor:default; border-bottom: 2px solid #000; padding:12px 16px;">
         <div class="ex-title-sect" style="margin-left:0;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <h4 onclick="openExerciseDetail(${index})" style="cursor:pointer; font-weight:700; letter-spacing:-0.3px; font-size:0.9rem;">${exercise.name}</h4>
-            <button class="ex-btn-del" onclick="removeExercise(${index})" style="background:transparent; border:none; color:var(--text-muted); font-weight:600; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">✕</button>
+            <h4 onclick="openExerciseDetail(${index})" style="cursor:pointer; text-decoration:underline; font-weight:900; letter-spacing:-0.5px;">${exercise.name.toUpperCase()}</h4>
+            <button class="ex-btn-del" onclick="removeExercise(${index})" style="background:transparent; border:none; color:#000; font-weight:700;">✕</button>
           </div>
-          <div style="display:flex; gap:8px; font-size:0.65rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; margin-top:4px; letter-spacing:0.3px;">
+          <div style="display:flex; gap:10px; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-top:4px;">
             <span>${muscleGroup.name}</span>
             <span>·</span>
-            <span>${setsData.length} series</span>
+            <span>${setsData.length} SERIES</span>
           </div>
         </div>
       </div>
 
       <!-- CARD BODY -->
-      <div class="exercise-card-body" style="background:var(--bg-card);">
-        <div class="exercise-card-body-inner" style="padding: 0 16px 16px;">
+      <div class="exercise-card-body" style="background:#fff;">
+        <div class="exercise-card-body-inner" style="padding: 16px;">
+          
+          <div class="exercise-notes" style="margin-bottom:15px;">
+             <label style="font-size:0.6rem; font-weight:900; text-transform:uppercase; color:#000; display:block; margin-bottom:4px;">Nota de la serie</label>
+             <textarea style="width:100%; min-height:40px; border:1px solid #000; padding:8px; font-size:0.8rem; background:#fff; color:#000;" placeholder="Escribe aquí..." onchange="updateExerciseNote(${index}, this.value)">${(exerciseConfig.notes && exerciseConfig.notes !== "-") ? exerciseConfig.notes : ''}</textarea>
+          </div>
 
           <!-- SETS TRACKER HEADER -->
-          <div class="sets-header" style="margin-top: 8px;">
-             <div class="sh-type">Tipo</div>
-             <div class="sh-prev" style="width:60px; text-align:center;">Prev</div>
-             <div class="sh-kg">Peso (kg)</div>
-             <div class="sh-reps">Reps</div>
-             <div class="sh-done">OK</div>
+          <div class="sets-header" style="margin-top: 10px; position:relative; background:#f1f1f1; border:1px solid #000; padding:4px;">
+             <div class="sh-type" style="width:50px; display:flex; align-items:center; gap:2px; font-weight:900; font-size:0.6rem;">
+                TIPO
+                <span onclick="this.closest('.sets-header').querySelector('.sets-help-panel').style.display = (this.closest('.sets-header').querySelector('.sets-help-panel').style.display==='none'?'block':'none')" style="cursor:pointer; opacity:0.6; background:#000; color:#fff; border-radius:50%; width:14px; height:14px; display:inline-flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:bold;">?</span>
+             </div>
+             <div class="sh-prev" style="width:60px; text-align:center; font-weight:900; font-size:0.6rem;">PREV</div>
+             <div class="sh-kg" style="flex:1; text-align:center; font-weight:900; font-size:0.6rem;">PESO (KG)</div>
+             <div class="sh-reps" style="flex:1; text-align:center; font-weight:900; font-size:0.6rem;">REPS</div>
+             <div class="sh-done" style="width:40px; text-align:center; font-weight:900; font-size:0.6rem;">OK</div>
+
+             <!-- Help Panel -->
+             <div class="sets-help-panel" style="display:none; position:absolute; top:25px; left:0; right:0; background:#fff; border:2px solid #000; padding:12px; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.2);">
+                <div style="font-size:0.7rem; font-weight:900; margin-bottom:8px; display:flex; justify-content:space-between;">
+                   <span>LEYENDA DE SERIES</span>
+                   <span onclick="this.closest('.sets-help-panel').style.display='none'" style="cursor:pointer; opacity:0.5;">✕</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px; font-size:0.7rem; font-weight:400; color:#000;">
+                   <div><strong>W:</strong> Warm-up (Calentamiento)</div>
+                   <div><strong>X:</strong> Aproximación</div>
+                   <div><strong>1:</strong> Serie Normal</div>
+                   <div><strong>D:</strong> Dropset</div>
+                   <div><strong>F:</strong> Fallo</div>
+                </div>
+             </div>
           </div>
 
           <!-- SETS ROWS -->
           <div class="sets-list">
              ${setsData.map((s, i) => renderSetRow(index, i, s, exerciseConfig.exerciseId)).join('')}
           </div>
-
+          
           <div class="sets-actions">
              <button class="btn-outline-small" onclick="addSet(${index})">+ Serie</button>
-             <button class="btn-outline-small" style="color:var(--accent-primary)" onclick="removeSet(${index})">- Serie</button>
+             <button class="btn-outline-small" style="color:var(--danger)" onclick="removeSet(${index})">- Serie</button>
           </div>
 
           <!-- COMPACT REST TIMER -->
@@ -1659,18 +1499,11 @@ function toggleSet(exerciseIndex, setIndex, btnElement = null) {
   const wasCompleted = setObj.done;
   setObj.done = !wasCompleted;
 
-  // Haptic feedback on set complete
   if (!wasCompleted) {
-    hapticFeedback('light');
     if (!state.sessionActive) startSession();
     const exList = isVacío ? state.emptyWorkout.exercises : state.routine.days[state.currentDay].exercises;
     const exerciseId = exList[exerciseIndex].exerciseId;
     checkPR(exerciseId, setObj);
-
-    // Start rest timer after completing a set
-    if (setObj.isPR) {
-      hapticFeedback('success');
-    }
   } else {
     setObj.isPR = false;
   }
@@ -1684,40 +1517,19 @@ function toggleSet(exerciseIndex, setIndex, btnElement = null) {
     setsDoneInDay += s.filter(item => item.done).length;
   });
   const totalPossibleSets = day.exercises.reduce((acc, ex) => acc + ex.sets, 0);
-  if (setsDoneInDay === totalPossibleSets && !wasCompleted) {
-    hapticFeedback('success');
-    showToast('🎉', "¡TODOS LOS EJERCICIOS DEL DÍA COMPLETADOS!");
-  }
+  if (setsDoneInDay === totalPossibleSets && !wasCompleted) showToast('🎉', "¡TODOS LOS EJERCICIOS DEL DÍA COMPLETADOS!");
 
   // DOM UPDATE PERFECTION
   const row = btnElement ? btnElement.closest('.set-row') : document.getElementById(`setRow_${exerciseIndex}_${setIndex}`);
   if (row) {
-    if (setObj.done) {
-      row.classList.add('completed');
-      // Add smooth scale animation
-      row.style.transform = 'scale(1.02)';
-      setTimeout(() => {
-        row.style.transform = '';
-      }, 200);
-    } else {
-      row.classList.remove('completed');
-    }
+    if (setObj.done) row.classList.add('completed');
+    else row.classList.remove('completed');
   }
 
   const btn = btnElement || document.getElementById(`setBtn_${exerciseIndex}_${setIndex}`);
   if (btn) {
-    if (setObj.done) {
-      btn.classList.add('checked');
-      btn.textContent = '✓';
-      // Button press animation
-      btn.style.transform = 'scale(0.9)';
-      setTimeout(() => {
-        btn.style.transform = '';
-      }, 150);
-    } else {
-      btn.classList.remove('checked');
-      btn.textContent = '';
-    }
+    if (setObj.done) { btn.classList.add('checked'); btn.textContent = '✓'; }
+    else { btn.classList.remove('checked'); btn.textContent = ''; }
   }
 
   // Patch PR Medal directly in DOM
@@ -2044,189 +1856,84 @@ function renderWorkoutSummary(day, totalSets, completedCount) {
           <div class="summary-stat-label">Tiempo</div>
         </div>
       </div>
-      <button class="finish-workout-btn" onclick="finishWorkout()" style="margin-top: 24px;">
-          ✅ Finalizar Entrenamiento
-      </button>
-      <button class="finish-workout-btn" onclick="resetWorkout()" style="margin-top: 12px; background: var(--bg-surface); color: var(--text-secondary); border: 1px solid var(--border-subtle); box-shadow: none;">
-        🔄 Resetear
-      </button>
+      ${allDone && !feedbackSaved ? `
+        <div class="workout-feedback-section">
+          <h4>🧠 Reflexión post-entrenamiento</h4>
+          <p>¿Cómo te has sentido hoy?</p>
+          <div class="feedback-emojis" id="feedbackEmojis">
+            <button class="feedback-emoji-btn" onclick="selectFeedback('facil')">
+              <span class="emoji">🥱</span><span class="label">Fácil</span>
+            </button>
+            <button class="feedback-emoji-btn" onclick="selectFeedback('bien')">
+              <span class="emoji">👍</span><span class="label">Bien</span>
+            </button>
+            <button class="feedback-emoji-btn" onclick="selectFeedback('intenso')">
+              <span class="emoji">🔥</span><span class="label">Intenso</span>
+            </button>
+            <button class="feedback-emoji-btn" onclick="selectFeedback('mortal')">
+              <span class="emoji">💀</span><span class="label">Mortal</span>
+            </button>
+          </div>
+          <textarea id="feedbackNotes" class="feedback-notes" placeholder="Tus sensaciones, molestias, PRs, lo que quieras anotar..."></textarea>
+          <button class="finish-workout-btn" onclick="submitFeedback()">
+            💾 Guardar y Finalizar Sesión
+          </button>
+        </div>
+      ` : ''}
+      ${(!allDone || feedbackSaved) ? `
+        <button class="finish-workout-btn" onclick="resetWorkout()">
+          🔄 Resetear entrenamiento
+        </button>
+      ` : ''}
     </div>
   `;
 }
 
-function finishWorkout() {
+let currentFeedbackSelection = null;
+function selectFeedback(type) {
+  currentFeedbackSelection = type;
+  document.querySelectorAll('.feedback-emoji-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+function submitFeedback() {
+  if (!currentFeedbackSelection) { showToast('⚠️', 'Selecciona cómo te has sentido'); return; }
+  const notes = document.getElementById('feedbackNotes').value;
   const isVacío = state.currentView === 'empty_workout';
   const day = isVacío ? { title: state.emptyWorkout.name, exercises: state.emptyWorkout.exercises } : state.routine.days[state.currentDay];
 
-  // Calcular datos de la sesión
-  const totalVolume = getCurrentSessionVolume();
-  const totalSets = getCurrentSessionSets();
-  const totalPRs = day.exercises.reduce((acc, ex, i) => {
+  // Guardamos el rendimiento detallado para la columna "ANTERIOR"
+  const performanceMap = {};
+  day.exercises.forEach((ex, i) => {
     const key = isVacío ? `empty_ex${i}` : `day${state.currentDay}_ex${i}`;
-    const sets = state.completedSets[key] || [];
-    return acc + sets.filter(s => s.isPR).length;
-  }, 0);
+    const sets = state.completedSets[key];
+    if (sets) {
+      performanceMap[ex.exerciseId] = sets.map(s => ({ kg: s.kg, reps: s.reps }));
+    }
+  });
 
-  // Ejercicios completados
-  const completedExercises = day.exercises.filter((ex, i) => {
-    const key = isVacío ? `empty_ex${i}` : `day${state.currentDay}_ex${i}`;
-    const sets = state.completedSets[key] || [];
-    return sets.length > 0 && sets.every(s => s.done);
-  }).length;
-
-  // Guardar datos temporales para el resumen
-  state.postWorkout.sessionData = {
-    name: day.title,
-    duration: state.sessionElapsed,
-    volume: totalVolume,
-    sets: totalSets,
-    prs: totalPRs,
-    exercisesCompleted: completedExercises,
-    totalExercises: day.exercises.length,
-    isVacío
-  };
-  state.postWorkout.active = true;
-  state.postWorkout.feedback = null;
-  state.postWorkout.notes = '';
-
-  // Mostrar vista de resumen post-entreno
-  state.currentView = 'post_workout';
-  renderApp();
-  hapticFeedback('success');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function submitPostWorkout() {
-  const session = state.postWorkout.sessionData;
-  if (!session) { navigateHome(); return; }
-
-  // Guardar en historial
+  // Save to history
   const sessionRecord = {
     date: new Date().toISOString(),
-    name: session.name,
-    duration: session.duration,
-    volume: session.volume,
-    sets: session.sets,
-    prs: session.prs,
-    feedback: state.postWorkout.feedback,
-    notes: state.postWorkout.notes
+    name: day.title,
+    duration: state.sessionElapsed,
+    volume: getCurrentSessionVolume(),
+    sets: getCurrentSessionSets(),
+    prs: day.exercises.reduce((acc, ex, i) => {
+      const key = isVacío ? `empty_ex${i}` : `day${state.currentDay}_ex${i}`;
+      const sets = state.completedSets[key] || [];
+      return acc + sets.filter(s => s.isPR).length;
+    }, 0),
+    feedback: currentFeedbackSelection,
+    notes: notes,
+    exercisesPerformance: performanceMap
   };
 
   state.history.push(sessionRecord);
   state.userProfile.totalWorkouts++;
 
-  showToast('💾', 'Entrenamiento guardado en Inicio');
-
-  // Resetear y volver al inicio
-  setTimeout(() => {
-    resetWorkout(true);
-    navigateHome();
-  }, 1000);
-}
-
-function renderPostWorkout() {
-  const session = state.postWorkout.sessionData;
-  if (!session) { navigateHome(); return; }
-
-  const main = document.getElementById('mainContent');
-  const feedbackOptions = [
-    { type: 'facil', emoji: '🥱', label: 'Fácil', color: '#34c759' },
-    { type: 'normal', emoji: '👍', label: 'Normal', color: '#007aff' },
-    { type: 'intenso', emoji: '🔥', label: 'Intenso', color: '#ff9500' },
-    { type: 'mortal', emoji: '💀', label: 'Mortal', color: '#ff3b30' }
-  ];
-
-  main.innerHTML = `
-    <div class="home-screen">
-      <!-- Header del resumen -->
-      <div style="padding: 20px 16px; background: var(--bg-surface); border-bottom: 0.5px solid rgba(0,0,0,0.05); text-align:center;">
-        <div style="font-size:2.5rem; margin-bottom:8px;">🎉</div>
-        <h2 style="font-size:1.2rem; font-weight:800; margin-bottom:4px;">¡Entrenamiento Completado!</h2>
-        <p style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">${session.name}</p>
-      </div>
-
-      <!-- Stats Grid -->
-      <div style="padding: 16px;">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:16px;">
-          <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
-            <div style="font-size:1.5rem; font-weight:800; color:var(--accent-primary);">${formatTime(session.duration)}</div>
-            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:600;">Duración</div>
-          </div>
-          <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
-            <div style="font-size:1.5rem; font-weight:800; color:var(--text-primary);">${session.sets}</div>
-            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:600;">Series</div>
-          </div>
-          <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
-            <div style="font-size:1.5rem; font-weight:800; color:var(--text-primary);">${session.volume >= 1000 ? (session.volume / 1000).toFixed(1) + 't' : session.volume + 'kg'}</div>
-            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:600;">Volumen</div>
-          </div>
-          <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
-            <div style="font-size:1.5rem; font-weight:800; color:var(--pr-color);">${session.prs > 0 ? '🏅 ' + session.prs : '0'}</div>
-            <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:600;">PRs</div>
-          </div>
-        </div>
-
-        <!-- Progreso -->
-        <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); margin-bottom:16px;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <span style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:700;">Progreso</span>
-            <span style="font-size:0.7rem; color:var(--text-primary); font-weight:700;">${session.exercisesCompleted}/${session.totalExercises}</span>
-          </div>
-          <div style="width:100%; height:6px; background:var(--bg-elevated); border-radius:3px; overflow:hidden;">
-            <div style="width:${(session.exercisesCompleted / session.totalExercises) * 100}%; height:100%; background:var(--accent-gradient); border-radius:3px;"></div>
-          </div>
-        </div>
-
-        <!-- Feedback -->
-        <h3 style="font-size:0.75rem; font-weight:700; text-transform:uppercase; margin:20px 0 12px; color:var(--text-muted); letter-spacing:0.5px;">¿Cómo te has sentido?</h3>
-        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:16px;">
-          ${feedbackOptions.map(opt => `
-            <div onclick="selectPostWorkoutFeedback('${opt.type}', this)" 
-                 style="background:${state.postWorkout.feedback === opt.type ? opt.color + '15' : 'var(--bg-surface)'}; 
-                        border:2px solid ${state.postWorkout.feedback === opt.type ? opt.color : 'transparent'}; 
-                        border-radius:var(--radius-md); padding:12px 8px; text-align:center; cursor:pointer; transition:all 0.2s;">
-              <div style="font-size:1.8rem; margin-bottom:4px;">${opt.emoji}</div>
-              <div style="font-size:0.6rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">${opt.label}</div>
-            </div>
-          `).join('')}
-        </div>
-
-        <!-- Notas -->
-        <textarea 
-          onchange="state.postWorkout.notes = this.value"
-          placeholder="Notas opcionales (sensaciones, molestias, etc.)..." 
-          style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); border-radius:var(--radius-md); font-size:0.85rem; font-family:var(--font-family); resize:vertical; min-height:80px; color:var(--text-primary); margin-bottom:16px;"
-        >${state.postWorkout.notes}</textarea>
-
-        <!-- Botón guardar -->
-        <button onclick="submitPostWorkout()" 
-                style="width:100%; padding:16px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; text-transform:uppercase; border-radius:var(--radius-md); box-shadow:var(--accent-glow); margin-bottom:10px;">
-          ✅ Guardar Entrenamiento
-        </button>
-        <button onclick="resetWorkout(true); navigateHome();" 
-                style="width:100%; padding:14px; background:transparent; color:var(--text-muted); border:1px solid var(--border-subtle); font-weight:600; font-size:0.85rem; cursor:pointer; border-radius:var(--radius-md);">
-          🔄 Descartar
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-function selectPostWorkoutFeedback(type, element) {
-  state.postWorkout.feedback = type;
-
-  // Actualizar UI
-  const parent = element.parentElement;
-  parent.querySelectorAll('div').forEach(div => {
-    div.style.borderColor = 'transparent';
-    div.style.background = 'var(--bg-surface)';
-  });
-
-  const colors = { facil: '#34c759', normal: '#007aff', intenso: '#ff9500', mortal: '#ff3b30' };
-  element.style.borderColor = colors[type];
-  element.style.background = colors[type] + '15';
-
-  hapticFeedback('light');
+  showToast('💾', 'Entrenamiento finalizado y guardado en Inicio');
+  setTimeout(() => { resetWorkout(true); navigateHome(); }, 1500);
 }
 
 function resetWorkout(skipConfirm = false) {
@@ -2273,28 +1980,17 @@ function resetWorkout(skipConfirm = false) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── Toasts (iOS Style) ──
+// ── Toasts ──
 function showToast(icon, message) {
   const container = document.getElementById('toastContainer');
-
-  // Remove any existing toasts to prevent stacking
-  const existingToasts = container.querySelectorAll('.toast');
-  if (existingToasts.length > 2) {
-    existingToasts[0].remove();
-  }
-
   const toast = document.createElement('div');
   toast.className = 'toast';
   toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${message}</span>`;
   container.appendChild(toast);
-
-  // Haptic feedback for toast
-  hapticFeedback('light');
-
   setTimeout(() => {
     toast.classList.add('toast-out');
     setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  }, 3500);
 }
 
 function formatTime(totalSeconds) {

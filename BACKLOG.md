@@ -6,18 +6,23 @@
 
 ## 🔴 BUGS PENDIENTES
 
+> ¡Todos los bugs originales están resueltos! 🎉
+
 | # | Tarea | Impacto |
 |---|-------|---------|
-| B1 | `openExerciseDetail()` llamada pero no existe — crash al clicar nombre de ejercicio | 🔴 Crash |
-| B2 | `resetWorkout` no funciona en modo "entrenamiento vacío" | 🔴 Feature rota |
-| B3 | `toggleSet` usa prefijo incorrecto en modo vacío — toast nunca aparece | 🔴 UI rota |
-| B4 | `removeExercise` remapeo off-by-one en `completedSets` | 🟠 Datos huérfanos |
-| B5 | `addSet`/`removeSet` no soportan modo vacío | 🟠 Feature incompleta |
-| B6 | `renderWorkoutSummary` no cuenta PRs en modo vacío | 🟠 Stats mal |
+| — | Sin bugs pendientes | — |
 
 ---
 
-## 🚀 ÉPICAS PENDIENTES
+## � BUGS MENORES PENDIENTES
+
+| # | Tarea | Impacto |
+|---|-------|---------|
+| M1 | `openExerciseDetailFromSelector` mostraba "ejercicio no encontrado" al venir del selector | ✅ Corregido |
+
+---
+
+## �🚀 ÉPICAS PENDIENTES
 
 ### 📊 Exportar/Importar Datos
 > La librería `xlsx` ya está instalada pero nunca se usa.
@@ -34,12 +39,26 @@
 - [ ] E6 — Añadir campo `icon` a todos los ejercicios en `EXERCISE_DB`
 - [ ] E7 — Placeholder cuando no hay imagen disponible
 
+### 🔍 Detalle del Historial
+> Cuando entro en "Inicio" → Historial, solo veo datos básicos. Necesito ver todo el detalle.
+
+- [ ] E32 — Al clicar una sesión del historial, mostrar ejercicios realizados
+- [ ] E33 — Mostrar peso (kg), reps y tipo de serie de cada ejercicio completado
+- [ ] E34 — Mostrar tiempo total de la sesión y notas post-entreno
+- [ ] E35 — Mostrar PRs batidos en esa sesión concreta
+
 ### 🎨 Mejoras UI/UX
 - [ ] E8 — Implementar feature "Explorar" (browse exercises)
 - [ ] E9 — Implementar "Reordenar" ejercicios (drag & drop)
 - [ ] E10 — Dark theme real (no solo comentario)
 - [ ] E11 — Animaciones de transición entre vistas
 - [ ] E12 — Confirmaciones custom (reemplazar `confirm()` nativo)
+- [ ] E36 — Corregir color del body heatmap: el desgaste no puede ser blanco sobre fondo blanco
+
+### 💪 Base de Datos de Ejercicios
+- [x] E37 — Organizar selector de ejercicios por grupo muscular (headers desplegables)
+- [x] E38 — Añadir ejercicios faltantes por grupo muscular (+37 nuevos ejercicios)
+- [x] E39 — Al clicar ejercicio en el selector, abrir vista de detalle antes de añadir
 
 ### 🤖 AI Coach Mejorado
 - [ ] E13 — Mejorar motor de reglas con más keywords y respuestas
