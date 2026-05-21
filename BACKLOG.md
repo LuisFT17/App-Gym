@@ -39,26 +39,19 @@
 - [ ] E6 — Añadir campo `icon` a todos los ejercicios en `EXERCISE_DB`
 - [ ] E7 — Placeholder cuando no hay imagen disponible
 
-### 🔍 Detalle del Historial
-> Cuando entro en "Inicio" → Historial, solo veo datos básicos. Necesito ver todo el detalle.
 
-- [ ] E32 — Al clicar una sesión del historial, mostrar ejercicios realizados
-- [ ] E33 — Mostrar peso (kg), reps y tipo de serie de cada ejercicio completado
-- [ ] E34 — Mostrar tiempo total de la sesión y notas post-entreno
-- [ ] E35 — Mostrar PRs batidos en esa sesión concreta
+
+### 🍎 Nutrición
+- [ ] E40 — Nuevo apartado "Nutrición" junto a "Entrenar" (estilo app Fitia)
+  - Interfaz intuitiva y parecida a la app móvil
+  - Registro de calorías y macros
+  - Base de datos de alimentos básicos
+  - Plan nutricional diario
 
 ### 🎨 Mejoras UI/UX
-- [ ] E8 — Implementar feature "Explorar" (browse exercises)
-- [ ] E9 — Implementar "Reordenar" ejercicios (drag & drop)
-- [ ] E10 — Dark theme real (no solo comentario)
-- [ ] E11 — Animaciones de transición entre vistas
-- [ ] E12 — Confirmaciones custom (reemplazar `confirm()` nativo)
-- [ ] E36 — Corregir color del body heatmap: el desgaste no puede ser blanco sobre fondo blanco
+- *¡Todas las mejoras UI/UX propuestas han sido completadas!*
 
-### 💪 Base de Datos de Ejercicios
-- [x] E37 — Organizar selector de ejercicios por grupo muscular (headers desplegables)
-- [x] E38 — Añadir ejercicios faltantes por grupo muscular (+37 nuevos ejercicios)
-- [x] E39 — Al clicar ejercicio en el selector, abrir vista de detalle antes de añadir
+
 
 ### 🤖 AI Coach Mejorado
 - [ ] E13 — Mejorar motor de reglas con más keywords y respuestas

@@ -10,6 +10,7 @@ const state = {
   sessionStartTime: null,
   sessionElapsed: 0,
   sessionInterval: null,
+  workoutMinimized: false, // true when user navigates away from an active workout
   expandedExercise: null,
   expandedExerciseId: null, // ID directo del ejercicio para el detalle
   expandedExerciseListSnapshot: null, // Snapshot de la lista de ejercicios al entrar al detalle
@@ -98,16 +99,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!state.routine) state.routine = JSON.parse(JSON.stringify(ROUTINE));
 
+  // SVGs globally available
+  window.ICON_TRASH = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`;
+  window.ICON_REPLACE = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`;
+  window.ICON_PLATE = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>`;
+  window.ICON_X = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+  window.ICON_EXPLORE = `<svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
+
   // Register global functions for inline onclick
   window.startSelectedDay = startSelectedDay;
   window.startEmptyWorkout = startEmptyWorkout;
   window.startRoutineBuilder = startRoutineBuilder;
   window.navigateHome = navigateHome;
+  window.minimizeWorkout = minimizeWorkout;
+  window.resumeWorkout = resumeWorkout;
+  window.openHistoryDetail = openHistoryDetail;
+  window.closeHistoryDetail = closeHistoryDetail;
   window.openExerciseSelector = openExerciseSelector;
   window.closeExerciseSelector = closeExerciseSelector;
   window.openExerciseDetailFromSelector = openExerciseDetailFromSelector;
   window.addExerciseFromDetailAndBack = addExerciseFromDetailAndBack;
   window.navigateBackFromExerciseDetail = navigateBackFromExerciseDetail;
+  window.openExerciseSelectorToReplace = openExerciseSelectorToReplace;
+  window.showPlateCalculator = showPlateCalculator;
   window.finishWorkout = finishWorkout;
   window.resetWorkout = resetWorkout;
   window.changeTab = changeTab;
@@ -131,6 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
   window.toggleSet = toggleSet;
   window.updateSetType = updateSetType;
   window.updateSetData = updateSetData;
+  window.toggleTheme = toggleTheme;
+  window.filterExplorarList = filterExplorarList;
+  window.openExerciseDetailFromExplorar = openExerciseDetailFromExplorar;
+  window.openReorderView = openReorderView;
+  window.closeReorderView = closeReorderView;
+  window.initReorderDrag = initReorderDrag;
+  window.showCustomConfirm = showCustomConfirm;
 
   // Add touch feedback for better mobile UX
   setupTouchFeedback();
@@ -180,6 +201,8 @@ function hapticFeedback(type = 'light') {
 
 // ── Renderizado de la App (controlador de vistas) ──
 function renderApp() {
+  document.documentElement.setAttribute('data-theme', state.theme || 'light');
+
   if (state.currentView === 'post_workout') {
     renderHeader();
     renderPostWorkout();
@@ -213,8 +236,20 @@ function renderMainShell() {
     return;
   }
 
+  if (state.currentView === 'reorder_exercises') {
+    renderReorderView(main);
+    return;
+  }
+
+  if (state.currentView === 'history_detail') {
+    renderHistoryDetail(main);
+    return;
+  }
+
   if (state.activeTab === 'inicio') {
     renderInicio(main);
+  } else if (state.activeTab === 'explorar') {
+    renderExplorar(main);
   } else {
     // Subviews common to both Entrenamiento and Perfil
     if (state.currentView === 'exercise_detail') renderExerciseDetail(main);
@@ -243,18 +278,30 @@ function renderBottomNav() {
     document.getElementById('app').appendChild(nav);
   }
 
+  // Show or hide mini-player depending on whether a session is running outside the workout view
+  const isInWorkout = (state.currentView === 'workout' || state.currentView === 'empty_workout');
+  if (state.sessionActive && !isInWorkout) {
+    renderMiniPlayer();
+  } else {
+    teardownMiniPlayer();
+  }
+
   // SVG Icons for tabs
   const homeIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`;
   const workoutIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h1m16 0h1M5.5 6.5v11M18.5 6.5v11"/><rect x="5.5" y="9" width="13" height="6" rx="1"/></svg>`;
   const profileIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
 
-  const hideNav = ['post_workout'].includes(state.currentView);
+  const hideNav = ['post_workout', 'reorder_exercises'].includes(state.currentView);
   nav.className = hideNav ? 'bottom-nav hidden' : 'bottom-nav';
 
   nav.innerHTML = `
     <button class="nav-item ${state.activeTab === 'inicio' ? 'active' : ''}" onclick="changeTab('inicio')">
       ${homeIcon}
       <span class="nav-label">Inicio</span>
+    </button>
+    <button class="nav-item ${state.activeTab === 'explorar' ? 'active' : ''}" onclick="changeTab('explorar')">
+      ${ICON_EXPLORE}
+      <span class="nav-label">Explorar</span>
     </button>
     <button class="nav-item ${state.activeTab === 'entreno' ? 'active' : ''}" onclick="changeTab('entreno')">
       ${workoutIcon}
@@ -269,7 +316,12 @@ function renderBottomNav() {
 
 function changeTab(tab) {
   state.activeTab = tab;
-  state.currentView = 'home';
+  // If a workout is minimized, don't override the view – keep 'home' but don't lose session
+  if (!state.workoutMinimized) {
+    state.currentView = 'home';
+  } else {
+    state.currentView = 'home'; // still show home, mini-player will appear
+  }
   saveState();
   renderApp();
 }
@@ -289,18 +341,22 @@ function renderHeader() {
     `;
     header.classList.add('home-header');
   } else {
+    const workoutName = state.currentView === 'empty_workout'
+      ? state.emptyWorkout.name
+      : (state.routine.days[state.currentDay]?.title || 'Entrenamiento');
     header.innerHTML = `
       <div class="header-top" style="justify-content: space-between; align-items:center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
         <div style="display:flex; align-items:center; gap:8px;">
-           <button class="back-btn" style="background:transparent; border:none; color:var(--text-primary); font-size:1.2rem; cursor:pointer;" onclick="navigateHome()">←</button>
+           <button class="back-btn" style="background:transparent; border:none; color:var(--text-primary); font-size:1.2rem; cursor:pointer;" onclick="minimizeWorkout()">←</button>
            <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary); display:flex; gap:12px; align-items:center;">
              <span id="sessionTimerValue" style="color:var(--text-muted)">${formatTime(state.sessionElapsed)}</span>
              <span><span id="headerTotalSets" style="color:#fff">${getCurrentSessionSets()}</span> <span style="color:var(--text-muted); font-weight:400; font-size:0.65rem; text-transform:uppercase;">Series</span></span>
              <span><span id="headerTotalVolume" style="color:#fff">${getCurrentSessionVolume()}</span> <span style="color:var(--text-muted); font-weight:400; font-size:0.65rem; text-transform:uppercase;">Volumen</span></span>
            </div>
         </div>
-        <div>
+        <div style="display:flex; align-items:center; gap:8px;">
            ${state.currentView === 'empty_workout' ? renderBodyHeatmap({ exercises: state.emptyWorkout.exercises }) : renderBodyHeatmap(state.routine.days[state.currentDay])}
+           <button onclick="minimizeWorkout()" style="background:rgba(0,0,0,0.07); border:none; color:var(--text-primary); font-size:0.65rem; font-weight:800; cursor:pointer; padding:6px 10px; border-radius:10px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">— Min</button>
         </div>
       </div>
     `;
@@ -309,7 +365,7 @@ function renderHeader() {
 }
 
 function getHeatColor(muscleList, day) {
-  if (!day) return '#222';
+  if (!day) return 'var(--border-subtle)';
   let total = 0; let done = 0;
   day.exercises.forEach((ex, i) => {
     const exDB = EXERCISE_DB[ex.exerciseId];
@@ -319,12 +375,12 @@ function getHeatColor(muscleList, day) {
       done += sets.filter(s => s && s.done).length;
     }
   });
-  if (total === 0) return '#181818';
+  if (total === 0) return 'var(--border-subtle)';
   const r = done / total;
-  if (r === 0) return '#333';
-  if (r <= 0.3) return '#666';
-  if (r <= 0.7) return '#aaa';
-  return '#fff';
+  if (r === 0) return 'rgba(255,59,48,0.15)';
+  if (r <= 0.3) return 'rgba(255,59,48,0.4)';
+  if (r <= 0.7) return 'rgba(255,59,48,0.7)';
+  return 'var(--accent-primary)';
 }
 
 function renderBodyHeatmap(day) {
@@ -444,7 +500,6 @@ function renderHome() {
 
       <div style="display:flex; flex-direction:column; gap:1px; margin-top:0; background: rgba(0,0,0,0.05);">
         ${state.routine.days.map((day, i) => {
-    const isNext = state.currentDay === i;
     const totalExercises = day.exercises.length;
     const completedExercises = day.exercises.filter((ex, exIdx) => {
       const key = `day${i}_ex${exIdx}`;
@@ -453,24 +508,33 @@ function renderHome() {
     }).length;
     const progress = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
 
+    // If a session is currently active, detect if it's this specific day
+    const isActiveDay = state.sessionActive && state.currentDay === i
+      && (state.currentView === 'workout' || state.workoutMinimized);
+    const sessionIsRunning = state.sessionActive && state.workoutMinimized;
+
     return `
-            <button onclick="startSelectedDay(${i})" style="background:var(--bg-card); padding:16px; display:flex; align-items:center; gap:14px; cursor:pointer; border:none; width:100%; font-family:var(--font-family); text-align:left; transition: all 0.2s; -webkit-appearance:none;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
-               <div style="width:44px; height:44px; border-radius:var(--radius-sm); background:var(--accent-gradient); display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:0.9rem; flex-shrink:0; pointer-events:none;">
-                 ${i + 1}
+            <button onclick="${sessionIsRunning ? 'resumeWorkout()' : `startSelectedDay(${i})`}" style="background:var(--bg-card); padding:16px; display:flex; align-items:center; gap:14px; cursor:pointer; border:none; width:100%; font-family:var(--font-family); text-align:left; transition: all 0.2s; -webkit-appearance:none;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+               <div style="width:44px; height:44px; border-radius:var(--radius-sm); background:${isActiveDay ? 'linear-gradient(135deg,#34c759,#30d158)' : 'var(--accent-gradient)'}; display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:0.9rem; flex-shrink:0; pointer-events:none;">
+                 ${isActiveDay ? '▶' : i + 1}
                </div>
                <div style="flex:1; min-width:0;">
                   <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:4px; color:var(--text-primary); text-transform:uppercase; pointer-events:none;">${day.title}</h3>
-                  <p style="font-size:0.7rem; color:var(--text-muted); font-weight:600; pointer-events:none;">${totalExercises} ejercicios · ${progress}% completado</p>
+                  <p style="font-size:0.7rem; color:${isActiveDay ? '#34c759' : 'var(--text-muted)'}; font-weight:600; pointer-events:none;">${isActiveDay ? '● En curso · ' + formatTime(state.sessionElapsed) : totalExercises + ' ejercicios · ' + progress + '% completado'}</p>
                   <div style="width:100%; height:3px; background:var(--bg-surface); border-radius:2px; margin-top:6px; overflow:hidden; pointer-events:none;">
-                    <div style="width:${progress}%; height:100%; background:var(--accent-gradient); border-radius:2px; transition:width 0.3s; pointer-events:none;"></div>
+                    <div style="width:${progress}%; height:100%; background:${isActiveDay ? 'linear-gradient(135deg,#34c759,#30d158)' : 'var(--accent-gradient)'}; border-radius:2px; transition:width 0.3s; pointer-events:none;"></div>
                   </div>
                </div>
                <div style="color:var(--text-muted); font-size:1.2rem; flex-shrink:0; pointer-events:none;">›</div>
             </button>
             <div style="background:var(--bg-card); padding:0 16px 12px; display:flex; gap:8px;">
-              <button onclick="startSelectedDay(${i})" style="flex:1; padding:10px; background:var(--accent-gradient); color:#fff; border:none; font-weight:600; font-size:0.75rem; cursor:pointer; border-radius:var(--radius-sm); box-shadow:var(--accent-glow); text-transform:uppercase; letter-spacing:0.3px;">
-                ▶ Empezar rutina
-              </button>
+              ${sessionIsRunning
+                ? (isActiveDay
+                    ? `<button onclick="resumeWorkout()" style="flex:1; padding:10px; background:linear-gradient(135deg,#34c759,#30d158); color:#fff; border:none; font-weight:700; font-size:0.75rem; cursor:pointer; border-radius:var(--radius-sm); text-transform:uppercase; letter-spacing:0.3px;">▶ Continuar entrenamiento</button>`
+                    : `<div class="routine-start-btn-locked">🔒 Entrenamiento en curso</div>`
+                  )
+                : `<button onclick="startSelectedDay(${i})" style="flex:1; padding:10px; background:var(--accent-gradient); color:#fff; border:none; font-weight:600; font-size:0.75rem; cursor:pointer; border-radius:var(--radius-sm); box-shadow:var(--accent-glow); text-transform:uppercase; letter-spacing:0.3px;">▶ Empezar rutina</button>`
+              }
             </div>
           `;
   }).join('')}
@@ -528,12 +592,22 @@ function openDaySelector() {
 function startSelectedDay(idx) {
   console.log('startSelectedDay called with idx:', idx);
 
+  // Block starting a new workout if one is already running in background
+  if (state.sessionActive && state.workoutMinimized) {
+    showToast('⚠️', 'Ya tienes un entrenamiento en curso. Retómalo primero.');
+    resumeWorkout();
+    return;
+  }
+
   state.currentDay = idx;
   state.currentView = 'workout';
   state.activeTab = 'entreno';
   state.expandedExercise = null;
   state.expandedInfo = null;
   state.postWorkout.active = false;
+  state.workoutMinimized = false;
+  state._minimizedView = null;
+  state.emptyWorkout.active = false; // ensure empty workout flag is clear when starting a routine
 
   // Start session timer immediately
   if (!state.sessionActive) {
@@ -560,6 +634,313 @@ function startSelectedDay(idx) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+let explorarQuery = '';
+
+function renderExplorar(container) {
+  container.innerHTML = `
+     <div class="home-screen">
+        <div class="home-section-header">
+           <h2>Explorar Ejercicios</h2>
+        </div>
+        
+        <div style="padding: 0 16px 16px;">
+           <input type="text" id="exSearchExplore" placeholder="Buscar ejercicio..." oninput="filterExplorarList(this.value)" value="${explorarQuery}" style="width:100%; padding:12px 16px; margin: 0 0 16px 0; border:0.5px solid var(--border-subtle); background:var(--bg-surface); color:var(--text-primary); outline:none; font-size:0.9rem; font-weight:600; border-radius: var(--radius-sm);">
+           
+           <div id="explorarList" style="display:flex; flex-direction:column; gap:12px;">
+              ${renderExerciseListForExplorar(explorarQuery)}
+           </div>
+        </div>
+        </div>
+     </div>
+  `;
+}
+
+// ── Confirmaciones Custom (Reemplazo de confirm() nativo) ──
+function showCustomConfirm(message) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    
+    overlay.innerHTML = `
+      <div class="confirm-modal">
+        <h3 class="confirm-title">Confirmar</h3>
+        <p class="confirm-message">${message}</p>
+        <div class="confirm-actions">
+          <button class="confirm-btn confirm-btn-cancel" id="confirmBtnCancel">Cancelar</button>
+          <button class="confirm-btn confirm-btn-ok" id="confirmBtnOk">Confirmar</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+    });
+    
+    const cleanup = (value) => {
+      overlay.classList.remove('show');
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+        resolve(value);
+      }, 250);
+    };
+    
+    overlay.querySelector('#confirmBtnCancel').addEventListener('click', () => cleanup(false));
+    overlay.querySelector('#confirmBtnOk').addEventListener('click', () => cleanup(true));
+    
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        cleanup(false);
+      }
+    });
+  });
+}
+
+// ── Reordenar Ejercicios (Drag & Drop con Pointer Events) ──
+function openReorderView() {
+  state.previousView = state.currentView;
+  state.currentView = 'reorder_exercises';
+  saveState();
+  renderApp();
+}
+
+function closeReorderView() {
+  state.currentView = state.previousView || (state.emptyWorkout.active ? 'empty_workout' : 'workout');
+  saveState();
+  renderApp();
+}
+
+function getActiveExercises() {
+  const isVacío = state.previousView === 'empty_workout';
+  if (isVacío) {
+    return state.emptyWorkout.exercises;
+  } else {
+    return state.routine.days[state.currentDay]?.exercises || [];
+  }
+}
+
+function setActiveExercises(newExs) {
+  const isVacío = state.previousView === 'empty_workout';
+  if (isVacío) {
+    state.emptyWorkout.exercises = newExs;
+  } else {
+    if (state.routine.days[state.currentDay]) {
+      state.routine.days[state.currentDay].exercises = newExs;
+    }
+  }
+}
+
+function renderReorderView(container) {
+  const exercises = getActiveExercises();
+  
+  const itemsHtml = exercises.map((exConfig, index) => {
+    const ex = EXERCISE_DB[exConfig.exerciseId];
+    if (!ex) return '';
+    const muscleGroup = MUSCLE_GROUPS[ex.muscleGroup] || { color: '#000000', name: ex.muscleGroup, icon: '' };
+    return `
+      <div class="reorder-item" data-index="${index}" style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; display:flex; justify-content:space-between; align-items:center; user-select:none; touch-action:none; cursor:grab;">
+        <div style="display:flex; align-items:center; gap:12px; pointer-events:none;">
+          <div style="width:4px; height:20px; background:${muscleGroup.color}; border-radius:2px;"></div>
+          <div>
+            <h4 style="font-size:0.9rem; font-weight:700; margin:0; color:var(--text-primary);">${ex.name}</h4>
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">${muscleGroup.name}</span>
+          </div>
+        </div>
+        <div class="reorder-handle" style="color:var(--text-muted); display:flex; align-items:center; justify-content:center; width:36px; height:36px; cursor:grab;" onpointerdown="initReorderDrag(event, ${index})">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/></svg>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="home-screen" style="padding-bottom:80px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding: 12px 16px; background:var(--bg-primary); border-bottom:1px solid var(--border-subtle);">
+        <h3 style="font-weight:800; text-transform:uppercase; font-size:0.95rem; margin:0;">Reordenar Ejercicios</h3>
+        <button onclick="closeReorderView()" style="background:var(--accent-primary); border:none; color:#fff; font-weight:700; font-size:0.8rem; cursor:pointer; padding:8px 16px; border-radius:var(--radius-sm); box-shadow:var(--accent-glow);">Hecho</button>
+      </div>
+      
+      <div style="padding: 0 16px;">
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:16px; font-weight:500;">Arrastra el icono de las barras ☰ para cambiar el orden de los ejercicios.</p>
+        <div id="reorderList" style="display:flex; flex-direction:column; gap:10px; position:relative;">
+          ${itemsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+let activeDragItem = null;
+let activeDragIndex = null;
+
+function initReorderDrag(e, index) {
+  if (e.button !== 0 && e.pointerType === 'mouse') return;
+  
+  const handle = e.target.closest('.reorder-handle');
+  if (!handle) return;
+
+  const row = handle.closest('.reorder-item');
+  if (!row) return;
+
+  e.preventDefault();
+  activeDragItem = row;
+  activeDragIndex = index;
+  
+  try {
+    handle.setPointerCapture(e.pointerId);
+  } catch(err) {}
+  
+  row.classList.add('dragging');
+  row.style.cursor = 'grabbing';
+  handle.style.cursor = 'grabbing';
+  
+  handle.addEventListener('pointermove', onReorderMove);
+  handle.addEventListener('pointerup', onReorderEnd);
+  handle.addEventListener('pointercancel', onReorderEnd);
+}
+
+function onReorderMove(e) {
+  if (!activeDragItem) return;
+  const clientY = e.clientY;
+  
+  const container = document.getElementById('reorderList');
+  if (!container) return;
+
+  const items = [...container.querySelectorAll('.reorder-item')];
+  const siblings = items.filter(item => item !== activeDragItem);
+  
+  const nextSibling = siblings.find(sibling => {
+    const rect = sibling.getBoundingClientRect();
+    return clientY < rect.top + rect.height / 2;
+  });
+  
+  if (nextSibling) {
+    container.insertBefore(activeDragItem, nextSibling);
+  } else {
+    container.appendChild(activeDragItem);
+  }
+}
+
+function onReorderEnd(e) {
+  if (!activeDragItem) return;
+  
+  const handle = e.target.closest('.reorder-handle');
+  if (handle) {
+    try {
+      handle.releasePointerCapture(e.pointerId);
+    } catch(err) {}
+    handle.removeEventListener('pointermove', onReorderMove);
+    handle.removeEventListener('pointerup', onReorderEnd);
+    handle.removeEventListener('pointercancel', onReorderEnd);
+    handle.style.cursor = '';
+  }
+
+  activeDragItem.classList.remove('dragging');
+  activeDragItem.style.cursor = '';
+  
+  const container = document.getElementById('reorderList');
+  if (container) {
+    const items = [...container.querySelectorAll('.reorder-item')];
+    const newOrderIndices = items.map(item => parseInt(item.dataset.index));
+    const orderChanged = newOrderIndices.some((val, idx) => val !== idx);
+    
+    if (orderChanged) {
+      const exercises = getActiveExercises();
+      const reorderedExercises = newOrderIndices.map(idx => exercises[idx]);
+      
+      const isVacío = state.previousView === 'empty_workout';
+      const prefix = isVacío ? 'empty_ex' : `day${state.currentDay}_ex`;
+      
+      const newCompletedSets = {};
+      
+      Object.keys(state.completedSets).forEach(key => {
+        if (!key.startsWith(prefix)) {
+          newCompletedSets[key] = state.completedSets[key];
+        }
+      });
+      
+      newOrderIndices.forEach((oldIdx, newIdx) => {
+        const oldKey = `${prefix}${oldIdx}`;
+        const newKey = `${prefix}${newIdx}`;
+        if (state.completedSets[oldKey]) {
+          newCompletedSets[newKey] = state.completedSets[oldKey];
+        }
+      });
+      
+      state.completedSets = newCompletedSets;
+      setActiveExercises(reorderedExercises);
+      saveState();
+    }
+  }
+  
+  activeDragItem = null;
+  activeDragIndex = null;
+  
+  renderApp();
+}
+
+
+function filterExplorarList(query) {
+  explorarQuery = query;
+  const container = document.getElementById('explorarList');
+  if (container) container.innerHTML = renderExerciseListForExplorar(query);
+}
+
+function renderExerciseListForExplorar(query) {
+  const q = query.toLowerCase().trim();
+  const groups = {};
+  
+  Object.keys(EXERCISE_DB).forEach(id => {
+    const ex = EXERCISE_DB[id];
+    if (ex.name.toLowerCase().includes(q) || ex.muscleGroup.toLowerCase().includes(q)) {
+      if (!groups[ex.muscleGroup]) groups[ex.muscleGroup] = [];
+      groups[ex.muscleGroup].push({ ...ex, id });
+    }
+  });
+
+  if (Object.keys(groups).length === 0) {
+    return `<p style="text-align:center; color:var(--text-muted); padding:40px 0;">No se encontraron ejercicios</p>`;
+  }
+
+  return Object.keys(groups).sort().map(mg => {
+    const muscleGroup = MUSCLE_GROUPS[mg] || { color: '#000000', name: mg, icon: '' };
+    const exercises = groups[mg];
+    
+    return `
+      <div class="explore-group" style="margin-bottom:8px;">
+         <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <div style="width:4px; height:16px; background:${muscleGroup.color}; border-radius:2px;"></div>
+            <h3 style="font-size:0.8rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">${muscleGroup.name}</h3>
+         </div>
+         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            ${exercises.map(ex => `
+               <div onclick="openExerciseDetailFromExplorar('${ex.id}')" style="background:var(--bg-card); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border-subtle); cursor:pointer; display:flex; flex-direction:column; gap:8px; transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+                  <span style="font-size:0.85rem; font-weight:700; line-height:1.2; min-height:2em;">${ex.name}</span>
+                  <div style="display:flex; align-items:center; gap:4px;">
+                     <span style="font-size:0.6rem; background:rgba(0,0,0,0.05); color:var(--text-muted); padding:2px 6px; border-radius:4px; font-weight:700; text-transform:uppercase;">${ex.muscleGroup}</span>
+                  </div>
+               </div>
+            `).join('')}
+         </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openExerciseDetailFromExplorar(exerciseId) {
+  state.previousView = state.currentView;
+  state.previousDay = state.currentDay;
+  state.expandedExerciseId = exerciseId;
+  state.exerciseDetailSource = null; 
+  state.currentView = 'exercise_detail';
+  saveState();
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function renderInicio(container) {
   container.innerHTML = `
     <div class="home-screen">
@@ -574,8 +955,8 @@ function renderInicio(container) {
              <p>Aún no has terminado ningún entrenamiento.</p>
              <p style="font-size:0.8rem; margin-top:8px;">¡Dale duro hoy! 💪</p>
           </div>
-        ` : state.history.map(session => `
-          <div class="history-card">
+        ` : state.history.map((session, i) => `
+          <div class="history-card" onclick="openHistoryDetail(${i})" style="cursor:pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(0.98)'" onmouseout="this.style.transform='none'">
             <div class="history-header">
                <div>
                   <div class="history-date">${new Date(session.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</div>
@@ -627,61 +1008,72 @@ function renderPerfil(container) {
              <span class="stat-label">Volumen Acum.</span>
           </div>
           <div class="stat-box">
-             <span class="stat-value">${Object.keys(state.prs).length}</span>
-             <span class="stat-label">Records</span>
-          </div>
-       </div>
+             <span class        </div>
 
-       <h3 style="margin-top:20px;">Volumen (Últimos 7 días)</h3>
-       <div class="bar-chart">
-          ${last7.length > 0 ? last7.map(s => `
-             <div class="bar-wrap" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;">
-                <div class="bar" style="height: ${(s.volume / maxVol) * 100}%; width:100%;"></div>
-                <span style="font-size:0.5rem; color:var(--text-muted);">${new Date(s.date).getDate()}</span>
-             </div>
-          `).join('') : '<p style="color:var(--text-muted); width:100%; text-align:center; padding:20px;">Entrena para ver estadísticas</p>'}
-       </div>
-       
-       <h3 style="margin-top:30px;">Configuración para IA</h3>
-       <div style="background:#fff; border-radius:0; border:2px solid #000; padding:16px; display:flex; flex-direction:column; gap:12px; margin-top:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-             <span style="font-size:0.8rem; font-weight:900; color:#000;">EDAD</span>
-             <input type="number" value="${state.userProfile.age || 25}" onchange="state.userProfile.age=this.value; saveState();" style="width:60px; background:#f9f9f9; border:1px solid #000; color:#000; text-align:center; padding:4px; font-weight:900; font-size:0.8rem;">
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-             <span style="font-size:0.8rem; font-weight:900; color:#000;">PESO (KG)</span>
-             <input type="number" value="${state.userProfile.weight || 75}" onchange="state.userProfile.weight=this.value; saveState();" style="width:60px; background:#f9f9f9; border:1px solid #000; color:#000; text-align:center; padding:4px; font-weight:900; font-size:0.8rem;">
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-             <span style="font-size:0.8rem; font-weight:900; color:#000;">ALTURA (CM)</span>
-             <input type="number" value="${state.userProfile.height || 175}" onchange="state.userProfile.height=this.value; saveState();" style="width:60px; background:#f9f9f9; border:1px solid #000; color:#000; text-align:center; padding:4px; font-weight:900; font-size:0.8rem;">
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-             <span style="font-size:0.8rem; font-weight:900; color:#000;">OBJETIVO</span>
-             <select onchange="state.userProfile.goals=this.value; saveState();" style="background:#f9f9f9; border:1px solid #000; color:#000; font-size:0.8rem; font-weight:900; outline:none; padding:4px;">
-                <option value="gain" ${state.userProfile.goals === 'gain' ? 'selected' : ''}>GANAR MASA</option>
-                <option value="lose" ${state.userProfile.goals === 'lose' ? 'selected' : ''}>PERDER GRASA</option>
-                <option value="strength" ${state.userProfile.goals === 'strength' ? 'selected' : ''}>FUERZA PURA</option>
-             </select>
-          </div>
-       </div>
+        <h3 style="margin-top:20px; font-weight:700; font-size:1rem;">Volumen (Últimos 7 días)</h3>
+        <div class="bar-chart" style="background:var(--bg-surface); padding:16px; border-radius:var(--radius-md); display:flex; gap:8px; align-items:flex-end; height:120px; margin-top:10px;">
+           ${last7.length > 0 ? last7.map(s => `
+              <div class="bar-wrap" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%;">
+                 <div class="bar" style="height: ${(s.volume / maxVol) * 100}%; width:100%; background:var(--accent-primary); border-radius:4px 4px 0 0;"></div>
+                 <span style="font-size:0.6rem; color:var(--text-muted); font-weight:600;">${new Date(s.date).getDate()}</span>
+              </div>
+           `).join('') : '<p style="color:var(--text-muted); width:100%; text-align:center; padding:20px; font-size:0.8rem;">Entrena para ver estadísticas</p>'}
+        </div>
+        
+        <h3 style="margin-top:30px; font-weight:700; font-size:1rem;">Ajustes</h3>
+        
+        <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+           <button class="home-action-card" onclick="toggleTheme()" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; justify-content:space-between; border-radius:var(--radius-md);">
+              <div style="display:flex; align-items:center; gap:16px;">
+                 <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">🌓</div>
+                 <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">Modo Oscuro</h3><p style="font-size:0.75rem; color:var(--text-muted);">Cambiar tema visual</p></div>
+              </div>
+              <div style="color:var(--text-muted); font-size:1.2rem; display:flex; align-items:center;">
+                 ${state.theme === 'dark' ? 'Activado' : 'Desactivado'}
+              </div>
+           </button>
+        </div>
 
-       <div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
-          <button class="home-action-card" onclick="navigateToView('measures')" style="padding:15px; border:2px solid #000; background:#fff; align-items:center; display:flex; gap:16px; border-radius:0;">
-             <div class="home-action-icon" style="background:#000; color:#fff; font-weight:900;">MM</div>
-             <div class="home-action-info"><h3 style="font-size:1rem; font-weight:900; text-transform:uppercase;">MIS MEDIDAS</h3><p style="font-size:0.75rem; color:#000;">Peso, grasa corporal...</p></div>
-          </button>
-          
-          <button class="home-action-card" onclick="navigateToView('nutrition')" style="padding:15px; border:2px solid #000; background:#fff; align-items:center; display:flex; gap:16px; border-radius:0;">
-             <div class="home-action-icon" style="background:#000; color:#fff; font-weight:900;">CAL</div>
-             <div class="home-action-info"><h3 style="font-size:1rem; font-weight:900; text-transform:uppercase;">NUTRICIÓN Y DIETA</h3><p style="font-size:0.75rem; color:#000;">Plan alimenticio con IA</p></div>
-          </button>
-          
-          <button class="home-action-card" onclick="navigateToView('calendar')" style="padding:15px; border:2px solid #000; background:#fff; align-items:center; display:flex; gap:16px; border-radius:0;">
-             <div class="home-action-icon" style="background:#000; color:#fff; font-weight:900;">CAL</div>
-             <div class="home-action-info"><h3 style="font-size:1rem; font-weight:900; text-transform:uppercase;">CALENDARIO</h3><p style="font-size:0.75rem; color:#000;">Días de entreno</p></div>
-          </button>
-       </div>
+        <h3 style="margin-top:30px; font-weight:700; font-size:1rem;">Configuración IA</h3>
+        <div style="background:var(--bg-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle); padding:16px; display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+           <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">EDAD</span>
+              <input type="number" value="${state.userProfile.age || 25}" onchange="state.userProfile.age=this.value; saveState();" style="width:60px; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); text-align:center; padding:6px; font-weight:700; font-size:0.8rem; border-radius:4px;">
+           </div>
+           <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">PESO (KG)</span>
+              <input type="number" value="${state.userProfile.weight || 75}" onchange="state.userProfile.weight=this.value; saveState();" style="width:60px; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); text-align:center; padding:6px; font-weight:700; font-size:0.8rem; border-radius:4px;">
+           </div>
+           <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">ALTURA (CM)</span>
+              <input type="number" value="${state.userProfile.height || 175}" onchange="state.userProfile.height=this.value; saveState();" style="width:60px; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); text-align:center; padding:6px; font-weight:700; font-size:0.8rem; border-radius:4px;">
+           </div>
+           <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">OBJETIVO</span>
+              <select onchange="state.userProfile.goals=this.value; saveState();" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); font-size:0.8rem; font-weight:700; outline:none; padding:6px; border-radius:4px;">
+                 <option value="gain" ${state.userProfile.goals === 'gain' ? 'selected' : ''}>GANAR MASA</option>
+                 <option value="lose" ${state.userProfile.goals === 'lose' ? 'selected' : ''}>PERDER GRASA</option>
+                 <option value="strength" ${state.userProfile.goals === 'strength' ? 'selected' : ''}>FUERZA PURA</option>
+              </select>
+           </div>
+        </div>
+
+        <div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
+           <button class="home-action-card" onclick="navigateToView('measures')" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
+              <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">📏</div>
+              <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">MIS MEDIDAS</h3><p style="font-size:0.75rem; color:var(--text-muted);">Peso, grasa corporal...</p></div>
+           </button>
+           
+           <button class="home-action-card" onclick="navigateToView('nutrition')" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
+              <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">🍎</div>
+              <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">NUTRICIÓN Y DIETA</h3><p style="font-size:0.75rem; color:var(--text-muted);">Plan alimenticio con IA</p></div>
+           </button>
+           
+           <button class="home-action-card" onclick="navigateToView('calendar')" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
+              <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">📅</div>
+              <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">CALENDARIO</h3><p style="font-size:0.75rem; color:var(--text-muted);">Días de entreno</p></div>
+           </button>
+        </div>
     </div>
   `;
 }
@@ -820,6 +1212,185 @@ function navigateBackFromSubview() {
   renderApp();
 }
 
+// ── History Detail View ──
+window.openHistoryDetail = function(idx) {
+  state.selectedHistoryIdx = idx;
+  state.currentView = 'history_detail';
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.closeHistoryDetail = function() {
+  state.currentView = 'home';
+  state.activeTab = 'inicio';
+  renderApp();
+};
+
+function renderHistoryDetail(container) {
+  const session = state.history[state.selectedHistoryIdx];
+  if (!session) { closeHistoryDetail(); return; }
+
+  const feedbackEmoji = {
+    'facil': '🥱 Fácil',
+    'normal': '👍 Normal',
+    'intenso': '🔥 Intenso',
+    'mortal': '💀 Mortal'
+  }[session.feedback] || 'Sin especificar';
+
+  const exercisesHtml = (session.exercisesList && session.exercisesList.length > 0)
+    ? session.exercisesList.map((ex, idx) => `
+      <div style="background:var(--bg-card); border:0.5px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; margin-bottom:12px;">
+        <h4 style="font-size:0.9rem; font-weight:800; margin-bottom:12px; color:var(--text-primary); text-transform:uppercase;">${ex.name}</h4>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <div style="display:grid; grid-template-columns: 40px 1fr 1fr 50px; font-size:0.65rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; margin-bottom:4px; padding:0 4px;">
+            <div style="text-align:center;">TIPO</div>
+            <div style="text-align:center;">KG</div>
+            <div style="text-align:center;">REPS</div>
+            <div style="text-align:center;">PR</div>
+          </div>
+          ${ex.sets.map(s => `
+            <div style="display:grid; grid-template-columns: 40px 1fr 1fr 50px; align-items:center; background:var(--bg-surface); padding:8px 4px; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:700;">
+              <div style="text-align:center; font-size:1.1rem;">${SET_TYPES[s.type]?.icon || '1'}</div>
+              <div style="text-align:center;">${s.kg || '-'}</div>
+              <div style="text-align:center;">${s.reps || '-'}</div>
+              <div style="text-align:center;">${s.isPR ? '🏅' : ''}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('')
+    : `<div style="text-align:center; padding:30px; background:var(--bg-card); border:1px dashed var(--border-subtle); border-radius:var(--radius-md); color:var(--text-muted); font-weight:600; font-size:0.8rem;">No hay detalles de ejercicios guardados para esta sesión (sesión antigua).</div>`;
+
+  container.innerHTML = `
+    <div class="home-screen">
+       <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; padding:12px 16px; background:var(--bg-primary); border-bottom:0.5px solid rgba(0,0,0,0.05);">
+          <button onclick="closeHistoryDetail()" style="background:transparent; border:none; color:var(--text-primary); font-size:1.5rem; font-weight:900; cursor:pointer;">←</button>
+          <h2 style="font-size:1rem; font-weight:900; text-transform:uppercase;">Detalle de Sesión</h2>
+       </div>
+
+       <div style="padding:0 16px;">
+          <!-- Resumen cabecera -->
+          <div style="background:var(--bg-surface); border-radius:var(--radius-md); padding:20px; text-align:center; margin-bottom:20px;">
+             <h3 style="font-size:1.2rem; font-weight:900; color:var(--text-primary); margin-bottom:4px;">${session.name}</h3>
+             <p style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">${new Date(session.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute:'2-digit' })}</p>
+          </div>
+
+          <!-- Stats -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+             <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
+                <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${formatTime(session.duration)}</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:700;">Duración</div>
+             </div>
+             <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
+                <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${session.volume >= 1000 ? (session.volume / 1000).toFixed(1) + 't' : session.volume + 'kg'}</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:700;">Volumen</div>
+             </div>
+             <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
+                <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${session.sets}</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:700;">Series Totales</div>
+             </div>
+             <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
+                <div style="font-size:1.3rem; font-weight:800; color:var(--pr-color);">${session.prs > 0 ? '🏅 ' + session.prs : '0'}</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:700;">Nuevos PRs</div>
+             </div>
+          </div>
+
+          ${session.notes || session.feedback ? `
+          <div style="background:var(--bg-surface); border-radius:var(--radius-md); padding:16px; margin-bottom:20px;">
+             <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;">Sensaciones & Notas</div>
+             ${session.feedback ? `<div style="font-size:0.85rem; font-weight:700; color:var(--text-primary); margin-bottom:8px;">Estado: ${feedbackEmoji}</div>` : ''}
+             ${session.notes ? `<div style="font-size:0.85rem; color:var(--text-secondary); font-style:italic;">"${session.notes}"</div>` : ''}
+          </div>
+          ` : ''}
+
+          <h3 style="font-size:0.9rem; font-weight:800; color:var(--text-primary); text-transform:uppercase; margin-bottom:12px;">Ejercicios Realizados</h3>
+          ${exercisesHtml}
+       </div>
+    </div>
+  `;
+}
+
+function navigateHome() {
+  state.currentView = 'home';
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Minimize / Resume Workout ──
+function minimizeWorkout() {
+  if (!state.sessionActive) {
+    // No active session – just go home normally
+    state.currentView = 'home';
+    renderApp();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  // Snapshot the exact view so resume restores it correctly
+  state._minimizedView = state.currentView; // 'workout' | 'empty_workout'
+  state.workoutMinimized = true;
+  state.currentView = 'home';
+  saveState();
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resumeWorkout() {
+  state.workoutMinimized = false;
+  // Restore the exact view that was active when the user minimized
+  state.currentView = state._minimizedView || (state.emptyWorkout.active ? 'empty_workout' : 'workout');
+  state._minimizedView = null;
+  state.activeTab = 'entreno';
+  saveState();
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Floating Mini-Player ──
+let _miniPlayerInterval = null;
+
+function renderMiniPlayer() {
+  let container = document.getElementById('workoutMiniPlayer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'workoutMiniPlayer';
+    document.getElementById('app').appendChild(container);
+  }
+
+  const name = state.emptyWorkout.active
+    ? state.emptyWorkout.name
+    : (state.routine.days[state.currentDay]?.title || 'Entrenamiento');
+
+  container.innerHTML = `
+    <div class="mini-player-pill" onclick="resumeWorkout()">
+      <div class="mini-player-dot"></div>
+      <div class="mini-player-info">
+        <div class="mini-player-name">${name}</div>
+        <div class="mini-player-time" id="miniPlayerTime">${formatTime(state.sessionElapsed)}</div>
+      </div>
+      <button style="background:transparent; border:none; color:var(--accent-primary); cursor:pointer; padding:6px; margin-right:-4px; display:flex; align-items:center; justify-content:center; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='none'" onclick="event.stopPropagation(); resetWorkout()">${ICON_TRASH}</button>
+    </div>
+  `;
+
+  // Start live-updating timer inside the pill
+  if (_miniPlayerInterval) clearInterval(_miniPlayerInterval);
+  _miniPlayerInterval = setInterval(() => {
+    const el = document.getElementById('miniPlayerTime');
+    if (el && state.sessionActive) {
+      state.sessionElapsed = Math.floor((Date.now() - state.sessionStartTime) / 1000);
+      el.textContent = formatTime(state.sessionElapsed);
+    }
+  }, 1000);
+}
+
+function teardownMiniPlayer() {
+  if (_miniPlayerInterval) {
+    clearInterval(_miniPlayerInterval);
+    _miniPlayerInterval = null;
+  }
+  const container = document.getElementById('workoutMiniPlayer');
+  if (container) container.remove();
+}
+
 function navigateHome() {
   state.currentView = 'home';
   renderApp();
@@ -861,6 +1432,40 @@ function openExerciseDetail(exerciseIndex) {
 }
 
 // Abrir detalle desde el selector de ejercicios
+function openExerciseSelectorToReplace(index) {
+  state.replaceExerciseIndex = index;
+  state.exerciseDetailSource = state.currentView === 'empty_workout' ? 'empty_workout' : 'workout';
+  state.previousView = state.currentView;
+  state.currentView = 'exercise_selector';
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showPlateCalculator(totalWeight) {
+  if (!totalWeight || totalWeight <= 20) {
+    showToast(window.ICON_PLATE, 'El peso debe ser mayor a la barra (20kg)');
+    return;
+  }
+  
+  const barWeight = 20;
+  let weightPerSide = (totalWeight - barWeight) / 2;
+  const plates = [25, 20, 15, 10, 5, 2.5, 1.25];
+  const usedPlates = [];
+
+  for (let plate of plates) {
+    while (weightPerSide >= plate) {
+      usedPlates.push(plate);
+      weightPerSide -= plate;
+    }
+  }
+
+  const platesText = usedPlates.length > 0 
+    ? usedPlates.map(p => `<span style="background:var(--accent-primary); color:#fff; padding:3px 6px; border-radius:4px; font-weight:800; font-size:0.75rem; margin:0 2px;">${p}</span>`).join('')
+    : '<span style="font-size:0.8rem; font-weight:700;">Solo barra</span>';
+
+  showToast(window.ICON_PLATE, `Por lado:<br><div style="margin-top:6px;">${platesText}</div>`);
+}
+
 function openExerciseDetailFromSelector(exerciseId) {
   const exerciseData = EXERCISE_DB[exerciseId];
   if (!exerciseData) {
@@ -990,8 +1595,8 @@ function renderExerciseDetail(container) {
       <!-- Botón Añadir al Entrenamiento (solo si viene del selector) -->
       ${state.exerciseDetailSource ? `
         <div style="margin-top:24px; margin-bottom:20px;">
-          <button onclick="addExerciseFromDetailAndBack('${exerciseConfig.exerciseId}')" style="width:100%; padding:16px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; text-transform:uppercase; border-radius: var(--radius-md); box-shadow: var(--accent-glow);">
-            + AÑADIR AL ENTRENAMIENTO
+          <button onclick="addExerciseFromDetailAndBack('${exerciseConfig.exerciseId}')" style="width:100%; padding:16px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; text-transform:uppercase; border-radius: var(--radius-md); box-shadow: var(--accent-glow); display:flex; align-items:center; justify-content:center; gap:8px;">
+            ${state.replaceExerciseIndex !== null && state.replaceExerciseIndex !== undefined ? `${ICON_REPLACE} SUSTITUIR EJERCICIO` : '+ AÑADIR AL ENTRENAMIENTO'}
           </button>
         </div>
       ` : ''}
@@ -1022,32 +1627,46 @@ function navigateBackFromExerciseDetail() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Añadir ejercicio desde la vista de detalle y volver al selector
 function addExerciseFromDetailAndBack(exerciseId) {
   const ex = { exerciseId, sets: 3, reps: '10-12', notes: '' };
 
-  if (state.exerciseDetailSource === 'routine_builder') {
-    state.builder.days[activeBuilderDay].exercises.push(ex);
-    showToast('✅', `${EXERCISE_DB[exerciseId].name} añadido a la rutina`);
-  } else if (state.exerciseDetailSource === 'empty_workout') {
-    state.emptyWorkout.exercises.push({
-      exerciseId: exerciseId,
-      sets: 3,
-      history: []
-    });
-    showToast('✅', `${EXERCISE_DB[exerciseId].name} añadido al entrenamiento`);
+  if (state.replaceExerciseIndex !== null && state.replaceExerciseIndex !== undefined) {
+    // Sustitución al vuelo
+    if (state.exerciseDetailSource === 'empty_workout') {
+      state.emptyWorkout.exercises[state.replaceExerciseIndex] = ex;
+      state.completedSets[`empty_ex${state.replaceExerciseIndex}`] = [];
+    } else {
+      state.routine.days[state.currentDay].exercises[state.replaceExerciseIndex] = ex;
+      state.completedSets[`day${state.currentDay}_ex${state.replaceExerciseIndex}`] = [];
+    }
+    showToast(window.ICON_REPLACE, `Sustituido por ${EXERCISE_DB[exerciseId].name}`);
+  } else {
+    // Añadir normal
+    if (state.exerciseDetailSource === 'routine_builder') {
+      state.builder.days[activeBuilderDay].exercises.push(ex);
+      showToast('✅', `${EXERCISE_DB[exerciseId].name} añadido a la rutina`);
+    } else if (state.exerciseDetailSource === 'empty_workout') {
+      state.emptyWorkout.exercises.push({
+        exerciseId: exerciseId,
+        sets: 3,
+        history: []
+      });
+      showToast('✅', `${EXERCISE_DB[exerciseId].name} añadido al entrenamiento`);
+    }
   }
 
   saveState();
 
-  // Volver al selector de ejercicios
-  state.currentView = 'exercise_selector';
+  // Volver a la vista donde estábamos
+  state.currentView = state.previousView || (state.emptyWorkout.active ? 'empty_workout' : 'workout');
   state.exerciseDetailSource = null;
   state.expandedExerciseId = null;
+  state.replaceExerciseIndex = null;
   state.previousView = null;
   state.previousDay = null;
   saveState();
   renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showComingSoon(feature) {
@@ -1064,13 +1683,21 @@ function saveState() {
     sessionActive: state.sessionActive,
     sessionElapsed: state.sessionElapsed,
     sessionStartTime: state.sessionStartTime,
+    workoutMinimized: state.workoutMinimized,
     activeTab: state.activeTab,
     history: state.history,
     userProfile: state.userProfile,
     currentView: state.currentView,
-    emptyWorkout: state.emptyWorkout
+    emptyWorkout: state.emptyWorkout,
+    theme: state.theme
   };
   localStorage.setItem('gymcoach_state', JSON.stringify(toSave));
+}
+
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  saveState();
+  renderApp();
 }
 
 function loadState() {
@@ -1087,14 +1714,20 @@ function loadState() {
       state.userProfile = { ...state.userProfile, ...saved.userProfile };
       state.currentView = saved.currentView || 'home';
       state.emptyWorkout = saved.emptyWorkout || state.emptyWorkout;
+      state.workoutMinimized = saved.workoutMinimized || false;
 
       if (saved.sessionActive && saved.sessionStartTime) {
         state.sessionActive = true;
         state.sessionStartTime = saved.sessionStartTime;
         state.sessionElapsed = Math.floor((Date.now() - saved.sessionStartTime) / 1000);
+        // If page was reloaded while minimized, keep it minimized
+        if (state.workoutMinimized) {
+          state.currentView = 'home';
+        }
       } else {
         state.sessionActive = false;
         state.sessionElapsed = saved.sessionElapsed || 0;
+        state.workoutMinimized = false;
       }
     }
   } catch (e) {
@@ -1158,7 +1791,7 @@ function renderContent() {
       ${isVacío ? `<div style="margin-bottom:20px; text-align:center;"><h2 style="font-size:1.2rem; color:var(--text-primary);">${state.emptyWorkout.name}</h2></div>` : ''}
       ${exercisesHtml}
       <button class="add-exercise-btn" onclick="openExerciseSelector()">+ Agregar Ejercicio</button>
-      ${!isVacío ? `<button class="add-exercise-btn" style="margin-top:0;" onclick="showComingSoon('Reordenar')">☰ Reordenar</button>` : ''}
+      ${day.exercises.length > 1 ? `<button class="add-exercise-btn" style="margin-top:0; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openReorderView()">☰ Reordenar Ejercicios</button>` : ''}
     </div>
     ${summaryDiv}
   `;
@@ -1423,11 +2056,11 @@ function generateAIRoutine() {
   }, 1500);
 }
 
-function finalizeRoutineBuilder() {
+async function finalizeRoutineBuilder() {
   const hasEx = state.builder.days.some(d => d.exercises.length > 0);
   if (!hasEx) { showToast('⚠️', 'Añade ejercicios antes de guardar'); return; }
 
-  if (confirm('¿Quieres guardar esta nueva rutina? Se convertirá en tu plan de entrenamiento activo.')) {
+  if (await showCustomConfirm('¿Quieres guardar esta nueva rutina? Se convertirá en tu plan de entrenamiento activo.')) {
     state.routine = {
       id: 'user_custom',
       title: 'Mi Rutina Personalizada',
@@ -1537,7 +2170,10 @@ function renderExerciseCard(exerciseConfig, index, day) {
         <div class="ex-title-sect" style="margin-left:0;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <h4 onclick="openExerciseDetail(${index})" style="cursor:pointer; font-weight:700; letter-spacing:-0.3px; font-size:0.9rem;">${exercise.name}</h4>
-            <button class="ex-btn-del" onclick="removeExercise(${index})" style="background:transparent; border:none; color:var(--text-muted); font-weight:600; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">✕</button>
+            <div style="display:flex;">
+              <button class="ex-btn-rep" onclick="openExerciseSelectorToReplace(${index})" style="background:transparent; border:none; color:var(--text-muted); min-width:32px; min-height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer;" title="Sustituir ejercicio">${ICON_REPLACE}</button>
+              <button class="ex-btn-del" onclick="removeExercise(${index})" style="background:transparent; border:none; color:var(--text-muted); min-width:32px; min-height:44px; display:flex; align-items:center; justify-content:center;">${ICON_X}</button>
+            </div>
           </div>
           <div style="display:flex; gap:8px; font-size:0.65rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; margin-top:4px; letter-spacing:0.3px;">
             <span>${muscleGroup.name}</span>
@@ -1573,6 +2209,11 @@ function renderExerciseCard(exerciseConfig, index, day) {
           <!-- COMPACT REST TIMER -->
           ${renderCompactRestTimer(index, exercise)}
 
+          <!-- Notas -->
+          <div style="margin-top: 12px;">
+            <input type="text" placeholder="Notas (asiento, técnica...)" value="${exerciseConfig.notes || ''}" oninput="updateExerciseNote(${index}, this.value)" style="width:100%; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); padding:10px 12px; font-size:0.8rem; font-family:var(--font-family);" />
+          </div>
+
         </div>
       </div>
     </div>
@@ -1603,8 +2244,9 @@ function renderSetRow(exIndex, setIndex, setObj, exerciseId) {
          ${prevPerf || '-'}
       </div>
 
-      <div class="set-input-wrap">
-         <input type="number" step="0.5" placeholder="Kg" value="${setObj.kg}" oninput="updateSetData(${exIndex}, ${setIndex}, 'kg', this.value)">
+      <div class="set-input-wrap" style="position:relative; display:flex;">
+         <input type="number" step="0.5" placeholder="Kg" value="${setObj.kg}" oninput="updateSetData(${exIndex}, ${setIndex}, 'kg', this.value)" style="padding-right:24px; width:100%;">
+         <button onclick="showPlateCalculator(${setObj.kg || 0})" style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:transparent; border:none; color:var(--accent-primary); cursor:pointer;" title="Calculadora de discos" ${!setObj.kg || setObj.kg <= 20 ? 'disabled style="opacity:0.3; position:absolute; right:4px; top:50%; transform:translateY(-50%); background:transparent; border:none;"' : ''}>${ICON_PLATE}</button>
       </div>
       <div class="set-input-wrap">
          <input type="number" placeholder="Rep" value="${setObj.reps}" oninput="updateSetData(${exIndex}, ${setIndex}, 'reps', this.value)">
@@ -1668,6 +2310,13 @@ function toggleSet(exerciseIndex, setIndex, btnElement = null) {
     checkPR(exerciseId, setObj);
 
     // Start rest timer after completing a set
+    const exerciseData = EXERCISE_DB[exerciseId];
+    let restTime = exerciseData?.restRecommended || 90;
+    if (setObj.type === 'warmup') restTime = 60;
+    else if (setObj.type === 'failure') restTime = 180;
+    
+    startRestTimer(exerciseIndex, restTime);
+
     if (setObj.isPR) {
       hapticFeedback('success');
     }
@@ -1740,7 +2389,12 @@ function toggleSet(exerciseIndex, setIndex, btnElement = null) {
 }
 
 function updateExerciseNote(exerciseIndex, noteText) {
-  state.routine.days[state.currentDay].exercises[exerciseIndex].notes = noteText;
+  const isVacío = state.currentView === 'empty_workout';
+  if (isVacío) {
+    state.emptyWorkout.exercises[exerciseIndex].notes = noteText;
+  } else {
+    state.routine.days[state.currentDay].exercises[exerciseIndex].notes = noteText;
+  }
   saveState();
 }
 
@@ -1825,8 +2479,8 @@ function removeSet(exerciseIndex) {
   renderContent();
 }
 
-function removeExercise(exerciseIndex) {
-  if (!confirm("¿Eliminar este ejercicio de la rutina actual?")) return;
+async function removeExercise(exerciseIndex) {
+  if (!(await showCustomConfirm("¿Eliminar este ejercicio de la rutina actual?"))) return;
 
   const isVacío = state.currentView === 'empty_workout' || state.emptyWorkout.active;
 
@@ -2048,7 +2702,7 @@ function renderWorkoutSummary(day, totalSets, completedCount) {
           ✅ Finalizar Entrenamiento
       </button>
       <button class="finish-workout-btn" onclick="resetWorkout()" style="margin-top: 12px; background: var(--bg-surface); color: var(--text-secondary); border: 1px solid var(--border-subtle); box-shadow: none;">
-        🔄 Resetear
+        🗑️ Descartar entreno
       </button>
     </div>
   `;
@@ -2074,6 +2728,25 @@ function finishWorkout() {
     return sets.length > 0 && sets.every(s => s.done);
   }).length;
 
+  // Recopilar detalle de los ejercicios realizados
+  const exercisesPerformance = {};
+  const exercisesList = [];
+
+  day.exercises.forEach((ex, i) => {
+    const key = isVacío ? `empty_ex${i}` : `day${state.currentDay}_ex${i}`;
+    const sets = state.completedSets[key] || [];
+    const doneSets = sets.filter(s => s && s.done).map(s => ({...s})); // clonar series hechas
+    
+    if (doneSets.length > 0) {
+      exercisesPerformance[ex.exerciseId] = doneSets; // para el historial rápido (prevPerf)
+      exercisesList.push({
+        exerciseId: ex.exerciseId,
+        name: EXERCISE_DB[ex.exerciseId]?.name || 'Ejercicio',
+        sets: doneSets
+      });
+    }
+  });
+
   // Guardar datos temporales para el resumen
   state.postWorkout.sessionData = {
     name: day.title,
@@ -2083,7 +2756,9 @@ function finishWorkout() {
     prs: totalPRs,
     exercisesCompleted: completedExercises,
     totalExercises: day.exercises.length,
-    isVacío
+    isVacío,
+    exercisesPerformance,
+    exercisesList
   };
   state.postWorkout.active = true;
   state.postWorkout.feedback = null;
@@ -2109,11 +2784,14 @@ function submitPostWorkout() {
     sets: session.sets,
     prs: session.prs,
     feedback: state.postWorkout.feedback,
-    notes: state.postWorkout.notes
+    notes: state.postWorkout.notes,
+    exercisesPerformance: session.exercisesPerformance || {},
+    exercisesList: session.exercisesList || []
   };
 
   state.history.push(sessionRecord);
   state.userProfile.totalWorkouts++;
+  state.workoutMinimized = false;
 
   showToast('💾', 'Entrenamiento guardado en Inicio');
 
@@ -2229,8 +2907,8 @@ function selectPostWorkoutFeedback(type, element) {
   hapticFeedback('light');
 }
 
-function resetWorkout(skipConfirm = false) {
-  if (!skipConfirm && !confirm('¿Seguro que quieres borrar el progreso de HOY? (Tus PRs se mantendrán)')) return;
+async function resetWorkout(skipConfirm = false) {
+  if (!skipConfirm && !(await showCustomConfirm('¿Seguro que quieres descartar y cancelar este entrenamiento? (Se perderá el progreso de hoy)'))) return;
 
   const isVacío = state.currentView === 'empty_workout' || state.emptyWorkout.active;
 
@@ -2262,12 +2940,22 @@ function resetWorkout(skipConfirm = false) {
   pauseSession();
   state.sessionElapsed = 0;
   state.sessionStartTime = null;
+  state.workoutMinimized = false;
   state.expandedExercise = null;
   state.expandedExerciseId = null;
   state.expandedInfo = null;
   state.previousView = null;
   state.previousDay = null;
+  state.emptyWorkout.active = false;
+  teardownMiniPlayer();
   stopRestTimer();
+
+  // Si fue cancelado por el usuario, mandarlo al inicio
+  if (!skipConfirm) {
+    state.currentView = 'home';
+    state.activeTab = 'inicio';
+  }
+
   saveState();
   renderApp();
   window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -6,6 +6,26 @@
 
 ## 06-abr-2026
 
+### Épica: Planificación y Diseño inicial
+- ✅ E8: Pestaña "Explorar" para navegar por el catálogo de ejercicios
+- ✅ E9: Reordenar ejercicios (drag & drop) mediante Pointer Events
+- ✅ E10: Modo Oscuro (Dark Theme) real y persistente
+- ✅ E11: Animaciones de transición entre pantallas (Mobile UX)
+- ✅ E12: Confirmaciones custom (reemplazo de confirm() nativo con modal animado)
+- ✅ E36: Body Heatmap mejorado con colores de acento y soporte para modo oscuro
+- ✅ E41: Sustitución de emojis por iconos SVG consistentes
+
+### Épica: Detalle del Historial completado
+- ✅ E32: Al clicar una sesión del historial, mostrar ejercicios realizados
+- ✅ E33: Mostrar peso (kg), reps y tipo de serie de cada ejercicio completado
+- ✅ E34: Mostrar tiempo total de la sesión y notas post-entreno
+- ✅ E35: Mostrar PRs batidos en esa sesión concreta
+
+### Épica: Base de Datos de Ejercicios mejorada
+- ✅ E37: Organizar selector de ejercicios por grupo muscular
+- ✅ E38: Añadir ejercicios faltantes por grupo muscular (+37 nuevos ejercicios)
+- ✅ E39: Al clicar ejercicio en el selector, abrir vista de detalle antes de añadir
+
 ### Bug B1 resuelto: Crash en `openExerciseDetail()`
 - ✅ Implementada función `openExerciseDetail()` que faltaba
 - ✅ Creada vista de detalle de ejercicio con información completa:
