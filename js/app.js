@@ -249,7 +249,9 @@ function renderMainShell() {
   if (state.activeTab === 'inicio') {
     renderInicio(main);
   } else if (state.activeTab === 'explorar') {
-    renderExplorar(main);
+    // Subviews from explorar (exercise_detail, etc.) take priority
+    if (state.currentView === 'exercise_detail') renderExerciseDetail(main);
+    else renderExplorar(main);
   } else {
     // Subviews common to both Entrenamiento and Perfil
     if (state.currentView === 'exercise_detail') renderExerciseDetail(main);
@@ -298,10 +300,6 @@ function renderBottomNav() {
     <button class="nav-item ${state.activeTab === 'inicio' ? 'active' : ''}" onclick="changeTab('inicio')">
       ${homeIcon}
       <span class="nav-label">Inicio</span>
-    </button>
-    <button class="nav-item ${state.activeTab === 'explorar' ? 'active' : ''}" onclick="changeTab('explorar')">
-      ${ICON_EXPLORE}
-      <span class="nav-label">Explorar</span>
     </button>
     <button class="nav-item ${state.activeTab === 'entreno' ? 'active' : ''}" onclick="changeTab('entreno')">
       ${workoutIcon}
@@ -481,6 +479,16 @@ function renderHome() {
         </div>
       ` : ''}
 
+      <!-- Explorar Ejercicios -->
+      <button onclick="changeTab('explorar')" style="width:100%; padding:14px 16px; background:var(--bg-card); border:none; cursor:pointer; display:flex; align-items:center; gap:12px; font-family:var(--font-family); text-align:left; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+        ${ICON_EXPLORE}
+        <div style="flex:1;">
+          <div style="font-size:0.8rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Explorar Ejercicios</div>
+          <div style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">Busca y descubre ejercicios</div>
+        </div>
+        <span style="color:var(--text-muted); font-size:1.2rem;">›</span>
+      </button>
+
       <!-- Action Buttons -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background:rgba(0,0,0,0.05); margin: 0;">
         <button class="home-action-card" onclick="startEmptyWorkout()" style="flex-direction: column; padding: 18px 12px; text-align: center; gap: 6px; background:var(--bg-card); border-radius:0;">
@@ -639,8 +647,9 @@ let explorarQuery = '';
 function renderExplorar(container) {
   container.innerHTML = `
      <div class="home-screen">
-        <div class="home-section-header">
-           <h2>Explorar Ejercicios</h2>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; padding: 12px 16px; background: var(--bg-primary); border-bottom: 0.5px solid rgba(0,0,0,0.05);">
+          <button onclick="changeTab('entreno')" style="background:transparent; border:none; color:var(--accent-primary); width:44px; height:44px; cursor:pointer; font-weight:700; font-size:1.3rem;">←</button>
+          <h2 style="font-size:1rem; font-weight:800; text-transform:uppercase; flex:1;">Explorar Ejercicios</h2>
         </div>
         
         <div style="padding: 0 16px 16px;">
@@ -934,7 +943,7 @@ function openExerciseDetailFromExplorar(exerciseId) {
   state.previousView = state.currentView;
   state.previousDay = state.currentDay;
   state.expandedExerciseId = exerciseId;
-  state.exerciseDetailSource = null; 
+  state.exerciseDetailSource = 'exercise_selector';
   state.currentView = 'exercise_detail';
   saveState();
   renderApp();

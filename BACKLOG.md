@@ -19,6 +19,7 @@
 | # | Tarea | Impacto |
 |---|-------|---------|
 | M1 | `openExerciseDetailFromSelector` mostraba "ejercicio no encontrado" al venir del selector | ✅ Corregido |
+| M2 | Apartado "Nutrición e IA": fondo oscuro mal implementado, texto blanco sobre fondo blanco + cajas innecesarias sobre el fondo | Alto |
 
 ---
 
