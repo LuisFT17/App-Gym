@@ -57,6 +57,8 @@ const state = {
   },
   programsCollapsed: false,
   routinesCollapsed: false,
+  userRegistered: false,
+  userName: '',
 
   // Post-workout summary
   postWorkout: {
@@ -69,6 +71,25 @@ const state = {
 
 // ── Inicialización ──
 document.addEventListener('DOMContentLoaded', () => {
+  // Check if user is registered
+  const savedUser = localStorage.getItem('gymcoach_user');
+  if (savedUser) {
+    try {
+      const user = JSON.parse(savedUser);
+      state.userRegistered = true;
+      state.userName = user.name || '';
+      state.userProfile.goals = user.goals || 'gain';
+      state.userProfile.joinedDate = user.joinedDate || new Date().toISOString();
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+    }
+  }
+
+  if (!state.userRegistered) {
+    renderRegister();
+    return;
+  }
+
   // Check if localStorage has valid data
   const savedState = localStorage.getItem('gymcoach_state');
   let hasValidData = false;
@@ -164,12 +185,15 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openProgramSelector = openProgramSelector;
   window.closeProgramSelector = closeProgramSelector;
   window.toggleRoutinesSection = toggleRoutinesSection;
+  window.submitRegistration = submitRegistration;
+  window.enterGym = enterGym;
+  window.selectGoal = selectGoal;
 
   // Add touch feedback for better mobile UX
   setupTouchFeedback();
 
   console.log('GymCoach initialized');
-  renderApp();
+  renderWelcome();
 });
 
 // ── Touch Feedback (Mobile UX Enhancement) ──
@@ -209,6 +233,162 @@ function hapticFeedback(type = 'light') {
     }
   }
   // iOS doesn't support navigator.vibrate, but we can use visual feedback
+}
+
+// ── Pantalla de Registro ──
+let selectedGoal = 'gain';
+
+function renderRegister() {
+  document.getElementById('appHeader').innerHTML = '';
+  document.getElementById('mainContent').innerHTML = '';
+  const existingNav = document.getElementById('bottomNav');
+  if (existingNav) existingNav.remove();
+
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; background:var(--bg-primary);">
+      <div style="text-align:center; margin-bottom:40px;">
+        <div style="width:64px; height:64px; background:var(--accent-gradient); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; box-shadow:var(--accent-glow);">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h1m16 0h1M5.5 6.5v11M18.5 6.5v11"/><rect x="5.5" y="9" width="13" height="6" rx="1"/></svg>
+        </div>
+        <h1 style="font-size:1.8rem; font-weight:900; color:var(--text-primary); text-transform:uppercase; letter-spacing:-0.5px; margin:0;">GymCoach</h1>
+        <p style="font-size:0.85rem; color:var(--text-muted); font-weight:500; margin-top:4px;">Tu entrenador personal</p>
+      </div>
+
+      <div style="width:100%; max-width:360px;">
+        <label style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">Tu nombre</label>
+        <input id="regName" type="text" placeholder="¿Cómo te llamas?" maxlength="20" style="width:100%; padding:14px 16px; background:var(--bg-surface); border:1px solid var(--border-subtle); color:var(--text-primary); font-size:1rem; font-weight:600; border-radius:var(--radius-md); outline:none; font-family:var(--font-family); margin-bottom:24px;" />
+
+        <label style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:10px;">Tu objetivo</label>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:24px;">
+          <button onclick="selectGoal('gain')" id="goalGain" style="padding:14px 16px; background:${selectedGoal === 'gain' ? 'var(--accent-primary)' : 'var(--bg-surface)'}; color:${selectedGoal === 'gain' ? '#fff' : 'var(--text-primary)'}; border:1px solid ${selectedGoal === 'gain' ? 'var(--accent-primary)' : 'var(--border-subtle)'}; font-weight:700; font-size:0.85rem; cursor:pointer; border-radius:var(--radius-md); text-align:left; font-family:var(--font-family); transition:all 0.2s;">
+            🏋️ Ganar Masa Muscular
+          </button>
+          <button onclick="selectGoal('lose')" id="goalLose" style="padding:14px 16px; background:${selectedGoal === 'lose' ? 'var(--accent-primary)' : 'var(--bg-surface)'}; color:${selectedGoal === 'lose' ? '#fff' : 'var(--text-primary)'}; border:1px solid ${selectedGoal === 'lose' ? 'var(--accent-primary)' : 'var(--border-subtle)'}; font-weight:700; font-size:0.85rem; cursor:pointer; border-radius:var(--radius-md); text-align:left; font-family:var(--font-family); transition:all 0.2s;">
+            🔥 Perder Grasa
+          </button>
+          <button onclick="selectGoal('strength')" id="goalStrength" style="padding:14px 16px; background:${selectedGoal === 'strength' ? 'var(--accent-primary)' : 'var(--bg-surface)'}; color:${selectedGoal === 'strength' ? '#fff' : 'var(--text-primary)'}; border:1px solid ${selectedGoal === 'strength' ? 'var(--accent-primary)' : 'var(--border-subtle)'}; font-weight:700; font-size:0.85rem; cursor:pointer; border-radius:var(--radius-md); text-align:left; font-family:var(--font-family); transition:all 0.2s;">
+            💪 Fuerza Pura
+          </button>
+        </div>
+
+        <label style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:6px;">Fecha de inicio</label>
+        <input id="regDate" type="date" value="${new Date().toISOString().slice(0, 10)}" style="width:100%; padding:14px 16px; background:var(--bg-surface); border:1px solid var(--border-subtle); color:var(--text-primary); font-size:0.9rem; font-weight:600; border-radius:var(--radius-md); outline:none; font-family:var(--font-family); margin-bottom:32px;" />
+
+        <button onclick="submitRegistration()" style="width:100%; padding:16px; background:var(--accent-gradient); color:#fff; border:none; font-weight:800; font-size:1rem; cursor:pointer; text-transform:uppercase; border-radius:var(--radius-md); box-shadow:var(--accent-glow); letter-spacing:0.5px; font-family:var(--font-family);">
+          Comenzar
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function selectGoal(goal) {
+  selectedGoal = goal;
+  renderRegister();
+}
+
+function submitRegistration() {
+  const name = document.getElementById('regName').value.trim();
+  if (!name) {
+    showToast('⚠️', 'Pon tu nombre para empezar');
+    return;
+  }
+
+  const date = document.getElementById('regDate').value;
+
+  state.userRegistered = true;
+  state.userName = name;
+  state.userProfile.goals = selectedGoal;
+  state.userProfile.joinedDate = new Date(date).toISOString();
+
+  localStorage.setItem('gymcoach_user', JSON.stringify({
+    name: name,
+    goals: selectedGoal,
+    joinedDate: state.userProfile.joinedDate
+  }));
+
+  state.userProfile.goals = selectedGoal;
+  saveState();
+  renderWelcome();
+}
+
+// ── Pantalla de Bienvenida ──
+function renderWelcome() {
+  document.getElementById('appHeader').innerHTML = '';
+  document.getElementById('mainContent').innerHTML = '';
+  const existingNav = document.getElementById('bottomNav');
+  if (existingNav) existingNav.remove();
+
+  const hour = new Date().getHours();
+  let greeting = 'Buenas noches';
+  if (hour >= 6 && hour < 12) greeting = 'Buenos días';
+  else if (hour >= 12 && hour < 20) greeting = 'Buenas tardes';
+
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `
+    <div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; background:var(--bg-primary);">
+      <div style="text-align:center; margin-bottom:48px;">
+        <div style="width:96px; height:96px; background:var(--bg-elevated); border-radius:50%; margin:0 auto 20px; display:flex; align-items:center; justify-content:center; border:3px solid var(--border-subtle);">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted); font-weight:500; margin-bottom:4px;">${greeting}</p>
+        <h1 style="font-size:2rem; font-weight:900; color:var(--text-primary); text-transform:uppercase; letter-spacing:-0.5px; margin:0;">${state.userName}</h1>
+      </div>
+
+      ${state.history.length > 0 ? `
+        <div style="width:100%; max-width:360px; margin-bottom:32px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+            <div style="background:var(--bg-surface); padding:14px 10px; border-radius:var(--radius-md); text-align:center;">
+              <div style="font-size:1.3rem; font-weight:800; color:var(--accent-primary);">${state.history.length}</div>
+              <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Entrenos</div>
+            </div>
+            <div style="background:var(--bg-surface); padding:14px 10px; border-radius:var(--radius-md); text-align:center;">
+              <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${state.userProfile.totalWorkouts > 0 ? state.userProfile.totalWorkouts : state.history.length}</div>
+              <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Total</div>
+            </div>
+            <div style="background:var(--bg-surface); padding:14px 10px; border-radius:var(--radius-md); text-align:center;">
+              <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${state.history.length > 0 ? formatTime(state.history[state.history.length - 1].duration) : '-'}</div>
+              <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Último</div>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      <div style="width:100%; max-width:360px;">
+        <button onclick="enterGym()" style="width:100%; padding:18px; background:var(--accent-gradient); color:#fff; border:none; font-weight:800; font-size:1.1rem; cursor:pointer; text-transform:uppercase; border-radius:var(--radius-md); box-shadow:var(--accent-glow); letter-spacing:0.5px; font-family:var(--font-family); display:flex; align-items:center; justify-content:center; gap:10px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h1m16 0h1M5.5 6.5v11M18.5 6.5v11"/><rect x="5.5" y="9" width="13" height="6" rx="1"/></svg>
+          Entrar al Gym
+        </button>
+      </div>
+
+      <p style="font-size:0.65rem; color:var(--text-muted); margin-top:24px; font-weight:500;">Entrenando desde ${new Date(state.userProfile.joinedDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    </div>
+  `;
+}
+
+function enterGym() {
+  // Load routine data if not already loaded
+  if (!state.routine) {
+    const savedState = localStorage.getItem('gymcoach_state');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        if (parsed.routine) state.routine = parsed.routine;
+        if (parsed.prs) state.prs = parsed.prs;
+        if (parsed.completedSets) state.completedSets = parsed.completedSets;
+        if (parsed.history) state.history = parsed.history;
+        if (parsed.userProfile) state.userProfile = { ...state.userProfile, ...parsed.userProfile };
+        if (parsed.emptyWorkout) state.emptyWorkout = parsed.emptyWorkout;
+        if (parsed.theme) state.theme = parsed.theme;
+      } catch (e) {}
+    }
+    if (!state.routine) state.routine = JSON.parse(JSON.stringify(ROUTINE));
+  }
+
+  state.currentView = 'home';
+  state.activeTab = 'entreno';
+  renderApp();
 }
 
 // ── Renderizado de la App (controlador de vistas) ──
@@ -1031,7 +1211,7 @@ function renderPerfil(container) {
     <div class="home-screen">
        <div style="text-align:center; padding: 20px 0;">
           <div style="width:80px; height:80px; background:var(--bg-elevated); border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:2rem; border:2px solid var(--border-subtle);">👤</div>
-          <h2>Usuario Pro</h2>
+           <h2>${state.userName || 'Usuario'}</h2>
           <p style="color:var(--text-muted); font-size:0.8rem;">Entrenando desde ${new Date(state.userProfile.joinedDate).toLocaleDateString()}</p>
        </div>
 
