@@ -152,6 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
   window.closeReorderView = closeReorderView;
   window.initReorderDrag = initReorderDrag;
   window.showCustomConfirm = showCustomConfirm;
+  window.openRestTimerPicker = openRestTimerPicker;
+  window.closeRestTimerPicker = closeRestTimerPicker;
 
   // Add touch feedback for better mobile UX
   setupTouchFeedback();
@@ -2318,14 +2320,6 @@ function toggleSet(exerciseIndex, setIndex, btnElement = null) {
     const exerciseId = exList[exerciseIndex].exerciseId;
     checkPR(exerciseId, setObj);
 
-    // Start rest timer after completing a set
-    const exerciseData = EXERCISE_DB[exerciseId];
-    let restTime = exerciseData?.restRecommended || 90;
-    if (setObj.type === 'warmup') restTime = 60;
-    else if (setObj.type === 'failure') restTime = 180;
-    
-    startRestTimer(exerciseIndex, restTime);
-
     if (setObj.isPR) {
       hapticFeedback('success');
     }
@@ -2552,20 +2546,9 @@ function renderCompactRestTimer(exerciseIndex, exercise) {
 
   if (!isActive) {
     return `
-      <div class="compact-rest inactive" style="box-shadow: none; border:1px solid #000; background:#f9f9f9; margin-top:15px;">
-        <div class="c-rest-content" style="justify-content: space-between; padding: 6px 12px;">
-           <span class="c-rest-icon" style="opacity: 1; font-size: 0.8rem; font-weight:900;">TIMER</span>
-           <div class="c-rest-actions" style="gap: 4px; overflow-x: auto; display:flex; align-items:center;">
-              <select style="background:#fff; color:#000; border:1px solid #000; border-radius:0; padding:4px 8px; font-size:0.8rem; cursor:pointer;" id="timerSel_${exerciseIndex}">
-                 <option value="30">30s</option>
-                 <option value="45">45s</option>
-                 <option value="60">1 min</option>
-                 <option value="90" selected>1m 30s</option>
-                 <option value="120">2 min</option>
-                 <option value="180">3 min</option>
-              </select>
-              <button class="c-rest-btn" style="color:white; background:#000; border:none; white-space:nowrap; border-radius:0; font-weight:900;" onclick="startRestTimer(${exerciseIndex}, document.getElementById('timerSel_${exerciseIndex}').value)">START</button>
-           </div>
+      <div class="compact-rest" style="box-shadow: none; border:1px solid var(--border-subtle); background:var(--bg-surface); margin-top:15px;">
+        <div class="c-rest-content" style="justify-content: space-between; padding: 8px 14px;">
+           <span onclick="openRestTimerPicker(${exerciseIndex})" style="font-size: 0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; cursor:pointer;">Descanso:</span>
         </div>
       </div>
     `;
@@ -2576,18 +2559,80 @@ function renderCompactRestTimer(exerciseIndex, exercise) {
   const progress = ((duration - remaining) / duration) * 100;
 
   return `
-    <div class="compact-rest" style="border:1px solid #000; background:#fff; margin-top:15px;">
-      <div class="c-rest-bar" id="restBar_${exerciseIndex}" style="width: ${progress}%; background:#ff0000; height:100%; opacity:0.1; position:absolute; top:0; left:0;"></div>
-      <div class="c-rest-content" style="position:relative; z-index:1;">
-        <span class="c-rest-icon" style="font-weight:900; font-size:0.8rem;">TIMER</span>
-        <span class="c-rest-val" style="color:#000; font-weight:900;" id="restVal_${exerciseIndex}">${formatTime(remaining)}</span>
-        <div class="c-rest-actions">
-           <button class="c-rest-btn" style="background:transparent; color:#000; border:1px solid #000;" onclick="addRestTime(15)">+15s</button>
-           <button class="c-rest-btn c-rest-skip" style="background:#000; color:#fff;" onclick="stopRestTimer(); renderContent();">STOP</button>
+    <div class="compact-rest" style="border:1px solid var(--accent-primary); background:var(--bg-surface); margin-top:15px; overflow:hidden; position:relative;">
+      <div class="c-rest-bar" id="restBar_${exerciseIndex}" style="width: ${progress}%; background:var(--accent-primary); height:100%; opacity:0.1; position:absolute; top:0; left:0; transition:width 1s linear;"></div>
+      <div class="c-rest-content" style="position:relative; z-index:1; justify-content:space-between; padding:8px 14px; display:flex; align-items:center;">
+        <span style="font-weight:700; font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Descanso:</span>
+        <span class="c-rest-val" style="color:var(--text-primary); font-weight:800; font-size:1.1rem;" id="restVal_${exerciseIndex}">${formatTime(remaining)}</span>
+        <div class="c-rest-actions" style="gap:6px; display:flex; align-items:center;">
+           <button class="c-rest-btn" style="background:transparent; color:var(--text-muted); border:1px solid var(--border-subtle); padding:4px 10px; font-size:0.7rem; font-weight:700; cursor:pointer; border-radius:var(--radius-sm);" onclick="addRestTime(15)">+15s</button>
+           <button class="c-rest-btn c-rest-skip" style="background:var(--accent-primary); color:#fff; border:none; padding:4px 12px; font-size:0.7rem; font-weight:700; cursor:pointer; border-radius:var(--radius-sm);" onclick="stopRestTimer(); renderContent();">Parar</button>
         </div>
       </div>
     </div>
   `;
+}
+
+function openRestTimerPicker(exerciseIndex, suggestedDuration) {
+  const suggested = suggestedDuration || 90;
+  const options = [];
+  for (let s = 5; s <= 300; s += 5) {
+    options.push(s);
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'restTimerPickerOverlay';
+  overlay.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; display:flex; align-items:flex-end; justify-content:center; animation:fadeIn 0.2s ease;';
+
+  let optionsHtml = options.map(s => {
+    const label = s < 60 ? `${s}"` : `${Math.floor(s / 60)}m ${s % 60 > 0 ? s % 60 + '"' : ''}`;
+    const isSuggested = s === suggested;
+    return `<div class="rest-picker-option ${isSuggested ? 'suggested' : ''}" data-value="${s}" style="padding:14px 20px; text-align:center; font-size:0.9rem; font-weight:${isSuggested ? '800' : '600'}; color:${isSuggested ? 'var(--accent-primary)' : 'var(--text-primary)'}; background:${isSuggested ? 'rgba(108,99,255,0.08)' : 'transparent'}; cursor:pointer; border-bottom:0.5px solid rgba(0,0,0,0.05);">${label}${isSuggested ? ' <span style="font-size:0.6rem; color:var(--accent-primary); font-weight:600;">(recomendado)</span>' : ''}</div>`;
+  }).join('');
+
+  overlay.innerHTML = `
+    <div style="background:var(--bg-primary); width:100%; max-width:500px; border-radius:16px 16px 0 0; max-height:70vh; display:flex; flex-direction:column; animation:slideUp 0.3s ease;">
+      <div style="padding:16px 20px; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:0.9rem; font-weight:800; text-transform:uppercase; margin:0;">Tiempo de descanso</h3>
+        <button onclick="closeRestTimerPicker()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer; padding:4px 8px;">✕</button>
+      </div>
+      <div id="restPickerScroll" style="overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch;">
+        ${optionsHtml}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeRestTimerPicker();
+  });
+
+  overlay.querySelectorAll('.rest-picker-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const value = parseInt(opt.dataset.value);
+      closeRestTimerPicker();
+      startRestTimer(exerciseIndex, value);
+    });
+  });
+
+  // Scroll to suggested option
+  setTimeout(() => {
+    const suggestedEl = overlay.querySelector('.rest-picker-option.suggested');
+    if (suggestedEl) {
+      suggestedEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, 100);
+}
+
+function closeRestTimerPicker() {
+  const overlay = document.getElementById('restTimerPickerOverlay');
+  if (overlay) {
+    overlay.style.animation = 'fadeOut 0.2s ease';
+    setTimeout(() => {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }, 200);
+  }
 }
 
 function addRestTime(seconds) {

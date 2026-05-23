@@ -155,3 +155,46 @@
 ---
 
 > **Cómo se actualiza este archivo:** Cada vez que se complete una tarea o épica del BACKLOG, se elimina del tablero y se registra aquí con la fecha y descripción del cambio.
+
+---
+
+## 23-may-2026
+
+### Idea: Avatar/Personaje Gamificado (Idea 1)
+> Sistema de registro de entrada con creación de avatar personalizable que evoluciona con el progreso real del gym.
+
+**Concepto:**
+- Registro de entrada obligatorio para crear un "muñeco" personalizado
+- El avatar evoluciona visualmente según entrenos seguidos y logros alcanzados
+- Grupos musculares del avatar crecen proporcionalmente al volumen entrenado por grupo
+- Sistema de mejora de nivel con cambio de ropa y accesorios desbloqueables
+- El avatar se va poniendo más fuerte conforme el usuario progresa
+
+**Fases propuestas:**
+- **Fase 1:** Avatar SVG simple con 5-6 grupos musculares que crecen en proporción al volumen entrenado
+- **Fase 2:** Sistema de niveles basado en métricas reales (total workouts, racha, PRs). Cada nivel desbloquea título/badge
+- **Fase 3:** Ropa/accesorios desbloqueables por hitos (ej: "10 entrenos seguidos" = camiseta, "PR en press banca" = cadena de oro)
+- **Principio clave:** El avatar es un *reflejo* del progreso real, no un minijuego separado
+
+### Idea: Nutrición + IA Coach (Idea 2)
+> Herramienta de alimentación potente con registro de calorías/macros, base de datos de alimentos, plan nutricional semanal e IA conversacional contextual.
+
+**Concepto:**
+- Registro de calorías y macros de cada ingesta
+- Base de datos amplia de alimentos
+- Plan nutricional como calendario semanal con ingestas personalizables (Desayuno, Almuerzo, Comida, Merienda, Cena)
+- IA entrenada para adaptar al objetivo físico del usuario, conversación fluida, respuestas no genéricas
+- Similar a ChatGPT pero especializado en nutrición
+- AI Coach Mejorado: entrenador profesional virtual con experiencia en gym, capaz de recomendar rutinas y ejercicios específicos
+
+**Fases propuestas:**
+- **Fase 1 (Nutrición básica):** Registro manual de comidas con macros calculados por el usuario. Calendario semanal simple. Sin IA aún.
+- **Fase 2 (Base de datos):** Integración con OpenFoodFacts (gratuita) para búsqueda de alimentos por nombre/barcode
+- **Fase 3 (IA Coach):** Chat con system prompt rico en contexto (historial de entrenos, medidas, objetivo, nutrición actual). Groq o similar para coste bajo
+- **Fase 4 (IA Nutricional):** IA analiza ingesta semanal y sugiere ajustes basados en objetivo
+
+**Riesgos identificados:**
+- Scope enorme: construir un MyFitnessPal + ChatGPT en vanilla JS con localStorage
+- Base de datos de alimentos requiere API externa (OpenFoodFacts, Nutritionix, USDA)
+- IA conversacional requiere LLM API (OpenAI, Anthropic, Groq) → coste, proxy/backend para no exponer keys, pierde capacidad offline
+- Arquitectura actual (localStorage + vanilla JS) no escala bien para esto

@@ -81,6 +81,36 @@
 - [ ] E30 — Eliminar CSS no usado
 - [ ] E31 — Documentar funciones públicas del estado
 
+### 🎮 Avatar/Personaje Gamificado (PRIORITARIA)
+> Avatar SVG que evoluciona visualmente con el progreso real del gym. Fase 1: grupos musculares que crecen según volumen entrenado.
+
+- [ ] E42 — Sistema de registro de entrada + creación de perfil de usuario
+- [ ] E43 — Avatar SVG base con 5-6 grupos musculares escalables
+- [ ] E44 — Mapear volumen entrenado por grupo muscular → crecimiento proporcional del avatar
+- [ ] E45 — Sistema de niveles basado en métricas reales (workouts, racha, PRs)
+- [ ] E46 — Ropa y accesorios desbloqueables por hitos
+- [ ] E47 — Persistencia eficiente del estado del avatar (optimizar localStorage)
+
+### 🏅 Sistema de Logros/Badges (Pre-Avatar)
+> Gamificación inmediata antes del avatar completo. Badges por hitos de entrenamiento.
+
+- [ ] E48 — Definir catálogo de logros (primer entreno, racha 7 días, PRs, volumen acumulado)
+- [ ] E49 — UI de logros desbloqueados y pendientes
+- [ ] E50 — Notificaciones toast al desbloquear logro
+- [ ] E51 — Persistencia de logros en localStorage
+
+### 📋 Plantillas de Rutinas
+- [ ] E57 — Añadir 3 plantillas base: Full Body, Upper/Lower, PPL (sin niveles aún)
+- [ ] E58 — Selector de plantilla al iniciar rutina nueva
+- [ ] E59 — Niveles (principiante, intermedio, avanzado) para cada plantilla
+> Evaluar Supabase/Firebase para auth, DB y llamadas seguras a IA sin exponer API keys.
+
+- [ ] E52 — Evaluar Supabase vs Firebase vs backend propio
+- [ ] E53 — Implementar autenticación de usuarios
+- [ ] E54 — Migrar localStorage a DB remota con sync offline
+- [ ] E55 — Proxy server para llamadas a IA (OpenAI/Groq/Anthropic)
+- [ ] E56 — Backup automático de datos del usuario
+
 ---
 
 ## 💡 SUGERENCIAS

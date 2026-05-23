@@ -558,6 +558,10 @@ body {
 
 .exercise-card-body-inner {
   padding: 0 16px 16px;
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  margin: 0 8px 8px;
 }
 
 /* ── Sets Tracker (Hevy Style) ── */
@@ -678,8 +682,8 @@ body {
 }
 
 .set-row.completed {
-  background: var(--success-dim);
-  border-color: rgba(52, 199, 89, 0.2);
+  background: rgba(52, 199, 89, 0.18);
+  border-color: rgba(52, 199, 89, 0.35);
 }
 
 .set-type {
@@ -2114,4 +2118,24 @@ body {
   background: var(--accent-gradient);
   color: #fff;
   box-shadow: var(--accent-glow);
+}
+
+/* ── Rest Timer Picker Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.rest-picker-option:active {
+  background: rgba(108, 99, 255, 0.12);
 }
