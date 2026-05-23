@@ -61,11 +61,11 @@
 - [ ] E16 — Análisis de patrones del historial para recomendaciones
 
 ### 📱 PWA & Offline
-- [ ] E17 — Crear `manifest.json`
-- [ ] E18 — Implementar Service Worker
-- [ ] E19 — Cache de assets para offline
+- [x] E17 — Crear `manifest.json`
+- [x] E18 — Implementar Service Worker
+- [x] E19 — Cache de assets para offline
 - [ ] E20 — Iconos de app (192x192, 512x512)
-- [ ] E21 — Soporte "Add to Home Screen"
+- [x] E21 — Soporte "Add to Home Screen"
 
 ### 📈 Analytics & Progreso
 - [ ] E22 — Gráficos de progreso de peso/reps por ejercicio

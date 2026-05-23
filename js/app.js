@@ -55,6 +55,8 @@ const state = {
   builder: {
     days: [] // [{title: '', exercises: []}]
   },
+  programsCollapsed: false,
+  routinesCollapsed: false,
 
   // Post-workout summary
   postWorkout: {
@@ -154,6 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
   window.showCustomConfirm = showCustomConfirm;
   window.openRestTimerPicker = openRestTimerPicker;
   window.closeRestTimerPicker = closeRestTimerPicker;
+  window.exportData = exportData;
+  window.loadTemplateRoutine = loadTemplateRoutine;
+  window.openProgramDetail = openProgramDetail;
+  window.closeProgramDetail = closeProgramDetail;
+  window.toggleProgramsSection = toggleProgramsSection;
+  window.openProgramSelector = openProgramSelector;
+  window.closeProgramSelector = closeProgramSelector;
+  window.toggleRoutinesSection = toggleRoutinesSection;
 
   // Add touch feedback for better mobile UX
   setupTouchFeedback();
@@ -245,6 +255,16 @@ function renderMainShell() {
 
   if (state.currentView === 'history_detail') {
     renderHistoryDetail(main);
+    return;
+  }
+
+  if (state.currentView === 'program_detail') {
+    renderProgramDetail(main);
+    return;
+  }
+
+  if (state.currentView === 'program_selector') {
+    renderProgramSelector(main);
     return;
   }
 
@@ -491,6 +511,15 @@ function renderHome() {
         <span style="color:var(--text-muted); font-size:1.2rem;">›</span>
       </button>
 
+      <!-- Programas -->
+      <button onclick="openProgramSelector()" style="width:100%; padding:14px 16px; background:var(--bg-card); border:none; cursor:pointer; display:flex; align-items:center; gap:12px; font-family:var(--font-family); text-align:left; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <div style="flex:1;">
+          <div style="font-size:0.8rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Programas</div>
+        </div>
+        <span style="color:var(--text-muted); font-size:1.2rem;">›</span>
+      </button>
+
       <!-- Action Buttons -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background:rgba(0,0,0,0.05); margin: 0;">
         <button class="home-action-card" onclick="startEmptyWorkout()" style="flex-direction: column; padding: 18px 12px; text-align: center; gap: 6px; background:var(--bg-card); border-radius:0;">
@@ -503,12 +532,16 @@ function renderHome() {
         </button>
       </div>
 
-      <div class="home-section-header">
-        <h2>Mis Rutinas</h2>
-        <span class="home-section-count">${state.routine.days.length} planes</span>
-      </div>
-
+      <!-- Mis Rutinas -->
       <div style="display:flex; flex-direction:column; gap:1px; margin-top:0; background: rgba(0,0,0,0.05);">
+        <div onclick="toggleRoutinesSection()" style="background:var(--bg-card); padding:12px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-bottom:0.5px solid var(--border-subtle);">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Mis Rutinas</h2>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${state.routine.days.length} planes</span>
+            <span style="font-size:0.9rem; color:var(--text-muted); transform:${state.routinesCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'}; transition:transform 0.2s;">▼</span>
+          </div>
+        </div>
+        <div style="overflow:hidden; max-height:${state.routinesCollapsed ? '0' : '5000px'}; transition:max-height 0.3s ease;">
         ${state.routine.days.map((day, i) => {
     const totalExercises = day.exercises.length;
     const completedExercises = day.exercises.filter((ex, exIdx) => {
@@ -518,7 +551,6 @@ function renderHome() {
     }).length;
     const progress = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
 
-    // If a session is currently active, detect if it's this specific day
     const isActiveDay = state.sessionActive && state.currentDay === i
       && (state.currentView === 'workout' || state.workoutMinimized);
     const sessionIsRunning = state.sessionActive && state.workoutMinimized;
@@ -548,13 +580,11 @@ function renderHome() {
             </div>
           `;
   }).join('')}
-      </div>
+        </div>
       </div>
     </div>
   `;
 }
-
-// ── Navegación ──
 function navigateToWorkout() {
   state.currentView = 'workout';
   state.expandedExercise = null;
@@ -1080,11 +1110,16 @@ function renderPerfil(container) {
               <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">NUTRICIÓN Y DIETA</h3><p style="font-size:0.75rem; color:var(--text-muted);">Plan alimenticio con IA</p></div>
            </button>
            
-           <button class="home-action-card" onclick="navigateToView('calendar')" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
-              <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">📅</div>
-              <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">CALENDARIO</h3><p style="font-size:0.75rem; color:var(--text-muted);">Días de entreno</p></div>
-           </button>
-        </div>
+            <button class="home-action-card" onclick="navigateToView('calendar')" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
+               <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">📅</div>
+               <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">CALENDARIO</h3><p style="font-size:0.75rem; color:var(--text-muted);">Días de entreno</p></div>
+            </button>
+            
+            <button class="home-action-card" onclick="exportData()" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
+               <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">📤</div>
+               <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">EXPORTAR DATOS</h3><p style="font-size:0.75rem; color:var(--text-muted);">Descargar backup .xlsx</p></div>
+            </button>
+         </div>
     </div>
   `;
 }
@@ -1864,6 +1899,80 @@ function renderExerciseSelectorView(container) {
    `;
 }
 
+function exportData() {
+  if (typeof XLSX === 'undefined') {
+    showToast('⚠️', 'Librería de export no disponible');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // Hoja 1: Historial de entrenamientos
+  const historyRows = state.history.map(s => ({
+    Fecha: new Date(s.date).toLocaleDateString('es-ES'),
+    Rutina: s.name,
+    Duración: formatTime(s.duration),
+    Volumen: s.volume + ' kg',
+    Series: s.sets,
+    PRs: s.prs || 0,
+    Sensaciones: s.feedback || '-',
+    Notas: s.notes || '-'
+  }));
+  if (historyRows.length === 0) historyRows.push({ Fecha: '-', Rutina: '-', Duración: '-', Volumen: '-', Series: '-', PRs: '-', Sensaciones: '-', Notas: 'Sin entrenamientos registrados' });
+  const wsHistory = XLSX.utils.json_to_sheet(historyRows);
+  XLSX.utils.book_append_sheet(wb, wsHistory, 'Historial');
+
+  // Hoja 2: PRs (Récords Personales)
+  const prRows = Object.keys(state.prs).map(exId => {
+    const ex = EXERCISE_DB[exId];
+    return {
+      Ejercicio: ex ? ex.name : exId,
+      'Peso Máx (kg)': state.prs[exId].maxKg,
+      'Reps al Peso Máx': state.prs[exId].maxRepsAtMax,
+      'Músculo': ex ? ex.muscleGroup : '-'
+    };
+  });
+  if (prRows.length === 0) prRows.push({ Ejercicio: '-', 'Peso Máx (kg)': '-', 'Reps al Peso Máx': '-', 'Músculo': 'Sin PRs registrados' });
+  const wsPRs = XLSX.utils.json_to_sheet(prRows);
+  XLSX.utils.book_append_sheet(wb, wsPRs, 'PRs');
+
+  // Hoja 3: Medidas corporales
+  const measureRows = state.userProfile.measurements.map(m => ({
+    Fecha: new Date(m.date).toLocaleDateString('es-ES'),
+    'Peso (kg)': m.weight,
+    'Grasa %': m.fat || '-',
+    'Pecho (cm)': m.chest || '-',
+    'Cintura (cm)': m.waist || '-'
+  }));
+  if (measureRows.length === 0) measureRows.push({ Fecha: '-', 'Peso (kg)': '-', 'Grasa %': '-', 'Pecho (cm)': '-', 'Cintura (cm)': 'Sin medidas registradas' });
+  const wsMeasures = XLSX.utils.json_to_sheet(measureRows);
+  XLSX.utils.book_append_sheet(wb, wsMeasures, 'Medidas');
+
+  // Hoja 4: Rutina actual
+  const routineRows = [];
+  state.routine.days.forEach(day => {
+    day.exercises.forEach(ex => {
+      const exData = EXERCISE_DB[ex.exerciseId];
+      routineRows.push({
+        Día: day.title,
+        Ejercicio: exData ? exData.name : ex.exerciseId,
+        Series: ex.sets,
+        Reps: ex.reps || '-',
+        Notas: ex.notes || '-',
+        Músculo: exData ? exData.muscleGroup : '-'
+      });
+    });
+  });
+  if (routineRows.length === 0) routineRows.push({ Día: '-', Ejercicio: 'Sin ejercicios', Series: '-', Reps: '-', Notas: '-', Músculo: '-' });
+  const wsRoutine = XLSX.utils.json_to_sheet(routineRows);
+  XLSX.utils.book_append_sheet(wb, wsRoutine, 'Rutina');
+
+  // Descargar
+  const dateStr = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `GymCoach_Backup_${dateStr}.xlsx`);
+  showToast('✅', 'Datos exportados correctamente');
+}
+
 function toggleGroupCollapse(mg) {
   collapsedGroups[mg] = !collapsedGroups[mg];
   const container = document.getElementById('exSelectorList');
@@ -1955,6 +2064,277 @@ function startRoutineBuilder() {
   state.currentView = 'routine_builder';
   state.builder.days = [{ title: 'Día 1', exercises: [] }];
   renderApp();
+}
+
+const ROUTINE_TEMPLATES = {
+  fullbody: {
+    id: 'template_fullbody',
+    title: 'Full Body 3 Días',
+    days: [
+      { title: 'FULL BODY A', exercises: [
+        { exerciseId: 'prensa', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'press_pecho_maquina_plano', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'jalon_pecho', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'press_hombros_mancuernas', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'curl_biceps_polea_barra', sets: 2, reps: '12-15', notes: '' },
+        { exerciseId: 'extension_triceps_polea', sets: 2, reps: '12-15', notes: '' }
+      ]},
+      { title: 'FULL BODY B', exercises: [
+        { exerciseId: 'hiperextension_lumbar', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'press_inclinado_maquina', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'remo_sentado_v', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'elevaciones_laterales_maquina', sets: 3, reps: '15-20', notes: '' },
+        { exerciseId: 'curl_femoral', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'extension_cuadriceps', sets: 3, reps: '12-15', notes: '' }
+      ]},
+      { title: 'FULL BODY C', exercises: [
+        { exerciseId: 'sentadilla_bulgarra', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'fondos_maquina', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'remo_polea_abierto', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'face_pull', sets: 3, reps: '15-20', notes: '' },
+        { exerciseId: 'curl_inclinado_mancuernas', sets: 2, reps: '12-15', notes: '' },
+        { exerciseId: 'press_frances', sets: 2, reps: '12-15', notes: '' }
+      ]}
+    ]
+  },
+  upperlower: {
+    id: 'template_upperlower',
+    title: 'Upper / Lower 4 Días',
+    days: [
+      { title: 'UPPER A', exercises: [
+        { exerciseId: 'press_pecho_maquina_plano', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'remo_sentado_v', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'press_hombros_mancuernas', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'jalon_pecho', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'curl_biceps_polea_barra', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'extension_triceps_polea', sets: 3, reps: '12-15', notes: '' }
+      ]},
+      { title: 'LOWER A', exercises: [
+        { exerciseId: 'prensa', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'extension_cuadriceps', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'curl_femoral', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'hiperextension_lumbar', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'gemelo_pie', sets: 4, reps: '15-20', notes: '' },
+        { exerciseId: 'abdominal_maquina', sets: 3, reps: '15-20', notes: '' }
+      ]},
+      { title: 'UPPER B', exercises: [
+        { exerciseId: 'press_inclinado_maquina', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'remo_maquina', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'elevaciones_laterales_maquina', sets: 4, reps: '15-20', notes: '' },
+        { exerciseId: 'fondos_maquina', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'curl_inclinado_mancuernas', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'press_frances', sets: 3, reps: '12-15', notes: '' }
+      ]},
+      { title: 'LOWER B', exercises: [
+        { exerciseId: 'sentadilla_bulgarra', sets: 4, reps: '10-12', notes: '' },
+        { exerciseId: 'prensa_piernas', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'curl_femoral', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'aductor_maquina', sets: 3, reps: '15-20', notes: '' },
+        { exerciseId: 'elevacion_gemelos_prensa', sets: 4, reps: '15-20', notes: '' },
+        { exerciseId: 'plancha_abdominal', sets: 3, reps: '30-60s', notes: '' }
+      ]}
+    ]
+  },
+  ppl: {
+    id: 'template_ppl',
+    title: 'Push / Pull / Legs 6 Días',
+    days: [
+      { title: 'PUSH A', exercises: [
+        { exerciseId: 'press_pecho_maquina_plano', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'press_inclinado_maquina', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'fondos_maquina', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'elevaciones_laterales_maquina', sets: 4, reps: '15-20', notes: '' },
+        { exerciseId: 'extension_triceps_polea', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'press_frances', sets: 3, reps: '12-15', notes: '' }
+      ]},
+      { title: 'PULL A', exercises: [
+        { exerciseId: 'jalon_pecho', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'remo_sentado_v', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'remo_polea_abierto', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'face_pull', sets: 3, reps: '15-20', notes: '' },
+        { exerciseId: 'curl_biceps_polea_barra', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'curl_inclinado_mancuernas', sets: 3, reps: '12-15', notes: '' }
+      ]},
+      { title: 'LEGS A', exercises: [
+        { exerciseId: 'prensa', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'extension_cuadriceps', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'curl_femoral', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'sentadilla_bulgarra', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'gemelo_pie', sets: 4, reps: '15-20', notes: '' },
+        { exerciseId: 'abdominal_maquina', sets: 3, reps: '15-20', notes: '' }
+      ]},
+      { title: 'PUSH B', exercises: [
+        { exerciseId: 'press_inclinado_maquina', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'press_pecho_maquina_plano', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'aperturas_polea', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'press_hombros_mancuernas', sets: 4, reps: '10-12', notes: '' },
+        { exerciseId: 'elevacion_lateral_polea', sets: 3, reps: '15-20', notes: '' },
+        { exerciseId: 'extension_triceps_sobre_cabeza', sets: 3, reps: '12-15', notes: '' }
+      ]},
+      { title: 'PULL B', exercises: [
+        { exerciseId: 'dominadas', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'remo_sentado_v', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'jalon_pecho', sets: 3, reps: '10-12', notes: '' },
+        { exerciseId: 'hiperextension_lumbar', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'curl_scott', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'curl_martillo', sets: 3, reps: '12-15', notes: '' }
+      ]},
+      { title: 'LEGS B', exercises: [
+        { exerciseId: 'prensa_piernas', sets: 4, reps: '8-10', notes: '' },
+        { exerciseId: 'curl_femoral', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'extension_cuadriceps', sets: 3, reps: '12-15', notes: '' },
+        { exerciseId: 'aductor_maquina', sets: 3, reps: '15-20', notes: '' },
+        { exerciseId: 'elevacion_gemelos_prensa', sets: 4, reps: '15-20', notes: '' },
+        { exerciseId: 'plancha_abdominal', sets: 3, reps: '30-60s', notes: '' }
+      ]}
+    ]
+  }
+};
+
+function loadTemplateRoutine(templateId) {
+  const template = ROUTINE_TEMPLATES[templateId];
+  if (!template) {
+    showToast('⚠️', 'Plantilla no encontrada');
+    return;
+  }
+
+  showCustomConfirm(`¿Quieres cargar la rutina "${template.title}"? Se reemplazará tu rutina actual.`).then(confirmed => {
+    if (!confirmed) return;
+
+    state.routine = {
+      id: template.id,
+      title: template.title,
+      days: JSON.parse(JSON.stringify(template.days))
+    };
+    state.currentDay = 0;
+    state.completedSets = {};
+    state.activeTab = 'entreno';
+    saveState();
+    renderApp();
+    showToast('✅', `Rutina "${template.title}" cargada`);
+  });
+}
+
+function openProgramDetail(templateId) {
+  state.selectedProgram = templateId;
+  state.currentView = 'program_detail';
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeProgramDetail() {
+  state.selectedProgram = null;
+  state.currentView = 'home';
+  renderApp();
+}
+
+function toggleProgramsSection() {
+  state.programsCollapsed = !state.programsCollapsed;
+  renderApp();
+}
+
+function toggleRoutinesSection() {
+  state.routinesCollapsed = !state.routinesCollapsed;
+  renderApp();
+}
+
+function openProgramSelector() {
+  state.currentView = 'program_selector';
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeProgramSelector() {
+  state.currentView = 'home';
+  renderApp();
+}
+
+function renderProgramSelector(container) {
+  const programs = [
+    { id: 'fullbody', icon: '🏋️', gradient: 'linear-gradient(135deg,#007aff,#5ac8fa)', name: 'Full Body', desc: 'Entrena todo el cuerpo cada sesión', days: '3 días/semana' },
+    { id: 'upperlower', icon: '💪', gradient: 'linear-gradient(135deg,#ff9500,#ffcc00)', name: 'Upper / Lower', desc: 'Tren superior e inferior alternados', days: '4 días/semana' },
+    { id: 'ppl', icon: '🔥', gradient: 'linear-gradient(135deg,#ff3b30,#ff6b6b)', name: 'Push / Pull / Legs', desc: 'Empuje, tracción y piernas', days: '6 días/semana' }
+  ];
+
+  container.innerHTML = `
+    <div class="home-screen">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; padding: 12px 16px; background: var(--bg-primary); border-bottom: 0.5px solid rgba(0,0,0,0.05);">
+        <button onclick="closeProgramSelector()" style="background:transparent; border:none; color:var(--accent-primary); width:44px; height:44px; cursor:pointer; font-weight:700; font-size:1.3rem;">←</button>
+        <h2 style="font-size:1rem; font-weight:800; text-transform:uppercase; flex:1;">Programas</h2>
+      </div>
+
+      <div style="padding:0 16px;">
+        <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05); border-radius:var(--radius-md); overflow:hidden;">
+          ${programs.map(p => `
+            <button onclick="openProgramDetail('${p.id}')" style="background:var(--bg-card); padding:16px; display:flex; align-items:center; gap:14px; cursor:pointer; border:none; width:100%; font-family:var(--font-family); text-align:left; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+              <div style="width:44px; height:44px; border-radius:var(--radius-sm); background:${p.gradient}; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">${p.icon}</div>
+              <div style="flex:1; min-width:0;">
+                <h3 style="font-size:0.85rem; font-weight:700; margin-bottom:2px; color:var(--text-primary); text-transform:uppercase;">${p.name}</h3>
+                <p style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">${p.desc} · ${p.days}</p>
+              </div>
+              <span style="color:var(--text-muted); font-size:1.2rem;">›</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderProgramDetail(container) {
+  const template = ROUTINE_TEMPLATES[state.selectedProgram];
+  if (!template) { closeProgramDetail(); return; }
+
+  const daysHtml = template.days.map((day) => `
+    <div style="background:var(--bg-card); border:0.5px solid var(--border-subtle); border-radius:var(--radius-md); margin-bottom:12px; overflow:hidden;">
+      <div style="padding:12px 16px; background:var(--bg-surface); border-bottom:0.5px solid var(--border-subtle);">
+        <h3 style="font-size:0.85rem; font-weight:700; color:var(--text-primary); text-transform:uppercase; margin:0;">${day.title}</h3>
+        <p style="font-size:0.65rem; color:var(--text-muted); font-weight:500; margin:2px 0 0;">${day.exercises.length} ejercicios</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05);">
+        ${day.exercises.map((ex) => {
+          const exData = EXERCISE_DB[ex.exerciseId];
+          const exName = exData ? exData.name : ex.exerciseId.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          const mg = exData ? (MUSCLE_GROUPS[exData.muscleGroup] || { name: exData.muscleGroup, color: '#888' }) : { name: '-', color: '#888' };
+          return `
+            <div style="padding:12px 16px; background:var(--bg-card); display:flex; align-items:center; gap:12px;">
+              <div style="width:4px; height:24px; background:${mg.color}; border-radius:2px; flex-shrink:0;"></div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">${exName}</div>
+                <div style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">${ex.sets} series · ${ex.reps}</div>
+              </div>
+              <span style="font-size:0.6rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">${mg.name}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="home-screen">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; padding: 12px 16px; background: var(--bg-primary); border-bottom: 0.5px solid rgba(0,0,0,0.05);">
+        <button onclick="closeProgramDetail()" style="background:transparent; border:none; color:var(--accent-primary); width:44px; height:44px; cursor:pointer; font-weight:700; font-size:1.3rem;">←</button>
+        <h2 style="font-size:1rem; font-weight:800; text-transform:uppercase; flex:1;">${template.title}</h2>
+      </div>
+
+      <div style="padding:0 16px;">
+        <div style="background:var(--bg-surface); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px;">
+          <div style="font-size:1.5rem;">📋</div>
+          <div>
+            <div style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">Vista previa del programa</div>
+            <div style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">${template.days.length} días · Revisa los ejercicios antes de cargar</div>
+          </div>
+        </div>
+
+        ${daysHtml}
+
+        <button onclick="loadTemplateRoutine('${state.selectedProgram}')" style="width:100%; padding:16px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; text-transform:uppercase; border-radius:var(--radius-md); box-shadow:var(--accent-glow); margin-top:8px; margin-bottom:20px;">
+          Cargar esta rutina
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 function renderRoutineBuilder(container) {
