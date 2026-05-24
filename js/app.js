@@ -23,7 +23,7 @@ const state = {
   prs: {},                 // { 'peso_muerto': { maxKg: 100, maxRepsAtMax: 5 } }
 
   completedSets: {},       // { 'day0_ex0': [ {done: true, kg: '100', reps: '10', type: 'normal'}, ... ] }
-  activeTab: 'entreno',    // 'inicio' | 'entreno' | 'perfil' | 'misiones'
+  activeTab: 'entreno',    // 'inicio' | 'entreno' | 'perfil' | 'misiones' | 'nutricion'
   history: [],
   userProfile: {
     totalWorkouts: 0,
@@ -130,6 +130,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.ICON_EXPLORE = `<svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
 
   // Register global functions for inline onclick
+  window.openExerciseExplorer = openExerciseExplorer;
+  window.closeExerciseExplorer = closeExerciseExplorer;
+  window.setChartMetric = setChartMetric;
   window.startSelectedDay = startSelectedDay;
   window.startEmptyWorkout = startEmptyWorkout;
   window.startRoutineBuilder = startRoutineBuilder;
@@ -448,12 +451,13 @@ function renderMainShell() {
     return;
   }
 
+  if (state.currentView === 'exercise_explorer') {
+    renderExerciseExplorer(main);
+    return;
+  }
+
   if (state.activeTab === 'inicio') {
     renderInicio(main);
-  } else if (state.activeTab === 'explorar') {
-    // Subviews from explorar (exercise_detail, etc.) take priority
-    if (state.currentView === 'exercise_detail') renderExerciseDetail(main);
-    else renderExplorar(main);
   } else {
     // Subviews common to both Entrenamiento and Perfil
     if (state.currentView === 'exercise_detail') renderExerciseDetail(main);
@@ -469,6 +473,7 @@ function renderMainShell() {
     else {
       if (state.activeTab === 'entreno') renderHome();
       else if (state.activeTab === 'misiones') renderMissions(main);
+      else if (state.activeTab === 'nutricion') renderNutritionTab(main);
       else renderPerfil(main);
     }
   }
@@ -496,8 +501,9 @@ function renderBottomNav() {
   const workoutIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="4" height="6" rx="1"/><rect x="18" y="9" width="4" height="6" rx="1"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>`;
   const profileIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
   const missionsIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>`;
+  const nutritionIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`;
 
-  const hideNav = ['post_workout', 'reorder_exercises'].includes(state.currentView);
+  const hideNav = ['post_workout', 'reorder_exercises', 'exercise_explorer'].includes(state.currentView);
   nav.className = hideNav ? 'bottom-nav hidden' : 'bottom-nav';
 
   nav.innerHTML = `
@@ -516,6 +522,10 @@ function renderBottomNav() {
     <button class="nav-item ${state.activeTab === 'misiones' ? 'active' : ''}" onclick="changeTab('misiones')">
       ${missionsIcon}
       <span class="nav-label">Misiones</span>
+    </button>
+    <button class="nav-item ${state.activeTab === 'nutricion' ? 'active' : ''}" onclick="changeTab('nutricion')">
+      ${nutritionIcon}
+      <span class="nav-label">Nutrición</span>
     </button>
   `;
 }
@@ -682,16 +692,6 @@ function renderHome() {
         </div>
       ` : ''}
 
-      <!-- Explorar Ejercicios -->
-      <button onclick="changeTab('explorar')" style="width:100%; padding:14px 16px; background:var(--bg-card); border:none; cursor:pointer; display:flex; align-items:center; gap:12px; font-family:var(--font-family); text-align:left; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
-        ${ICON_EXPLORE}
-        <div style="flex:1;">
-          <div style="font-size:0.8rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Explorar Ejercicios</div>
-          <div style="font-size:0.65rem; color:var(--text-muted); font-weight:500;">Busca y descubre ejercicios</div>
-        </div>
-        <span style="color:var(--text-muted); font-size:1.2rem;">›</span>
-      </button>
-
       <!-- Programas -->
       <button onclick="openProgramSelector()" style="width:100%; padding:14px 16px; background:var(--bg-card); border:none; cursor:pointer; display:flex; align-items:center; gap:12px; font-family:var(--font-family); text-align:left; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -857,12 +857,25 @@ function startSelectedDay(idx) {
 
 let explorarQuery = '';
 
-function renderExplorar(container) {
+function openExerciseExplorer() {
+  state.previousView = state.currentView;
+  state.currentView = 'exercise_explorer';
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeExerciseExplorer() {
+  state.currentView = 'home';
+  state.activeTab = 'perfil';
+  renderApp();
+}
+
+function renderExerciseExplorer(container) {
   container.innerHTML = `
      <div class="home-screen">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; padding: 12px 16px; background: var(--bg-primary); border-bottom: 0.5px solid rgba(0,0,0,0.05);">
-          <button onclick="changeTab('entreno')" style="background:transparent; border:none; color:var(--accent-primary); width:44px; height:44px; cursor:pointer; font-weight:700; font-size:1.3rem;">←</button>
-          <h2 style="font-size:1rem; font-weight:800; text-transform:uppercase; flex:1;">Explorar Ejercicios</h2>
+          <button onclick="closeExerciseExplorer()" style="background:transparent; border:none; color:var(--accent-primary); width:44px; height:44px; cursor:pointer; font-weight:700; font-size:1.3rem;">←</button>
+          <h2 style="font-size:1rem; font-weight:800; text-transform:uppercase; flex:1;">Ejercicios</h2>
         </div>
         
         <div style="padding: 0 16px 16px;">
@@ -1204,10 +1217,6 @@ function renderPerfil(container) {
   const totalWeight = state.history.reduce((acc, s) => acc + s.volume, 0);
   const totalHours = Math.round(state.history.reduce((acc, s) => acc + s.duration, 0) / 3600);
 
-  // Datos reales para el gráfico (últimos 7 entrenamientos)
-  const last7 = state.history.slice(-7);
-  const maxVol = Math.max(...last7.map(s => s.volume), 1000);
-
   container.innerHTML = `
     <div class="home-screen">
        <div style="text-align:center; padding: 20px 0;">
@@ -1216,93 +1225,85 @@ function renderPerfil(container) {
           <p style="color:var(--text-muted); font-size:0.8rem;">Entrenando desde ${new Date(state.userProfile.joinedDate).toLocaleDateString()}</p>
        </div>
 
-       <div class="profile-stat-grid">
-          <div class="stat-box">
-             <span class="stat-value">${state.history.length}</span>
-             <span class="stat-label">Sesiones</span>
-          </div>
-          <div class="stat-box">
-             <span class="stat-value">${totalHours}h</span>
-             <span class="stat-label">Tiempo Total</span>
-          </div>
-          <div class="stat-box">
-             <span class="stat-value">${totalWeight >= 1000 ? (totalWeight / 1000).toFixed(1) + 't' : totalWeight + 'kg'}</span>
-             <span class="stat-label">Volumen Acum.</span>
-          </div>
-          <div class="stat-box">
-             <span class        </div>
-
-        <h3 style="margin-top:20px; font-weight:700; font-size:1rem;">Volumen (Últimos 7 días)</h3>
-        <div class="bar-chart" style="background:var(--bg-surface); padding:16px; border-radius:var(--radius-md); display:flex; gap:8px; align-items:flex-end; height:120px; margin-top:10px;">
-           ${last7.length > 0 ? last7.map(s => `
-              <div class="bar-wrap" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%;">
-                 <div class="bar" style="height: ${(s.volume / maxVol) * 100}%; width:100%; background:var(--accent-primary); border-radius:4px 4px 0 0;"></div>
-                 <span style="font-size:0.6rem; color:var(--text-muted); font-weight:600;">${new Date(s.date).getDate()}</span>
+       <!-- Entrenamientos -->
+       <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05);">
+         <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle);">
+           <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Entrenamientos</h2>
+         </div>
+         ${state.history.length > 0 ? `
+           <div style="background:var(--bg-card); padding:16px;">
+              <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:10px;">Últimos 7 entrenamientos</div>
+              <div style="display:flex; gap:4px; margin-bottom:12px;">
+                 <button onclick="setChartMetric('duration')" id="chartBtnDuration" style="flex:1; padding:8px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.65rem; cursor:pointer; border-radius:var(--radius-sm); text-transform:uppercase;">Duración</button>
+                 <button onclick="setChartMetric('volume')" id="chartBtnVolume" style="flex:1; padding:8px; background:var(--bg-surface); color:var(--text-muted); border:none; font-weight:700; font-size:0.65rem; cursor:pointer; border-radius:var(--radius-sm); text-transform:uppercase;">Volumen</button>
+                 <button onclick="setChartMetric('sets')" id="chartBtnSets" style="flex:1; padding:8px; background:var(--bg-surface); color:var(--text-muted); border:none; font-weight:700; font-size:0.65rem; cursor:pointer; border-radius:var(--radius-sm); text-transform:uppercase;">Series</button>
               </div>
-           `).join('') : '<p style="color:var(--text-muted); width:100%; text-align:center; padding:20px; font-size:0.8rem;">Entrena para ver estadísticas</p>'}
-        </div>
-        
-        <h3 style="margin-top:30px; font-weight:700; font-size:1rem;">Ajustes</h3>
-        
-        <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
-           <button class="home-action-card" onclick="toggleTheme()" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; justify-content:space-between; border-radius:var(--radius-md);">
-              <div style="display:flex; align-items:center; gap:16px;">
-                 <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">🌓</div>
-                 <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">Modo Oscuro</h3><p style="font-size:0.75rem; color:var(--text-muted);">Cambiar tema visual</p></div>
+              <div id="chartContainer" style="display:flex; gap:6px; align-items:flex-end; height:100px;"></div>
+              <div id="chartLegend" style="margin-top:8px; font-size:0.6rem; color:var(--text-muted); font-weight:600; text-align:center;"></div>
+           </div>
+         ` : ''}
+         ${state.history.length === 0 ? `
+           <div style="background:var(--bg-card); padding:20px; text-align:center; color:var(--text-muted); font-size:0.8rem; font-weight:600;">
+             Aún no has completado ningún entrenamiento
+           </div>
+         ` : state.history.slice().reverse().slice(0, 3).map((session, i) => `
+           <div onclick="openHistoryDetail(${state.history.length - 1 - i})" style="background:var(--bg-card); padding:14px 16px; display:flex; align-items:center; gap:12px; cursor:pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+              <div style="flex:1; min-width:0;">
+                 <div style="font-size:0.85rem; font-weight:700; color:var(--text-primary);">${session.name}</div>
+                 <div style="font-size:0.65rem; color:var(--text-muted);">${new Date(session.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })} · ${formatTime(session.duration)}</div>
               </div>
-              <div style="color:var(--text-muted); font-size:1.2rem; display:flex; align-items:center;">
-                 ${state.theme === 'dark' ? 'Activado' : 'Desactivado'}
+              <div style="text-align:right; flex-shrink:0;">
+                 <div style="font-size:0.8rem; font-weight:800; color:var(--accent-primary);">${session.volume >= 1000 ? (session.volume / 1000).toFixed(1) + 't' : session.volume + 'kg'}</div>
+                 <div style="font-size:0.6rem; color:var(--text-muted); font-weight:600;">${session.sets} series</div>
               </div>
-           </button>
-        </div>
+           </div>
+         `).join('')}
+         ${state.history.length > 3 ? `
+           <div onclick="changeTab('inicio')" style="background:var(--bg-card); padding:12px 16px; text-align:center; cursor:pointer; font-size:0.75rem; font-weight:700; color:var(--accent-primary); text-transform:uppercase;">
+             Ver historial completo ›
+           </div>
+         ` : ''}
+       </div>
 
-        <h3 style="margin-top:30px; font-weight:700; font-size:1rem;">Configuración IA</h3>
-        <div style="background:var(--bg-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle); padding:16px; display:flex; flex-direction:column; gap:12px; margin-top:10px;">
-           <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">EDAD</span>
-              <input type="number" value="${state.userProfile.age || 25}" onchange="state.userProfile.age=this.value; saveState();" style="width:60px; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); text-align:center; padding:6px; font-weight:700; font-size:0.8rem; border-radius:4px;">
-           </div>
-           <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">PESO (KG)</span>
-              <input type="number" value="${state.userProfile.weight || 75}" onchange="state.userProfile.weight=this.value; saveState();" style="width:60px; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); text-align:center; padding:6px; font-weight:700; font-size:0.8rem; border-radius:4px;">
-           </div>
-           <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">ALTURA (CM)</span>
-              <input type="number" value="${state.userProfile.height || 175}" onchange="state.userProfile.height=this.value; saveState();" style="width:60px; background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); text-align:center; padding:6px; font-weight:700; font-size:0.8rem; border-radius:4px;">
-           </div>
-           <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.8rem; font-weight:700; color:var(--text-primary);">OBJETIVO</span>
-              <select onchange="state.userProfile.goals=this.value; saveState();" style="background:var(--bg-elevated); border:1px solid var(--border-subtle); color:var(--text-primary); font-size:0.8rem; font-weight:700; outline:none; padding:6px; border-radius:4px;">
-                 <option value="gain" ${state.userProfile.goals === 'gain' ? 'selected' : ''}>GANAR MASA</option>
-                 <option value="lose" ${state.userProfile.goals === 'lose' ? 'selected' : ''}>PERDER GRASA</option>
-                 <option value="strength" ${state.userProfile.goals === 'strength' ? 'selected' : ''}>FUERZA PURA</option>
-              </select>
-           </div>
-        </div>
-
-        <div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
-           <button class="home-action-card" onclick="navigateToView('measures')" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
-              <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">📏</div>
-              <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">MIS MEDIDAS</h3><p style="font-size:0.75rem; color:var(--text-muted);">Peso, grasa corporal...</p></div>
-           </button>
-           
-           <button class="home-action-card" onclick="navigateToView('nutrition')" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
-              <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">🍎</div>
-              <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">NUTRICIÓN Y DIETA</h3><p style="font-size:0.75rem; color:var(--text-muted);">Plan alimenticio con IA</p></div>
-           </button>
-           
-            <button class="home-action-card" onclick="navigateToView('calendar')" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
-               <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">📅</div>
-               <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">CALENDARIO</h3><p style="font-size:0.75rem; color:var(--text-muted);">Días de entreno</p></div>
+       <!-- Información -->
+       <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05); margin-top:16px;">
+         <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle);">
+           <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Información</h2>
+         </div>
+         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1px; background:rgba(0,0,0,0.05);">
+            <button onclick="navigateToView('measures')" style="background:var(--bg-card); padding:16px 12px; border:none; cursor:pointer; text-align:center; font-family:var(--font-family); transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+               <div style="font-size:1.5rem; margin-bottom:6px;">📏</div>
+               <div style="font-size:0.7rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Medidas</div>
             </button>
-            
-            <button class="home-action-card" onclick="exportData()" style="padding:15px; border:1px solid var(--border-subtle); background:var(--bg-card); align-items:center; display:flex; gap:16px; border-radius:var(--radius-md);">
-               <div class="home-action-icon" style="background:var(--bg-elevated); color:var(--text-primary); font-size:1.2rem; border-radius:var(--radius-sm);">📤</div>
-               <div class="home-action-info"><h3 style="font-size:0.9rem; font-weight:700; text-transform:uppercase;">EXPORTAR DATOS</h3><p style="font-size:0.75rem; color:var(--text-muted);">Descargar backup .xlsx</p></div>
+            <button onclick="navigateToView('calendar')" style="background:var(--bg-card); padding:16px 12px; border:none; cursor:pointer; text-align:center; font-family:var(--font-family); transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+               <div style="font-size:1.5rem; margin-bottom:6px;">📅</div>
+               <div style="font-size:0.7rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Calendario</div>
+            </button>
+            <button onclick="showComingSoon('Estadísticas')" style="background:var(--bg-card); padding:16px 12px; border:none; cursor:pointer; text-align:center; font-family:var(--font-family); transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+               <div style="font-size:1.5rem; margin-bottom:6px;">📊</div>
+               <div style="font-size:0.7rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Estadísticas</div>
+            </button>
+            <button onclick="openExerciseExplorer()" style="background:var(--bg-card); padding:16px 12px; border:none; cursor:pointer; text-align:center; font-family:var(--font-family); transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+               <div style="font-size:1.5rem; margin-bottom:6px;">🏋️</div>
+               <div style="font-size:0.7rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Ejercicios</div>
             </button>
          </div>
-    </div>
+       </div>
+
+       <!-- Secundario -->
+       <div style="margin-top:16px; display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05);">
+          <button class="home-action-card" onclick="exportData()" style="padding:14px 16px; border:none; background:var(--bg-card); align-items:center; display:flex; gap:12px; cursor:pointer; font-family:var(--font-family); transition: background 0.2s;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
+             <div style="font-size:1.2rem;">📤</div>
+             <div style="flex:1;">
+                <div style="font-size:0.8rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Exportar datos</div>
+                <div style="font-size:0.65rem; color:var(--text-muted);">Descargar backup .xlsx</div>
+             </div>
+             <span style="color:var(--text-muted); font-size:1.2rem;">›</span>
+          </button>
+        </div>
+     </div>
   `;
+  setTimeout(function(){ renderChart(_chartMetric); }, 50);
 }
 
 function navigateToView(view) {
@@ -1312,58 +1313,119 @@ function navigateToView(view) {
 }
 
 function renderMeasures(container) {
+  const bodyParts = [
+    { key: 'weight', label: 'Peso corporal', unit: 'kg', step: '0.1' },
+    { key: 'bodyFat', label: 'Grasa corporal', unit: '%', step: '0.1' },
+    { key: 'leanMass', label: 'Masa corporal magra', unit: 'kg', step: '0.1' },
+    { key: 'neck', label: 'Cuello', unit: 'cm', step: '0.1' },
+    { key: 'shoulder', label: 'Hombro', unit: 'cm', step: '0.1' },
+    { key: 'chest', label: 'Pecho', unit: 'cm', step: '0.1' },
+    { key: 'bicepL', label: 'Bíceps izquierdo', unit: 'cm', step: '0.1' },
+    { key: 'bicepR', label: 'Bíceps derecho', unit: 'cm', step: '0.1' },
+    { key: 'forearmL', label: 'Antebrazo izquierdo', unit: 'cm', step: '0.1' },
+    { key: 'forearmR', label: 'Antebrazo derecho', unit: 'cm', step: '0.1' },
+    { key: 'abdomen', label: 'Abdomen', unit: 'cm', step: '0.1' },
+    { key: 'waist', label: 'Cintura', unit: 'cm', step: '0.1' },
+    { key: 'hips', label: 'Caderas', unit: 'cm', step: '0.1' },
+    { key: 'thighL', label: 'Muslo izquierdo', unit: 'cm', step: '0.1' },
+    { key: 'thighR', label: 'Muslo derecho', unit: 'cm', step: '0.1' },
+    { key: 'calfL', label: 'Gemelo izquierdo', unit: 'cm', step: '0.1' },
+    { key: 'calfR', label: 'Gemelo derecho', unit: 'cm', step: '0.1' }
+  ];
+
+  const measurements = state.userProfile.measurements || [];
+
   container.innerHTML = `
     <div class="home-screen">
-       <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
-          <button onclick="navigateBackFromSubview()" style="background:#000; border:none; color:#fff; width:36px; height:36px; border-radius:0; cursor:pointer; font-weight:900;">←</button>
-          <h2 style="font-size:1.5rem; font-weight:900; text-transform:uppercase;">MIS MEDIDAS</h2>
+       <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; padding: 12px 16px; background: var(--bg-primary); border-bottom: 0.5px solid rgba(0,0,0,0.05);">
+         <button onclick="navigateBackFromSubview()" style="background:transparent; border:none; color:var(--accent-primary); width:44px; height:44px; cursor:pointer; font-weight:700; font-size:1.3rem;">←</button>
+         <h2 style="font-size:1rem; font-weight:800; text-transform:uppercase; flex:1;">Mis Medidas</h2>
        </div>
 
-       <div style="background:#fff; border:2px solid #000; padding:16px; margin-bottom:20px; border-radius:0;">
-          <h4 style="margin-bottom:12px; font-size:0.8rem; color:#000; font-weight:900; text-transform:uppercase;">REGISTRAR MEDIDA HOY</h4>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-             <div><label style="font-size:0.7rem; color:#000; font-weight:900;">PESO (KG)</label><input id="m_weight" type="number" step="0.1" style="width:100%; background:#f9f9f9; border:1px solid #000; color:#000; padding:6px; font-weight:900;"></div>
-             <div><label style="font-size:0.7rem; color:#000; font-weight:900;">GRASA %</label><input id="m_fat" type="number" step="0.1" style="width:100%; background:#f9f9f9; border:1px solid #000; color:#000; padding:6px; font-weight:900;"></div>
-             <div><label style="font-size:0.7rem; color:#000; font-weight:900;">PECHO (CM)</label><input id="m_chest" type="number" style="width:100%; background:#f9f9f9; border:1px solid #000; color:#000; padding:6px; font-weight:900;"></div>
-             <div><label style="font-size:0.7rem; color:#000; font-weight:900;">CINTURA (CM)</label><input id="m_waist" type="number" style="width:100%; background:#f9f9f9; border:1px solid #000; color:#000; padding:6px; font-weight:900;"></div>
-          </div>
-          <button onclick="saveNewMeasurement()" style="width:100%; margin-top:15px; background:#ff0000; color:#fff; border:none; padding:12px; font-weight:900; cursor:pointer; font-size:0.9rem;">GUARDAR MEDIDA</button>
+       <!-- Foto -->
+       <div style="padding:16px;">
+         <div style="background:var(--bg-surface); border-radius:var(--radius-md); padding:16px; text-align:center; margin-bottom:16px;">
+            <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px;">Foto de progreso</div>
+            <div id="measurePhotoPreview" style="width:120px; height:120px; background:var(--bg-elevated); border-radius:var(--radius-md); margin:0 auto 10px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px dashed var(--border-subtle);">
+               ${measurements.length > 0 && measurements[measurements.length - 1].photo ? `<img src="${measurements[measurements.length - 1].photo}" style="width:100%; height:100%; object-fit:cover;">` : '📷'}
+            </div>
+            <input type="file" id="measurePhotoInput" accept="image/*" onchange="saveMeasurePhoto(this)" style="display:none;">
+            <button onclick="document.getElementById('measurePhotoInput').click()" style="background:var(--accent-gradient); color:#fff; border:none; padding:8px 16px; font-weight:700; font-size:0.75rem; cursor:pointer; border-radius:var(--radius-sm); text-transform:uppercase;">Añadir foto</button>
+         </div>
+
+         <!-- Formulario -->
+         <h3 style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:12px; letter-spacing:0.5px;">Registrar medida hoy</h3>
+         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:16px;">
+            ${bodyParts.map(p => `
+              <div style="background:var(--bg-surface); padding:10px 12px; border-radius:var(--radius-sm); border:0.5px solid var(--border-subtle);">
+                 <label style="font-size:0.6rem; color:var(--text-muted); font-weight:700; text-transform:uppercase; display:block; margin-bottom:4px;">${p.label} (${p.unit})</label>
+                 <input id="m_${p.key}" type="number" step="${p.step}" style="width:100%; background:var(--bg-elevated); border:0.5px solid var(--border-subtle); color:var(--text-primary); padding:6px 8px; font-weight:700; font-size:0.85rem; border-radius:4px; outline:none;">
+              </div>
+            `).join('')}
+         </div>
+         <button onclick="saveNewMeasurement()" style="width:100%; padding:14px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.85rem; cursor:pointer; text-transform:uppercase; border-radius:var(--radius-md); box-shadow:var(--accent-glow);">Guardar medida</button>
        </div>
 
-       <h3 style="font-weight:900; text-transform:uppercase;">HISTORIAL</h3>
-       <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-          ${state.userProfile.measurements.length > 0 ? state.userProfile.measurements.slice().reverse().map(m => `
-             <div class="history-card" style="padding:12px; background:#f9f9f9; border:1px solid #000; border-radius:0;">
-                <div style="font-size:0.7rem; color:#000; font-weight:900; margin-bottom:8px;">${new Date(m.date).toLocaleDateString()}</div>
-                <div style="display:flex; gap:15px; font-size:0.85rem; font-weight:900; color:#000;">
-                   <span>PESO: ${m.weight}kg</span>
-                   <span>GRASA: ${m.fat}%</span>
-                   ${m.chest ? `<span>PECHO: ${m.chest}cm</span>` : ''}
-                </div>
-             </div>
-          `).join('') : '<p style="color:#000; text-align:center; padding:20px; font-weight:700;">No hay medidas registradas.</p>'}
+       <!-- Historial -->
+       <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05);">
+         <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle);">
+           <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Historial</h2>
+         </div>
+         ${measurements.length === 0 ? `
+           <div style="background:var(--bg-card); padding:20px; text-align:center; color:var(--text-muted); font-size:0.8rem; font-weight:600;">
+             No hay medidas registradas
+           </div>
+         ` : measurements.slice().reverse().map(m => `
+           <div style="background:var(--bg-card); padding:14px 16px;">
+              <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700; margin-bottom:8px; text-transform:uppercase;">${new Date(m.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px 12px; font-size:0.75rem; font-weight:600; color:var(--text-primary);">
+                 ${bodyParts.map(p => m[p.key] ? `<div>${p.label}: <strong>${m[p.key]}${p.unit}</strong></div>` : '').join('')}
+              </div>
+              ${m.photo ? `<div style="margin-top:8px;"><img src="${m.photo}" style="width:60px; height:60px; object-fit:cover; border-radius:var(--radius-sm);"></div>` : ''}
+           </div>
+         `).join('')}
        </div>
     </div>
   `;
 }
 
-function saveNewMeasurement() {
-  const w = document.getElementById('m_weight').value;
-  const f = document.getElementById('m_fat').value;
-  const c = document.getElementById('m_chest').value;
-  const ws = document.getElementById('m_waist').value;
-  if (!w) { showToast('⚠️', 'Al menos indica el peso'); return; }
+function saveMeasurePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
 
-  state.userProfile.measurements.push({
-    date: new Date().toISOString(),
-    weight: parseFloat(w),
-    fat: parseFloat(f) || 0,
-    chest: parseFloat(c) || 0,
-    waist: parseFloat(ws) || 0
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    if (!state.userProfile.measurements) state.userProfile.measurements = [];
+    if (state.userProfile.measurements.length === 0) {
+      state.userProfile.measurements.push({ date: new Date().toISOString(), photo: e.target.result });
+    } else {
+      state.userProfile.measurements[state.userProfile.measurements.length - 1].photo = e.target.result;
+    }
+    saveState();
+    renderApp();
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveNewMeasurement() {
+  const bodyParts = ['weight', 'bodyFat', 'leanMass', 'neck', 'shoulder', 'chest', 'bicepL', 'bicepR', 'forearmL', 'forearmR', 'abdomen', 'waist', 'hips', 'thighL', 'thighR', 'calfL', 'calfR'];
+  const entry = { date: new Date().toISOString() };
+  let hasData = false;
+
+  bodyParts.forEach(key => {
+    const val = document.getElementById(`m_${key}`).value;
+    if (val) {
+      entry[key] = parseFloat(val);
+      hasData = true;
+    }
   });
 
-  // Actualizar peso actual en perfil para la IA
-  state.userProfile.weight = parseFloat(w);
+  if (!hasData) { showToast('⚠️', 'Rellena al menos una medida'); return; }
+
+  if (!state.userProfile.measurements) state.userProfile.measurements = [];
+  state.userProfile.measurements.push(entry);
+
+  if (entry.weight) state.userProfile.weight = entry.weight;
 
   saveState();
   showToast('✅', 'Medida guardada');
@@ -2019,8 +2081,8 @@ function renderContent() {
       ${exercisesHtml}
       <button class="add-exercise-btn" onclick="openExerciseSelector()">+ Agregar Ejercicio</button>
       ${day.exercises.length > 1 ? `<button class="add-exercise-btn" style="margin-top:0; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openReorderView()">☰ Reordenar Ejercicios</button>` : ''}
+       </div>
     </div>
-    ${summaryDiv}
   `;
 }
 
@@ -3054,27 +3116,42 @@ function checkPR(exerciseId, setObj) {
   if (setObj.type === 'calentamiento' || setObj.type === 'aproximacion' || setObj.type === 'fallida') return;
 
   if (!state.prs[exerciseId]) {
-    state.prs[exerciseId] = { maxKg: kgFloat, maxRepsAtMax: repsInt };
+    state.prs[exerciseId] = { maxKg: kgFloat, maxRepsAtMax: repsInt, maxReps: repsInt, maxRepsKg: kgFloat };
     setObj.isPR = true;
-    showToast('🏅', '¡Nuevo Récord Personal de peso establecido!');
+    showToast('🏅', '¡Nuevo Récord Personal establecido!');
   } else {
     const currentPR = state.prs[exerciseId];
+    let isPR = false;
+
+    // Récord de peso
     if (kgFloat > currentPR.maxKg) {
       currentPR.maxKg = kgFloat;
       currentPR.maxRepsAtMax = repsInt;
-      setObj.isPR = true;
-      showToast('🏅', `¡NUEVO RÚCORD HISTÓRICO! (${kgFloat} kg)`);
-    } else if (kgFloat === currentPR.maxKg && repsInt > currentPR.maxRepsAtMax) {
-      currentPR.maxRepsAtMax = repsInt;
-      setObj.isPR = true;
-      showToast('🏅', `¡Récord de Reps con el peso máximo!`);
-    } else {
-      setObj.isPR = false;
+      isPR = true;
+      showToast('🏅', `¡NUEVO RÉCORD DE PESO! (${kgFloat} kg)`);
     }
+    // Récord de reps con el peso máximo
+    else if (kgFloat === currentPR.maxKg && repsInt > currentPR.maxRepsAtMax) {
+      currentPR.maxRepsAtMax = repsInt;
+      isPR = true;
+      showToast('🏅', `¡Récord de Reps con el peso máximo!`);
+    }
+
+    // Récord de repeticiones absolutas (cualquier peso)
+    if (!currentPR.maxReps || repsInt > currentPR.maxReps) {
+      currentPR.maxReps = repsInt;
+      currentPR.maxRepsKg = kgFloat;
+      if (!isPR) {
+        isPR = true;
+        showToast('🏅', `¡NUEVO RÉCORD DE REPS! (${repsInt} reps con ${kgFloat} kg)`);
+      }
+    }
+
+    setObj.isPR = isPR;
   }
 }
 
-// ── Manejo del Plan (Añadir/Quitar) ──
+// ── Manejo del Plan (Añadir/Quitar) ───
 function addSet(exerciseIndex) {
   const isVacío = state.currentView === 'empty_workout' || state.emptyWorkout.active;
 
@@ -3864,6 +3941,124 @@ window.sendIAChatMessage = function () {
       if (windowEl) windowEl.scrollTop = windowEl.scrollHeight;
     }, 50);
   }, 1200 + Math.random() * 800); // 1.2 to 2 sec delay for human response thinking feel
+}
+
+let _chartMetric = 'duration';
+
+function setChartMetric(m) {
+  _chartMetric = m;
+  var btns = {duration:'chartBtnDuration',volume:'chartBtnVolume',sets:'chartBtnSets'};
+  Object.keys(btns).forEach(function(k){
+    var el = document.getElementById(btns[k]);
+    if(!el) return;
+    if(k === m){ el.style.background = 'var(--accent-gradient)'; el.style.color = '#fff'; }
+    else { el.style.background = 'var(--bg-surface)'; el.style.color = 'var(--text-muted)'; }
+  });
+  renderChart(m);
+}
+
+function renderChart(m) {
+  var history = state.history.slice(-7);
+  var container = document.getElementById('chartContainer');
+  var legend = document.getElementById('chartLegend');
+  if(!container || !history.length) return;
+  var values = history.map(function(s){
+    if(m === 'duration') return s.duration;
+    if(m === 'volume') return s.volume;
+    return s.sets;
+  });
+  var maxVal = Math.max.apply(null, values) || 1;
+  var labels = {duration:'Duración',volume:'Volumen (kg)',sets:'Series'};
+  var html = history.map(function(s, i){
+    var val = values[i];
+    var pct = (val / maxVal) * 100;
+    var label = '';
+    if(m === 'duration') label = formatTime(val);
+    else if(m === 'volume') label = val >= 1000 ? (val/1000).toFixed(1)+'t' : val+'kg';
+    else label = val;
+    return '<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;">'+
+      '<div style="width:100%; background:var(--accent-primary); border-radius:4px 4px 0 0; height:'+pct+'%; min-height:4px;"></div>'+
+      '<div style="font-size:0.55rem; color:var(--text-muted); font-weight:600;">'+new Date(s.date).getDate()+'</div>'+
+      '<div style="font-size:0.5rem; color:var(--text-muted);">'+label+'</div>'+
+    '</div>';
+  }).join('');
+  container.innerHTML = html;
+  if(legend) legend.textContent = labels[m];
+}
+
+function renderNutritionTab(container) {
+  const profile = state.userProfile;
+  const weight = parseFloat(profile.weight) || 75;
+  const height = parseFloat(profile.height) || 175;
+  const age = parseInt(profile.age) || 25;
+
+  const tmb = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+  let tdee = tmb * 1.55;
+
+  let targetCals = tdee;
+  let split = { p: 30, c: 40, f: 30 };
+
+  if (profile.goals === 'gain') {
+    targetCals = tdee + 400;
+    split = { p: 25, c: 50, f: 25 };
+  } else if (profile.goals === 'lose') {
+    targetCals = tdee - 500;
+    split = { p: 40, c: 30, f: 30 };
+  }
+
+  const pGrams = Math.round((targetCals * (split.p / 100)) / 4);
+  const cGrams = Math.round((targetCals * (split.c / 100)) / 4);
+  const fGrams = Math.round((targetCals * (split.f / 100)) / 9);
+
+  container.innerHTML = `
+    <div class="home-screen">
+      <!-- Objetivo calórico -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1px; background:rgba(0,0,0,0.05); margin-bottom:0;">
+        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:800; color:var(--accent-primary);">${Math.round(targetCals)}</div>
+          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Kcal/día</div>
+        </div>
+        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${profile.goals === 'gain' ? 'Superávit' : profile.goals === 'lose' ? 'Déficit' : 'Mantenimiento'}</div>
+          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Objetivo</div>
+        </div>
+      </div>
+
+      <!-- Macros -->
+      <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05);">
+        <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle);">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Macros diarios</h2>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1px; background:rgba(0,0,0,0.05);">
+          <div style="background:var(--bg-card); padding:16px 12px; text-align:center;">
+            <div style="font-size:1.1rem; font-weight:800; color:var(--accent-primary);">${pGrams}g</div>
+            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Proteína</div>
+          </div>
+          <div style="background:var(--bg-card); padding:16px 12px; text-align:center;">
+            <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);">${cGrams}g</div>
+            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Carbos</div>
+          </div>
+          <div style="background:var(--bg-card); padding:16px 12px; text-align:center;">
+            <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);">${fGrams}g</div>
+            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Grasas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estrategia -->
+      <div style="padding:16px;">
+        <h3 style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:12px; letter-spacing:0.5px;">Estrategia recomendada</h3>
+        <div style="background:var(--bg-surface); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:10px;">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--accent-primary); text-transform:uppercase; margin-bottom:4px;">Pre-entreno</div>
+          <div style="font-size:0.8rem; color:var(--text-secondary); font-weight:500;">Carbohidratos rápidos + proteína ligera. Plátano con proteína o crema de arroz.</div>
+        </div>
+        <div style="background:var(--bg-surface); border-radius:var(--radius-md); padding:14px 16px;">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--accent-primary); text-transform:uppercase; margin-bottom:4px;">Post-entreno</div>
+          <div style="font-size:0.8rem; color:var(--text-secondary); font-weight:500;">Mayor ingesta del día. ~${Math.round(cGrams * 0.4)}g carbos + ~${Math.round(pGrams * 0.4)}g proteína para recuperación.</div>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderNutrition(container) {
