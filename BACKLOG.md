@@ -91,6 +91,26 @@
 - [ ] E46 — Ropa y accesorios desbloqueables por hitos
 - [ ] E47 — Persistencia eficiente del estado del avatar (optimizar localStorage)
 
+### 🎨 Estética Pixel Art (REVOLUCIONARIA)
+> Rediseño completo de la UI con estética pixel art retro. Todos los elementos visuales, iconos, tipografía y animaciones en estilo pixelado.
+
+- [ ] E53 — Rediseñar toda la UI con estética pixel art (colores, bordes, tipografía, iconos)
+- [ ] E54 — Crear sprites pixel art para avatar, iconos de ejercicios y elementos UI
+- [ ] E55 — Implementar fuente pixel art (Press Start 2P o similar)
+- [ ] E56 — Animaciones pixel art (transiciones, efectos de nivel, notificaciones)
+- [ ] E57 — Sistema de misiones diarias con recompensas de XP para el avatar
+- [ ] E58 — Ranking semanal con amigos (iniciales, días de la semana con ticks, KG totales, REPS totales)
+
+### 🎨 Sistema de Selección de Estilos (Minimalista / Pixel Art)
+> Dos temas visuales coexistiendo sin romper el estilo actual. El usuario elige desde Perfil cuál usar.
+
+- [ ] E59 — Crear selector de estilo en Perfil con formato desplegable en línea (Minimalista / Pixel Art)
+- [ ] E60 — Organizar variables CSS en dos temas separados (`--theme-minimal`, `--theme-pixel`)
+- [ ] E61 — Guardar preferencia de estilo en `localStorage`
+- [ ] E62 — Aplicar tema seleccionado a todos los componentes sin duplicar lógica
+- [ ] E63 — Migrar progresivamente componentes al estilo pixel art sin afectar al minimalista
+- [ ] E64 — Fuente pixel art (Press Start 2P) solo activa cuando el tema pixel está seleccionado
+
 ### 🏅 Sistema de Logros/Badges (Pre-Avatar)
 > Gamificación inmediata antes del avatar completo. Badges por hitos de entrenamiento.
 
@@ -98,6 +118,12 @@
 - [ ] E49 — UI de logros desbloqueados y pendientes
 - [ ] E50 — Notificaciones toast al desbloquear logro
 - [ ] E51 — Persistencia de logros en localStorage
+
+### 🎨 Ajustes UI de Perfil
+> Mejorar la sección de Perfil que actualmente tiene cajas demasiado alargadas y elementos innecesarios.
+
+- [ ] E65 — Rediseñar `profile-stat-grid`: cajas `stat-box` muy alargadas ("cuello de jirafa"), ajustar a proporción compacta
+- [ ] E66 — Eliminar caja de "Modo Oscuro" de Perfil (no se va a implementar)
 
 ### 📋 Plantillas de Rutinas
 - [ ] E57 — Añadir 3 plantillas base: Full Body, Upper/Lower, PPL (sin niveles aún)

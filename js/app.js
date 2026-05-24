@@ -23,7 +23,7 @@ const state = {
   prs: {},                 // { 'peso_muerto': { maxKg: 100, maxRepsAtMax: 5 } }
 
   completedSets: {},       // { 'day0_ex0': [ {done: true, kg: '100', reps: '10', type: 'normal'}, ... ] }
-  activeTab: 'entreno',    // 'inicio' | 'entreno' | 'perfil'
+  activeTab: 'entreno',    // 'inicio' | 'entreno' | 'perfil' | 'misiones'
   history: [],
   userProfile: {
     totalWorkouts: 0,
@@ -468,6 +468,7 @@ function renderMainShell() {
     }
     else {
       if (state.activeTab === 'entreno') renderHome();
+      else if (state.activeTab === 'misiones') renderMissions(main);
       else renderPerfil(main);
     }
   }
@@ -492,8 +493,9 @@ function renderBottomNav() {
 
   // SVG Icons for tabs
   const homeIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`;
-  const workoutIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h1m16 0h1M5.5 6.5v11M18.5 6.5v11"/><rect x="5.5" y="9" width="13" height="6" rx="1"/></svg>`;
+  const workoutIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="4" height="6" rx="1"/><rect x="18" y="9" width="4" height="6" rx="1"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>`;
   const profileIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+  const missionsIcon = `<svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>`;
 
   const hideNav = ['post_workout', 'reorder_exercises'].includes(state.currentView);
   nav.className = hideNav ? 'bottom-nav hidden' : 'bottom-nav';
@@ -511,17 +513,16 @@ function renderBottomNav() {
       ${profileIcon}
       <span class="nav-label">Perfil</span>
     </button>
+    <button class="nav-item ${state.activeTab === 'misiones' ? 'active' : ''}" onclick="changeTab('misiones')">
+      ${missionsIcon}
+      <span class="nav-label">Misiones</span>
+    </button>
   `;
 }
 
 function changeTab(tab) {
   state.activeTab = tab;
-  // If a workout is minimized, don't override the view – keep 'home' but don't lose session
-  if (!state.workoutMinimized) {
-    state.currentView = 'home';
-  } else {
-    state.currentView = 'home'; // still show home, mini-player will appear
-  }
+  state.currentView = 'home';
   saveState();
   renderApp();
 }
@@ -2076,7 +2077,90 @@ function renderExerciseSelectorView(container) {
            ${renderExerciseListForSelector(selectorQuery)}
         </div>
      </div>
-   `;
+  `;
+}
+
+function renderMissions(container) {
+  const missionsData = JSON.parse(localStorage.getItem('gymcoach_missions') || 'null');
+  const today = new Date().toDateString();
+
+  let missions = missionsData && missionsData.date === today ? missionsData.missions : generateDailyMissions();
+
+  if (!missionsData || missionsData.date !== today) {
+    localStorage.setItem('gymcoach_missions', JSON.stringify({ date: today, missions }));
+  }
+
+  const xpData = JSON.parse(localStorage.getItem('gymcoach_xp') || '{"xp":0,"level":1}');
+  const xpForNextLevel = xpData.level * 100;
+  const xpProgress = (xpData.xp / xpForNextLevel) * 100;
+
+  container.innerHTML = `
+    <div class="home-screen">
+      <!-- XP & Level Header -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1px; background:rgba(0,0,0,0.05); margin-bottom:0;">
+        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:800; color:var(--accent-primary);">${xpData.level}</div>
+          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Nivel</div>
+        </div>
+        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${xpData.xp} / ${xpForNextLevel}</div>
+          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">XP</div>
+        </div>
+      </div>
+
+      <!-- XP Progress Bar -->
+      <div style="padding:12px 16px; background:var(--bg-surface); border-bottom:0.5px solid rgba(0,0,0,0.05);">
+        <div style="width:100%; height:6px; background:var(--bg-elevated); border-radius:3px; overflow:hidden;">
+          <div style="width:${xpProgress}%; height:100%; background:var(--accent-gradient); border-radius:3px; transition:width 0.3s;"></div>
+        </div>
+      </div>
+
+      <!-- Daily Missions -->
+      <div style="display:flex; flex-direction:column; gap:1px; margin-top:0; background:rgba(0,0,0,0.05);">
+        <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle);">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Misiones Diarias</h2>
+        </div>
+        ${missions.map((m) => `
+          <div style="background:var(--bg-card); padding:14px 16px; display:flex; align-items:center; gap:12px;">
+            <div style="width:44px; height:44px; border-radius:var(--radius-sm); background:${m.completed ? 'var(--accent-gradient)' : 'var(--bg-elevated)'}; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">
+              ${m.completed ? '✓' : m.icon}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:4px; color:var(--text-primary); text-transform:uppercase;">${m.name}</h3>
+              <p style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${m.progress} / ${m.target}</p>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-size:0.75rem; font-weight:800; color:var(--accent-primary);">+${m.xpReward} XP</div>
+              ${m.completed ? '<div style="font-size:0.6rem; color:var(--text-muted); font-weight:600;">Completada</div>' : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Weekly Ranking -->
+      <div style="display:flex; flex-direction:column; gap:1px; margin-top:0; background:rgba(0,0,0,0.05);">
+        <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle);">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Ranking Semanal</h2>
+        </div>
+        <div style="background:var(--bg-card); padding:20px; text-align:center; color:var(--text-muted); font-size:0.8rem; font-weight:600;">
+          Completa entrenamientos para aparecer en el ranking
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function generateDailyMissions() {
+  const allMissions = [
+    { id: 'complete_workout', name: 'Completa un entrenamiento', icon: '🏋️', target: '1', xpReward: 50, progress: '0', completed: false },
+    { id: 'total_sets_20', name: 'Haz 20 series', icon: '📊', target: '20', xpReward: 30, progress: '0', completed: false },
+    { id: 'volume_5000', name: 'Alcanza 5000 kg de volumen', icon: '💪', target: '5000', xpReward: 40, progress: '0', completed: false },
+    { id: 'hit_pr', name: 'Bate un récord personal', icon: '🏅', target: '1', xpReward: 60, progress: '0', completed: false },
+    { id: 'complete_3_exercises', name: 'Completa 3 ejercicios', icon: '✅', target: '3', xpReward: 25, progress: '0', completed: false }
+  ];
+
+  const shuffled = allMissions.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3);
 }
 
 function exportData() {
