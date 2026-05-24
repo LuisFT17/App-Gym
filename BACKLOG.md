@@ -14,21 +14,24 @@
 
 ---
 
-## � BUGS MENORES PENDIENTES
+##  ÉPICAS PENDIENTES
 
-| # | Tarea | Impacto |
-|---|-------|---------|
-| M1 | `openExerciseDetailFromSelector` mostraba "ejercicio no encontrado" al venir del selector | ✅ Corregido |
-| M2 | Apartado "Nutrición e IA": fondo oscuro mal implementado, texto blanco sobre fondo blanco + cajas innecesarias sobre el fondo | Alto |
+###  Nutrición Tracker (NUEVA)
+> Registro completo de comidas con macros, base de datos de alimentos y contexto nutricional.
 
----
-
-## �🚀 ÉPICAS PENDIENTES
+- [ ] E67 — Fase 1: Tracker diario básico (añadir comida con kcal, P, C, G)
+- [ ] E68 — Fase 1: Resumen del día vs objetivo calórico
+- [ ] E69 — Fase 1: Historial de días anteriores
+- [ ] E70 — Fase 2: Base de datos de alimentos predefinidos (pollo, arroz, huevos, etc.)
+- [ ] E71 — Fase 2: Búsqueda rápida al añadir comida
+- [ ] E72 — Fase 2: Porciones personalizables (100g, 150g, etc.)
+- [ ] E73 — Fase 3: Tips nutricionales según objetivo
+- [ ] E74 — Fase 3: Distribución recomendada de macros a lo largo del día
 
 ### 📊 Exportar/Importar Datos
-> La librería `xlsx` ya está instalada pero nunca se usa.
+> La librería `xlsx` ya está instalada y se usa para exportar.
 
-- [ ] E1 — Exportar historial de entrenamientos a `.xlsx`
+- [ ] E1 — Exportar historial de entrenamientos a `.xlsx` ✅ Implementado
 - [ ] E2 — Importar rutina desde `Docs/rutina_gym_5_dias.xlsx`
 - [ ] E3 — Exportar rutina actual a `.xlsx`
 - [ ] E4 — Exportar/importar medidas corporales
@@ -40,21 +43,7 @@
 - [ ] E6 — Añadir campo `icon` a todos los ejercicios en `EXERCISE_DB`
 - [ ] E7 — Placeholder cuando no hay imagen disponible
 
-
-
-### 🍎 Nutrición
-- [ ] E40 — Nuevo apartado "Nutrición" junto a "Entrenar" (estilo app Fitia)
-  - Interfaz intuitiva y parecida a la app móvil
-  - Registro de calorías y macros
-  - Base de datos de alimentos básicos
-  - Plan nutricional diario
-
-### 🎨 Mejoras UI/UX
-- *¡Todas las mejoras UI/UX propuestas han sido completadas!*
-
-
-
-### 🤖 AI Coach Mejorado
+###  AI Coach Mejorado
 - [ ] E13 — Mejorar motor de reglas con más keywords y respuestas
 - [ ] E14 — Contexto de conversación (historial de chat)
 - [ ] E15 — Integración opcional con API de IA externa
@@ -67,7 +56,7 @@
 - [ ] E20 — Iconos de app (192x192, 512x512)
 - [x] E21 — Soporte "Add to Home Screen"
 
-### 📈 Analytics & Progreso
+###  Analytics & Progreso
 - [ ] E22 — Gráficos de progreso de peso/reps por ejercicio
 - [ ] E23 — Gráfico de peso corporal y % grasa
 - [ ] E24 — Estadísticas semanales/mensuales (volumen, sesiones)
@@ -119,16 +108,12 @@
 - [ ] E50 — Notificaciones toast al desbloquear logro
 - [ ] E51 — Persistencia de logros en localStorage
 
-### 🎨 Ajustes UI de Perfil
-> Mejorar la sección de Perfil que actualmente tiene cajas demasiado alargadas y elementos innecesarios.
-
-- [ ] E65 — Rediseñar `profile-stat-grid`: cajas `stat-box` muy alargadas ("cuello de jirafa"), ajustar a proporción compacta
-- [ ] E66 — Eliminar caja de "Modo Oscuro" de Perfil (no se va a implementar)
-
 ### 📋 Plantillas de Rutinas
-- [ ] E57 — Añadir 3 plantillas base: Full Body, Upper/Lower, PPL (sin niveles aún)
+- [x] E57 — Añadir 3 plantillas base: Full Body, Upper/Lower, PPL ✅ Implementado
 - [ ] E58 — Selector de plantilla al iniciar rutina nueva
 - [ ] E59 — Niveles (principiante, intermedio, avanzado) para cada plantilla
+
+###  Backend & Cloud
 > Evaluar Supabase/Firebase para auth, DB y llamadas seguras a IA sin exponer API keys.
 
 - [ ] E52 — Evaluar Supabase vs Firebase vs backend propio
@@ -139,11 +124,23 @@
 
 ---
 
+## ✅ IMPLEMENTADO RECIENTEMENTE
+
+- **Tab Misiones** — 4º tab con misiones diarias, XP y ranking semanal
+- **Tab Nutrición** — 5º tab con macros calculados y estrategia nutricional
+- **Perfil reorganizado** — Entrenamientos + Información (grid 2x2) + secundario
+- **Gráfico interactivo** — Duración/Volumen/Series en Perfil > Entrenamientos
+- **PRs ampliados** — Detección de récord de reps absolutas (cualquier peso)
+- **Medidas corporales** — 17 partes del cuerpo + foto de progreso
+- **Ejercicios movidos** — De Inicio a Perfil > Información > Ejercicios
+- **Iconos renovados** — Mancuerna para Entrenar, pergamino para Misiones
+
+---
+
 ## 💡 SUGERENCIAS
 
 1. **Renombrar `App Gym.html` → `index.html`** — El espacio en el nombre causa problemas de encoding en URLs.
 2. **Timer de descanso inteligente** — Auto-ajustar según tipo de serie (warm-up: 60s, normal: 90s, failure: 180s).
 3. **Modo "siguiente serie"** — Indicador visual claro de qué serie toca ahora.
-4. **Catálogo de plantillas de rutinas** — No solo una rutina hardcodeada, sino opciones (3 días, PPL, full body, etc.).
-5. **Backend opcional (Supabase/Firebase)** — Sincronización entre dispositivos y backup en la nube.
-6. **Migrar a framework ligero (Vue/Preact)** — 1,888 líneas en un solo archivo son difíciles de mantener.
+4. **Backend opcional (Supabase/Firebase)** — Sincronización entre dispositivos y backup en la nube.
+5. **Migrar a framework ligero (Vue/Preact)** — 1,888 líneas en un solo archivo son difíciles de mantener.
