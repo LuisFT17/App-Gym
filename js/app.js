@@ -133,6 +133,11 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openExerciseExplorer = openExerciseExplorer;
   window.closeExerciseExplorer = closeExerciseExplorer;
   window.setChartMetric = setChartMetric;
+  window.toggleHistoryMenu = toggleHistoryMenu;
+  window.shareWorkout = shareWorkout;
+  window.copyWorkout = copyWorkout;
+  window.editWorkout = editWorkout;
+  window.deleteWorkout = deleteWorkout;
   window.startSelectedDay = startSelectedDay;
   window.startEmptyWorkout = startEmptyWorkout;
   window.startRoutineBuilder = startRoutineBuilder;
@@ -559,11 +564,7 @@ function renderHeader() {
       <div class="header-top" style="justify-content: space-between; align-items:center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">
         <div style="display:flex; align-items:center; gap:8px;">
            <button class="back-btn" style="background:transparent; border:none; color:var(--text-primary); font-size:1.2rem; cursor:pointer;" onclick="minimizeWorkout()">←</button>
-           <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary); display:flex; gap:12px; align-items:center;">
-             <span id="sessionTimerValue" style="color:var(--text-muted)">${formatTime(state.sessionElapsed)}</span>
-             <span><span id="headerTotalSets" style="color:#fff">${getCurrentSessionSets()}</span> <span style="color:var(--text-muted); font-weight:400; font-size:0.65rem; text-transform:uppercase;">Series</span></span>
-             <span><span id="headerTotalVolume" style="color:#fff">${getCurrentSessionVolume()}</span> <span style="color:var(--text-muted); font-weight:400; font-size:0.65rem; text-transform:uppercase;">Volumen</span></span>
-           </div>
+           <span id="sessionTimerValue" style="font-size:0.85rem; font-weight:700; color:var(--text-muted)">${formatTime(state.sessionElapsed)}</span>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
            ${state.currentView === 'empty_workout' ? renderBodyHeatmap({ exercises: state.emptyWorkout.exercises }) : renderBodyHeatmap(state.routine.days[state.currentDay])}
@@ -1191,20 +1192,27 @@ function renderInicio(container) {
              <p style="font-size:0.8rem; margin-top:8px;">¡Dale duro hoy! 💪</p>
           </div>
         ` : state.history.map((session, i) => `
-          <div class="history-card" onclick="openHistoryDetail(${i})" style="cursor:pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(0.98)'" onmouseout="this.style.transform='none'">
-            <div class="history-header">
-               <div>
+          <div class="history-card" style="cursor:pointer; transition: transform 0.2s; position:relative;" onmouseover="this.style.transform='scale(0.98)'" onmouseout="this.style.transform='none'">
+            <div class="history-header" onclick="openHistoryDetail(${i})" style="display:flex; justify-content:space-between; align-items:flex-start;">
+               <div style="flex:1;">
                   <div class="history-date">${new Date(session.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</div>
                   <div style="font-weight:700; margin-top:4px;">${session.name}</div>
                </div>
-               <div style="text-align:right;">
+               <div style="text-align:right; margin-right:8px;">
                   <div class="history-volume">${session.volume} kg</div>
                   <div style="font-size:0.7rem; color:var(--text-muted);">${formatTime(session.duration)}</div>
                </div>
+               <button onclick="event.stopPropagation(); toggleHistoryMenu(${i}, this)" style="background:transparent; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:4px 8px; min-width:36px; min-height:36px; display:flex; align-items:center; justify-content:center;">⋮</button>
             </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;" onclick="openHistoryDetail(${i})">
                <span style="font-size:0.7rem; background:var(--bg-elevated); padding:2px 8px; border-radius:10px;">${session.sets} sets</span>
                ${session.prs > 0 ? `<span style="font-size:0.7rem; background:rgba(255,215,0,0.2); color:var(--pr-color); padding:2px 8px; border-radius:10px; font-weight:700;">🏅 ${session.prs} PRs</span>` : ''}
+            </div>
+            <div id="historyMenu_${i}" class="history-menu" style="display:none; position:absolute; top:40px; right:8px; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-md); box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:100; min-width:180px; overflow:hidden;">
+               <button onclick="event.stopPropagation(); shareWorkout(${i})" style="width:100%; padding:12px 16px; background:transparent; border:none; text-align:left; font-size:0.85rem; font-weight:600; color:var(--text-primary); cursor:pointer; display:flex; align-items:center; gap:8px; font-family:var(--font-family);">📤 Compartir</button>
+               <button onclick="event.stopPropagation(); copyWorkout(${i})" style="width:100%; padding:12px 16px; background:transparent; border:none; text-align:left; font-size:0.85rem; font-weight:600; color:var(--text-primary); cursor:pointer; display:flex; align-items:center; gap:8px; font-family:var(--font-family);">📋 Copiar</button>
+               <button onclick="event.stopPropagation(); editWorkout(${i})" style="width:100%; padding:12px 16px; background:transparent; border:none; text-align:left; font-size:0.85rem; font-weight:600; color:var(--text-primary); cursor:pointer; display:flex; align-items:center; gap:8px; font-family:var(--font-family);">✏️ Editar</button>
+               <button onclick="event.stopPropagation(); deleteWorkout(${i})" style="width:100%; padding:12px 16px; background:transparent; border:none; text-align:left; font-size:0.85rem; font-weight:600; color:#ff3b30; cursor:pointer; display:flex; align-items:center; gap:8px; font-family:var(--font-family);">🗑️ Borrar</button>
             </div>
           </div>
         `).reverse().join('')}
@@ -1212,6 +1220,62 @@ function renderInicio(container) {
     </div>
   `;
 }
+
+function toggleHistoryMenu(idx, btn) {
+  const menu = document.getElementById(`historyMenu_${idx}`);
+  const isVisible = menu.style.display === 'block';
+  document.querySelectorAll('.history-menu').forEach(m => m.style.display = 'none');
+  if (!isVisible) menu.style.display = 'block';
+}
+
+function shareWorkout(idx) {
+  const session = state.history[idx];
+  const text = `🏋️ ${session.name}\n📅 ${new Date(session.date).toLocaleDateString('es-ES')}\n⏱️ ${formatTime(session.duration)}\n📊 ${session.volume}kg · ${session.sets} series`;
+  if (navigator.share) {
+    navigator.share({ title: session.name, text });
+  } else {
+    navigator.clipboard.writeText(text);
+    showToast('✅', 'Entrenamiento copiado al portapapeles');
+  }
+  document.querySelectorAll('.history-menu').forEach(m => m.style.display = 'none');
+}
+
+function copyWorkout(idx) {
+  const session = state.history[idx];
+  state.emptyWorkout.active = true;
+  state.emptyWorkout.name = session.name + ' (copia)';
+  state.emptyWorkout.exercises = (session.exercisesList || []).map(ex => ({
+    exerciseId: ex.exerciseId,
+    sets: ex.sets.length,
+    reps: '10-12',
+    notes: ''
+  }));
+  state.currentView = 'empty_workout';
+  state.activeTab = 'entreno';
+  saveState();
+  renderApp();
+  showToast('✅', 'Entrenamiento copiado');
+  document.querySelectorAll('.history-menu').forEach(m => m.style.display = 'none');
+}
+
+function editWorkout(idx) {
+  showToast('🚧', 'Edición de entrenamientos pasados próximamente');
+  document.querySelectorAll('.history-menu').forEach(m => m.style.display = 'none');
+}
+
+async function deleteWorkout(idx) {
+  if (await showCustomConfirm('¿Borrar este entrenamiento del historial?')) {
+    state.history.splice(idx, 1);
+    saveState();
+    renderApp();
+    showToast('️', 'Entrenamiento borrado');
+  }
+  document.querySelectorAll('.history-menu').forEach(m => m.style.display = 'none');
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.history-menu').forEach(m => m.style.display = 'none');
+});
 
 function renderPerfil(container) {
   const totalWeight = state.history.reduce((acc, s) => acc + s.volume, 0);
@@ -1723,7 +1787,10 @@ function openExerciseDetail(exerciseIndex) {
 // Abrir detalle desde el selector de ejercicios
 function openExerciseSelectorToReplace(index) {
   state.replaceExerciseIndex = index;
-  state.exerciseDetailSource = state.currentView === 'empty_workout' ? 'empty_workout' : 'workout';
+  const isVacío = state.currentView === 'empty_workout';
+  const exList = isVacío ? state.emptyWorkout.exercises : state.routine.days[state.currentDay].exercises;
+  state.expandedExerciseId = exList[index].exerciseId;
+  state.exerciseDetailSource = isVacío ? 'empty_workout' : 'workout';
   state.previousView = state.currentView;
   state.currentView = 'exercise_selector';
   renderApp();
@@ -1762,12 +1829,13 @@ function openExerciseDetailFromSelector(exerciseId) {
     return;
   }
 
-  // Guardar contexto del selector para poder volver y mostrar botón de añadir
   state.previousView = state.currentView;
   state.previousDay = state.currentDay;
   state.expandedExerciseId = exerciseId;
-  state.exerciseDetailSource = exerciseSelectorSource || 'empty_workout'; // 'empty_workout' o 'routine_builder'
-  state.expandedExerciseListSnapshot = null; // No necesitamos snapshot aquí
+  if (state.replaceExerciseIndex === null || state.replaceExerciseIndex === undefined) {
+    state.exerciseDetailSource = exerciseSelectorSource || 'empty_workout';
+  }
+  state.expandedExerciseListSnapshot = null;
 
   state.currentView = 'exercise_detail';
   saveState();
@@ -1779,10 +1847,10 @@ function renderExerciseDetail(container) {
   let exerciseConfig = null;
   let exerciseData = null;
 
-  // Si viene del selector de ejercicios, usar EXERCISE_DB directamente
-  if (state.exerciseDetailSource === 'exercise_selector' || state.exerciseDetailSource === 'empty_workout' || state.exerciseDetailSource === 'routine_builder') {
+  // Si viene del selector de ejercicios o es una sustitución, usar EXERCISE_DB directamente
+  if (state.exerciseDetailSource === 'exercise_selector' || state.exerciseDetailSource === 'empty_workout' || state.exerciseDetailSource === 'routine_builder' || state.replaceExerciseIndex !== null) {
     exerciseData = EXERCISE_DB[state.expandedExerciseId];
-    exerciseConfig = { exerciseId: state.expandedExerciseId }; // Config mínima
+    exerciseConfig = { exerciseId: state.expandedExerciseId };
   } else {
     // Viene de un entrenamiento en curso, buscar en la lista
     const exList = state.expandedExerciseListSnapshot ||
@@ -1946,7 +2014,19 @@ function addExerciseFromDetailAndBack(exerciseId) {
 
   saveState();
 
-  // Volver a la vista donde estábamos
+  if (state.replaceExerciseIndex !== null && state.replaceExerciseIndex !== undefined) {
+    state.currentView = 'workout';
+    state.exerciseDetailSource = null;
+    state.expandedExerciseId = null;
+    state.replaceExerciseIndex = null;
+    state.previousView = null;
+    state.previousDay = null;
+    saveState();
+    renderApp();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
   state.currentView = state.previousView || (state.emptyWorkout.active ? 'empty_workout' : 'workout');
   state.exerciseDetailSource = null;
   state.expandedExerciseId = null;
@@ -2081,8 +2161,8 @@ function renderContent() {
       ${exercisesHtml}
       <button class="add-exercise-btn" onclick="openExerciseSelector()">+ Agregar Ejercicio</button>
       ${day.exercises.length > 1 ? `<button class="add-exercise-btn" style="margin-top:0; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openReorderView()">☰ Reordenar Ejercicios</button>` : ''}
-       </div>
     </div>
+    ${summaryDiv}
   `;
 }
 
