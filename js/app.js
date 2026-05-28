@@ -133,6 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openExerciseExplorer = openExerciseExplorer;
   window.closeExerciseExplorer = closeExerciseExplorer;
   window.setChartMetric = setChartMetric;
+  window.toggleRoutineMenu = toggleRoutineMenu;
+  window.shareRoutine = shareRoutine;
+  window.editRoutine = editRoutine;
+  window.deleteRoutine = deleteRoutine;
   window.toggleHistoryMenu = toggleHistoryMenu;
   window.shareWorkout = shareWorkout;
   window.copyWorkout = copyWorkout;
@@ -738,19 +742,26 @@ function renderHome() {
     const sessionIsRunning = state.sessionActive && state.workoutMinimized;
 
     return `
-            <button onclick="${sessionIsRunning ? 'resumeWorkout()' : `startSelectedDay(${i})`}" style="background:var(--bg-card); padding:16px; display:flex; align-items:center; gap:14px; cursor:pointer; border:none; width:100%; font-family:var(--font-family); text-align:left; transition: all 0.2s; -webkit-appearance:none;" onmouseover="this.style.background='var(--bg-surface)'" onmouseout="this.style.background='var(--bg-card)'">
-               <div style="width:44px; height:44px; border-radius:var(--radius-sm); background:${isActiveDay ? 'linear-gradient(135deg,#34c759,#30d158)' : 'var(--accent-gradient)'}; display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:0.9rem; flex-shrink:0; pointer-events:none;">
-                 ${isActiveDay ? '▶' : i + 1}
-               </div>
-               <div style="flex:1; min-width:0;">
-                  <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:4px; color:var(--text-primary); text-transform:uppercase; pointer-events:none;">${day.title}</h3>
-                  <p style="font-size:0.7rem; color:${isActiveDay ? '#34c759' : 'var(--text-muted)'}; font-weight:600; pointer-events:none;">${isActiveDay ? '● En curso · ' + formatTime(state.sessionElapsed) : totalExercises + ' ejercicios · ' + progress + '% completado'}</p>
-                  <div style="width:100%; height:3px; background:var(--bg-surface); border-radius:2px; margin-top:6px; overflow:hidden; pointer-events:none;">
-                    <div style="width:${progress}%; height:100%; background:${isActiveDay ? 'linear-gradient(135deg,#34c759,#30d158)' : 'var(--accent-gradient)'}; border-radius:2px; transition:width 0.3s; pointer-events:none;"></div>
+            <div style="background:var(--bg-card); padding:16px; display:flex; align-items:center; gap:14px; position:relative;">
+               <button onclick="${sessionIsRunning ? 'resumeWorkout()' : `startSelectedDay(${i})`}" style="flex:1; display:flex; align-items:center; gap:14px; cursor:pointer; border:none; background:transparent; font-family:var(--font-family); text-align:left; padding:0; min-width:0;">
+                  <div style="width:44px; height:44px; border-radius:var(--radius-sm); background:${isActiveDay ? 'linear-gradient(135deg,#34c759,#30d158)' : 'var(--accent-gradient)'}; display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:0.9rem; flex-shrink:0; pointer-events:none;">
+                    ${isActiveDay ? '▶' : i + 1}
                   </div>
+                  <div style="flex:1; min-width:0;">
+                     <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:4px; color:var(--text-primary); text-transform:uppercase; pointer-events:none;">${day.title}</h3>
+                     <p style="font-size:0.7rem; color:${isActiveDay ? '#34c759' : 'var(--text-muted)'}; font-weight:600; pointer-events:none;">${isActiveDay ? '● En curso · ' + formatTime(state.sessionElapsed) : totalExercises + ' ejercicios · ' + progress + '% completado'}</p>
+                     <div style="width:100%; height:3px; background:var(--bg-surface); border-radius:2px; margin-top:6px; overflow:hidden; pointer-events:none;">
+                       <div style="width:${progress}%; height:100%; background:${isActiveDay ? 'linear-gradient(135deg,#34c759,#30d158)' : 'var(--accent-gradient)'}; border-radius:2px; transition:width 0.3s; pointer-events:none;"></div>
+                     </div>
+                  </div>
+               </button>
+               <button onclick="event.stopPropagation(); toggleRoutineMenu(${i}, this)" style="background:transparent; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:4px 8px; min-width:36px; min-height:36px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">⋮</button>
+               <div id="routineMenu_${i}" class="routine-menu" style="display:none; position:absolute; top:50px; right:8px; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-md); box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:100; min-width:180px; overflow:hidden;">
+                  <button onclick="event.stopPropagation(); shareRoutine(${i})" style="width:100%; padding:12px 16px; background:transparent; border:none; text-align:left; font-size:0.85rem; font-weight:600; color:var(--text-primary); cursor:pointer; display:flex; align-items:center; gap:8px; font-family:var(--font-family);">📤 Compartir</button>
+                  <button onclick="event.stopPropagation(); editRoutine(${i})" style="width:100%; padding:12px 16px; background:transparent; border:none; text-align:left; font-size:0.85rem; font-weight:600; color:var(--text-primary); cursor:pointer; display:flex; align-items:center; gap:8px; font-family:var(--font-family);">✏️ Editar</button>
+                  <button onclick="event.stopPropagation(); deleteRoutine(${i})" style="width:100%; padding:12px 16px; background:transparent; border:none; text-align:left; font-size:0.85rem; font-weight:600; color:#ff3b30; cursor:pointer; display:flex; align-items:center; gap:8px; font-family:var(--font-family);">🗑️ Borrar</button>
                </div>
-               <div style="color:var(--text-muted); font-size:1.2rem; flex-shrink:0; pointer-events:none;">›</div>
-            </button>
+            </div>
             <div style="background:var(--bg-card); padding:0 16px 12px; display:flex; gap:8px;">
               ${sessionIsRunning
                 ? (isActiveDay
@@ -1274,8 +1285,56 @@ async function deleteWorkout(idx) {
 }
 
 document.addEventListener('click', () => {
-  document.querySelectorAll('.history-menu').forEach(m => m.style.display = 'none');
+  document.querySelectorAll('.history-menu, .routine-menu').forEach(m => m.style.display = 'none');
 });
+
+function toggleRoutineMenu(idx, btn) {
+  const menu = document.getElementById(`routineMenu_${idx}`);
+  const isVisible = menu.style.display === 'block';
+  document.querySelectorAll('.routine-menu').forEach(m => m.style.display = 'none');
+  if (!isVisible) menu.style.display = 'block';
+}
+
+function shareRoutine(idx) {
+  const day = state.routine.days[idx];
+  const exercises = day.exercises.map(ex => {
+    const name = EXERCISE_DB[ex.exerciseId]?.name || ex.exerciseId;
+    return `- ${name}: ${ex.sets} series x ${ex.reps}`;
+  }).join('\n');
+  const text = `🏋️ ${day.title}\n\n${exercises}`;
+  if (navigator.share) {
+    navigator.share({ title: day.title, text });
+  } else {
+    navigator.clipboard.writeText(text);
+    showToast('✅', 'Rutina copiada al portapapeles');
+  }
+  document.querySelectorAll('.routine-menu').forEach(m => m.style.display = 'none');
+}
+
+function editRoutine(idx) {
+  state.currentDay = idx;
+  state.currentView = 'workout';
+  state.activeTab = 'entreno';
+  saveState();
+  renderApp();
+  showToast('️', 'Modo edición activado');
+  document.querySelectorAll('.routine-menu').forEach(m => m.style.display = 'none');
+}
+
+async function deleteRoutine(idx) {
+  if (state.routine.days.length <= 1) {
+    showToast('⚠️', 'No puedes borrar la última rutina');
+    return;
+  }
+  if (await showCustomConfirm(`¿Borrar "${state.routine.days[idx].title}"?`)) {
+    state.routine.days.splice(idx, 1);
+    if (state.currentDay >= state.routine.days.length) state.currentDay = 0;
+    saveState();
+    renderApp();
+    showToast('🗑️', 'Rutina borrada');
+  }
+  document.querySelectorAll('.routine-menu').forEach(m => m.style.display = 'none');
+}
 
 function renderPerfil(container) {
   const totalWeight = state.history.reduce((acc, s) => acc + s.volume, 0);
@@ -2197,7 +2256,15 @@ function openExerciseSelectorForBuilder(dIdx) {
 
 function closeExerciseSelector() {
   selectorQuery = '';
-  state.currentView = exerciseSelectorSource === 'routine_builder' ? 'routine_builder' : 'empty_workout';
+  if (state.replaceExerciseIndex !== null && state.replaceExerciseIndex !== undefined) {
+    state.currentView = 'workout';
+    state.replaceExerciseIndex = null;
+    state.expandedExerciseId = null;
+  } else if (exerciseSelectorSource === 'routine_builder') {
+    state.currentView = 'routine_builder';
+  } else {
+    state.currentView = 'empty_workout';
+  }
   renderApp();
 }
 
