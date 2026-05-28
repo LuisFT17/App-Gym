@@ -66,6 +66,20 @@ const state = {
     feedback: null,
     notes: '',
     sessionData: null
+  },
+
+  // Avatar gamificado
+  avatar: {
+    level: 1,
+    xp: 0,
+    muscles: {
+      chest: { volume: 0, growth: 0 },
+      back: { volume: 0, growth: 0 },
+      legs: { volume: 0, growth: 0 },
+      arms: { volume: 0, growth: 0 },
+      shoulders: { volume: 0, growth: 0 }
+    },
+    accessories: []
   }
 };
 
@@ -1336,16 +1350,118 @@ async function deleteRoutine(idx) {
   document.querySelectorAll('.routine-menu').forEach(m => m.style.display = 'none');
 }
 
+function getAvatarMuscleStyle(growth) {
+  const scale = 1 + (growth / 200);
+  const opacity = 0.3 + (growth / 100) * 0.5;
+  return `transform: scale(${scale}); transform-origin: center; opacity: ${opacity}; transition: all 0.5s ease;`;
+}
+
+function renderAvatarSVG() {
+  const m = state.avatar.muscles;
+  const lvl = state.avatar.level;
+  const hasHeadband = lvl >= 5;
+  const hasBelt = lvl >= 10;
+
+  const skinColor = '#F4C2A1';
+  const skinShadow = '#E0A88A';
+  const tankColor = '#FFFFFF';
+  const tankShadow = '#E8E8E8';
+  const hairColor = '#4A3728';
+  const pantsColor = '#3D5A80';
+
+  return `
+    <div style="position:relative; width:180px; height:280px; margin:0 auto;">
+      <svg viewBox="0 0 200 320" width="180" height="280" style="overflow:visible;">
+        <defs>
+          <radialGradient id="skinGrad" cx="50%" cy="30%">
+            <stop offset="0%" stop-color="${skinColor}"/>
+            <stop offset="100%" stop-color="${skinShadow}"/>
+          </radialGradient>
+          <radialGradient id="tankGrad" cx="50%" cy="30%">
+            <stop offset="0%" stop-color="${tankColor}"/>
+            <stop offset="100%" stop-color="${tankShadow}"/>
+          </radialGradient>
+        </defs>
+
+        <!-- PIERNAS (Base) -->
+        <path d="M 75 200 L 70 280 L 85 280 L 90 210 Z" fill="${pantsColor}"/>
+        <path d="M 125 200 L 130 280 L 115 280 L 110 210 Z" fill="${pantsColor}"/>
+        ${hasBelt ? `<rect x="70" y="195" width="60" height="10" fill="#8B4513" rx="3"/>` : ''}
+
+        <!-- BRAZOS (Base) -->
+        <path d="M 45 110 C 30 120, 25 150, 30 180 C 35 190, 45 185, 50 170 C 50 140, 50 120, 45 110 Z" fill="url(#skinGrad)"/>
+        <path d="M 155 110 C 170 120, 175 150, 170 180 C 165 190, 155 185, 150 170 C 150 140, 150 120, 155 110 Z" fill="url(#skinGrad)"/>
+
+        <!-- TORSO (Camiseta) -->
+        <path d="M 70 100 C 65 110, 60 150, 65 195 C 70 205, 130 205, 135 195 C 140 150, 135 110, 130 100 C 120 90, 80 90, 70 100 Z" fill="url(#tankGrad)" stroke="#DDD" stroke-width="1"/>
+        <path d="M 85 95 C 90 105, 110 105, 115 95 C 110 85, 90 85, 85 95 Z" fill="${skinColor}"/>
+
+        <!-- CABEZA -->
+        <circle cx="100" cy="55" r="32" fill="url(#skinGrad)"/>
+        <path d="M 68 50 C 70 20, 100 15, 130 20 C 140 25, 145 40, 140 50 C 135 35, 100 30, 68 50 Z" fill="${hairColor}"/>
+        <path d="M 68 50 C 65 40, 70 30, 80 25 C 75 35, 70 45, 68 50 Z" fill="${hairColor}"/>
+        <path d="M 132 50 C 135 40, 130 30, 120 25 C 125 35, 130 45, 132 50 Z" fill="${hairColor}"/>
+        <ellipse cx="88" cy="55" rx="5" ry="6" fill="#FFF"/>
+        <circle cx="88" cy="55" r="3" fill="#333"/>
+        <ellipse cx="112" cy="55" rx="5" ry="6" fill="#FFF"/>
+        <circle cx="112" cy="55" r="3" fill="#333"/>
+        <path d="M 82 48 Q 88 45, 94 48" stroke="${hairColor}" stroke-width="2" fill="none"/>
+        <path d="M 106 48 Q 112 45, 118 48" stroke="${hairColor}" stroke-width="2" fill="none"/>
+        <path d="M 92 70 Q 100 78, 108 70" stroke="#C47A5A" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="80" cy="65" r="4" fill="#FFB6C1" opacity="0.4"/>
+        <circle cx="120" cy="65" r="4" fill="#FFB6C1" opacity="0.4"/>
+        ${hasHeadband ? `<rect x="68" y="45" width="64" height="6" fill="#FF4444" rx="2"/>` : ''}
+
+        <!-- MÚSCULOS (Corregidos anatómicamente) -->
+        <!-- Hombros -->
+        <g style="${getAvatarMuscleStyle(m.shoulders.growth)}">
+          <path d="M 60 105 C 50 105, 40 115, 40 125 C 40 135, 50 140, 60 135 C 65 130, 65 115, 60 105 Z" fill="var(--accent-primary)"/>
+          <path d="M 140 105 C 150 105, 160 115, 160 125 C 160 135, 150 140, 140 135 C 135 130, 135 115, 140 105 Z" fill="var(--accent-primary)"/>
+        </g>
+        <!-- Pecho -->
+        <g style="${getAvatarMuscleStyle(m.chest.growth)}">
+          <path d="M 75 115 C 85 110, 115 110, 125 115 C 130 130, 120 150, 100 150 C 80 150, 70 130, 75 115 Z" fill="var(--accent-primary)"/>
+        </g>
+        <!-- Brazos -->
+        <g style="${getAvatarMuscleStyle(m.arms.growth)}">
+          <path d="M 35 120 C 25 130, 25 160, 35 170 C 40 175, 45 165, 45 150 C 45 135, 40 125, 35 120 Z" fill="var(--accent-primary)"/>
+          <path d="M 165 120 C 175 130, 175 160, 165 170 C 160 175, 155 165, 155 150 C 155 135, 160 125, 165 120 Z" fill="var(--accent-primary)"/>
+        </g>
+        <!-- Piernas -->
+        <g style="${getAvatarMuscleStyle(m.legs.growth)}">
+          <path d="M 75 205 C 65 215, 65 250, 75 260 C 85 265, 90 250, 85 230 C 85 215, 80 210, 75 205 Z" fill="var(--accent-primary)"/>
+          <path d="M 125 205 C 135 215, 135 250, 125 260 C 115 265, 110 250, 115 230 C 115 215, 120 210, 125 205 Z" fill="var(--accent-primary)"/>
+        </g>
+        <!-- Espalda -->
+        <g style="${getAvatarMuscleStyle(m.back.growth)}">
+          <path d="M 70 100 L 60 110 L 65 130 L 80 130 L 80 110 Z" fill="var(--accent-primary)" opacity="0.5"/>
+          <path d="M 130 100 L 140 110 L 135 130 L 120 130 L 120 110 Z" fill="var(--accent-primary)" opacity="0.5"/>
+        </g>
+
+      </svg>
+      <div style="text-align:center; font-size:0.7rem; color:var(--text-muted); font-weight:700; margin-top:-10px;">
+        Nivel ${lvl}
+      </div>
+    </div>
+  `;
+}
+
 function renderPerfil(container) {
   const totalWeight = state.history.reduce((acc, s) => acc + s.volume, 0);
   const totalHours = Math.round(state.history.reduce((acc, s) => acc + s.duration, 0) / 3600);
 
-  container.innerHTML = `
+   container.innerHTML = `
     <div class="home-screen">
        <div style="text-align:center; padding: 20px 0;">
           <div style="width:80px; height:80px; background:var(--bg-elevated); border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:2rem; border:2px solid var(--border-subtle);">👤</div>
            <h2>${state.userName || 'Usuario'}</h2>
           <p style="color:var(--text-muted); font-size:0.8rem;">Entrenando desde ${new Date(state.userProfile.joinedDate).toLocaleDateString()}</p>
+          <p style="color:var(--accent-primary); font-size:0.75rem; font-weight:700; margin-top:4px;">Nivel ${state.avatar.level} · ${state.avatar.xp} XP</p>
+       </div>
+
+       <!-- Avatar Preview -->
+       <div style="padding:0 16px 16px; text-align:center;">
+          ${renderAvatarSVG()}
        </div>
 
        <!-- Entrenamientos -->
@@ -2117,7 +2233,8 @@ function saveState() {
     userProfile: state.userProfile,
     currentView: state.currentView,
     emptyWorkout: state.emptyWorkout,
-    theme: state.theme
+    theme: state.theme,
+    avatar: state.avatar
   };
   localStorage.setItem('gymcoach_state', JSON.stringify(toSave));
 }
@@ -2143,6 +2260,12 @@ function loadState() {
       state.currentView = saved.currentView || 'home';
       state.emptyWorkout = saved.emptyWorkout || state.emptyWorkout;
       state.workoutMinimized = saved.workoutMinimized || false;
+      state.avatar = saved.avatar || state.avatar;
+
+      // Inicializar avatar desde historial si es nuevo
+      if (!saved.avatar || (saved.avatar && saved.avatar.muscles.chest.volume === 0)) {
+        updateAvatarFromHistory();
+      }
 
       if (saved.sessionActive && saved.sessionStartTime) {
         state.sessionActive = true;
@@ -2161,6 +2284,56 @@ function loadState() {
   } catch (e) {
     console.error("Error loading state", e);
   }
+}
+
+function updateAvatarFromHistory() {
+  const muscleMap = {
+    chest: ['pecho'],
+    back: ['espalda', 'espalda baja', 'trapecio', 'core'],
+    legs: ['cuádriceps', 'isquiotibiales', 'glúteos', 'piernas', 'gemelos', 'aductores'],
+    arms: ['bíceps', 'tríceps', 'antebrazo'],
+    shoulders: ['hombro', 'hombro anterior', 'hombro posterior']
+  };
+
+  // Reset volumes
+  Object.keys(state.avatar.muscles).forEach(m => {
+    state.avatar.muscles[m].volume = 0;
+  });
+
+  // Calcular volumen por grupo muscular desde el historial
+  state.history.forEach(session => {
+    if (session.exercisesList) {
+      session.exercisesList.forEach(ex => {
+        const exData = EXERCISE_DB[ex.exerciseId];
+        if (!exData) return;
+        const mg = exData.muscleGroup;
+
+        // Encontrar a qué categoría del avatar pertenece
+        for (const [avatarMuscle, groups] of Object.entries(muscleMap)) {
+          if (groups.includes(mg)) {
+            const setVolume = ex.sets.reduce((acc, s) => {
+              return acc + ((parseFloat(s.kg) || 0) * (parseInt(s.reps) || 0));
+            }, 0);
+            state.avatar.muscles[avatarMuscle].volume += setVolume;
+            break;
+          }
+        }
+      });
+    }
+  });
+
+  // Calcular growth (0-100) basado en el volumen máximo encontrado
+  const maxVol = Math.max(...Object.values(state.avatar.muscles).map(m => m.volume), 1);
+  Object.keys(state.avatar.muscles).forEach(m => {
+    state.avatar.muscles[m].growth = Math.min(100, Math.round((state.avatar.muscles[m].volume / maxVol) * 100));
+  });
+
+  // Calcular XP y nivel
+  const totalVol = Object.values(state.avatar.muscles).reduce((acc, m) => acc + m.volume, 0);
+  state.avatar.xp = Math.floor(totalVol / 100); // 1 XP por cada 100kg
+  state.avatar.level = Math.floor(state.avatar.xp / 50) + 1; // 1 nivel cada 50 XP
+
+  saveState();
 }
 
 // ── UI de Días (Tabs) ──
@@ -3714,6 +3887,9 @@ function submitPostWorkout() {
   state.history.push(sessionRecord);
   state.userProfile.totalWorkouts++;
   state.workoutMinimized = false;
+
+  // Actualizar avatar con el nuevo entrenamiento
+  updateAvatarFromHistory();
 
   showToast('💾', 'Entrenamiento guardado en Inicio');
 
