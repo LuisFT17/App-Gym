@@ -79,7 +79,8 @@ const state = {
       arms: { volume: 0, growth: 0 },
       shoulders: { volume: 0, growth: 0 }
     },
-    accessories: []
+    accessories: [],
+    levelUpTriggered: false
   }
 };
 
@@ -1367,6 +1368,7 @@ function renderAvatarSVG() {
   const lvl = state.avatar.level;
   const hasHeadband = lvl >= 5;
   const hasBelt = lvl >= 10;
+  const auraActive = state.avatar.levelUpTriggered;
 
   const skinColor = '#F4C2A1';
   const skinShadow = '#E0A88A';
@@ -1377,6 +1379,7 @@ function renderAvatarSVG() {
 
   return `
     <div style="position:relative; width:180px; height:280px; margin:0 auto;">
+      ${auraActive ? '<div class="ssj-aura"></div>' : ''}
       <svg viewBox="0 0 200 320" width="180" height="280" style="overflow:visible;">
         <defs>
           <radialGradient id="skinGrad" cx="50%" cy="30%">
@@ -2344,8 +2347,22 @@ function updateAvatarFromHistory() {
 
   // Calcular XP y nivel
   const totalVol = Object.values(state.avatar.muscles).reduce((acc, m) => acc + m.volume, 0);
-  state.avatar.xp = Math.floor(totalVol / 100); // 1 XP por cada 100kg
-  state.avatar.level = Math.floor(state.avatar.xp / 50) + 1; // 1 nivel cada 50 XP
+  const newXP = Math.floor(totalVol / 100); // 1 XP por cada 100kg
+  const newLevel = Math.floor(newXP / 50) + 1; // 1 nivel cada 50 XP
+
+  // Detectar subida de nivel
+  if (newLevel > state.avatar.level && !state.avatar.levelUpTriggered) {
+    state.avatar.levelUpTriggered = true;
+    // Desactivar el aura después de 3 segundos
+    setTimeout(() => {
+      state.avatar.levelUpTriggered = false;
+      saveState();
+      renderApp();
+    }, 3000);
+  }
+
+  state.avatar.xp = newXP;
+  state.avatar.level = newLevel;
 
   saveState();
 }
