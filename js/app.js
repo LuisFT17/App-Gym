@@ -503,18 +503,26 @@ function renderMainShell() {
 }
 
 function renderBottomNav() {
+  let wrapper = document.getElementById('bottomBar');
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.id = 'bottomBar';
+    wrapper.style.cssText = 'position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; z-index:1000;';
+    document.getElementById('app').appendChild(wrapper);
+  }
+
   let nav = document.getElementById('bottomNav');
   if (!nav) {
     nav = document.createElement('nav');
     nav.id = 'bottomNav';
     nav.className = 'bottom-nav';
-    document.getElementById('app').appendChild(nav);
+    wrapper.appendChild(nav);
   }
 
   // Show or hide mini-player depending on whether a session is running outside the workout view
   const isInWorkout = (state.currentView === 'workout' || state.currentView === 'empty_workout');
   if (state.sessionActive && !isInWorkout) {
-    renderMiniPlayer();
+    renderMiniPlayer(wrapper);
   } else {
     teardownMiniPlayer();
   }
@@ -1874,12 +1882,17 @@ function resumeWorkout() {
 // ── Floating Mini-Player ──
 let _miniPlayerInterval = null;
 
-function renderMiniPlayer() {
+function renderMiniPlayer(wrapper) {
   let container = document.getElementById('workoutMiniPlayer');
   if (!container) {
     container = document.createElement('div');
     container.id = 'workoutMiniPlayer';
-    document.getElementById('app').appendChild(container);
+    const nav = document.getElementById('bottomNav');
+    if (nav && nav.parentNode) {
+      nav.parentNode.insertBefore(container, nav);
+    } else if (wrapper) {
+      wrapper.insertBefore(container, wrapper.firstChild);
+    }
   }
 
   const name = state.emptyWorkout.active

@@ -103,7 +103,7 @@ body {
   max-width: 480px;
   margin: 0 auto;
   padding: 0;
-  padding-bottom: calc(80px + var(--safe-area-bottom));
+  padding-bottom: calc(160px + var(--safe-area-bottom));
   background: var(--bg-primary);
   min-height: 100vh;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
@@ -1681,12 +1681,7 @@ body {
 
 /* ── Bottom Nav (iOS Tab Bar Style) ── */
 .bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
   width: 100%;
-  max-width: 480px;
   height: calc(64px + var(--safe-area-bottom));
   padding-bottom: var(--safe-area-bottom);
   background: rgba(255, 255, 255, 0.92);
@@ -1697,7 +1692,6 @@ body {
   justify-content: space-around;
   align-items: flex-start;
   padding-top: 8px;
-  z-index: 1000;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1920,14 +1914,22 @@ body {
 
 /* ── Floating Workout Mini-Player ── */
 #workoutMiniPlayer {
-  position: fixed;
-  bottom: calc(70px + var(--safe-area-bottom) + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   width: calc(100% - 32px);
   max-width: 448px;
+  margin: 0 auto 8px auto;
   z-index: 90;
   pointer-events: auto;
+}
+
+#bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  z-index: 1000;
 }
 
 .mini-player-pill {
