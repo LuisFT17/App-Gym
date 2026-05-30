@@ -79,6 +79,10 @@
 - [ ] E45 — Sistema de niveles basado en métricas reales (workouts, racha, PRs)
 - [ ] E46 — Ropa y accesorios desbloqueables por hitos
 - [ ] E47 — Persistencia eficiente del estado del avatar (optimizar localStorage)
+- [ ] E75 — Animación de "Level Up" al subir de nivel (efecto visual)
+- [ ] E76 — Animación de respiración sutil en el torso (idle)
+- [ ] E77 — Efecto de brillo en músculos que acaban de crecer
+- [ ] E78 — Pose dinámica al pulsar el avatar (flexión de brazos)
 
 ### 🎨 Estética Pixel Art (REVOLUCIONARIA)
 > Rediseño completo de la UI con estética pixel art retro. Todos los elementos visuales, iconos, tipografía y animaciones en estilo pixelado.
