@@ -2350,15 +2350,17 @@ function updateAvatarFromHistory() {
   const newXP = Math.floor(totalVol / 100); // 1 XP por cada 100kg
   const newLevel = Math.floor(newXP / 50) + 1; // 1 nivel cada 50 XP
 
-  // Detectar subida de nivel
-  if (newLevel > state.avatar.level && !state.avatar.levelUpTriggered) {
+  // Detectar subida de nivel (comparar con el nivel anterior guardado)
+  const oldLevel = state.avatar.level || 1;
+  if (newLevel > oldLevel) {
     state.avatar.levelUpTriggered = true;
-    // Desactivar el aura después de 3 segundos
+    showToast('⚡', `¡NIVEL ${newLevel}! Tu avatar ha evolucionado`);
+    // Desactivar el aura después de 5 segundos
     setTimeout(() => {
       state.avatar.levelUpTriggered = false;
       saveState();
       renderApp();
-    }, 3000);
+    }, 5000);
   }
 
   state.avatar.xp = newXP;
@@ -2501,14 +2503,248 @@ function renderExerciseSelectorView(container) {
 }
 
 function renderMissions(container) {
-  const missionsData = JSON.parse(localStorage.getItem('gymcoach_missions') || 'null');
-  const today = new Date().toDateString();
+  const missionsState = getMissionsState();
 
-  let missions = missionsData && missionsData.date === today ? missionsData.missions : generateDailyMissions();
+  const xpData = JSON.parse(localStorage.getItem('gymcoach_xp') || '{"xp":0,"level":1}');
+  const xpForNextLevel = xpData.level * 100;
+  const xpProgress = (xpData.xp / xpForNextLevel) * 100;
 
-  if (!missionsData || missionsData.date !== today) {
-    localStorage.setItem('gymcoach_missions', JSON.stringify({ date: today, missions }));
+  container.innerHTML = `
+    <div class="home-screen">
+      <!-- XP & Level Header -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1px; background:rgba(0,0,0,0.05); margin-bottom:0;">
+        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:800; color:var(--accent-primary);">${xpData.level}</div>
+          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Nivel</div>
+        </div>
+        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
+          <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${xpData.xp} / ${xpForNextLevel}</div>
+          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">XP</div>
+        </div>
+      </div>
+
+      <!-- XP Progress Bar -->
+      <div style="padding:12px 16px; background:var(--bg-surface); border-bottom:0.5px solid rgba(0,0,0,0.05);">
+        <div style="width:100%; height:6px; background:var(--bg-elevated); border-radius:3px; overflow:hidden;">
+          <div style="width:${xpProgress}%; height:100%; background:var(--accent-gradient); border-radius:3px; transition:width 0.3s;"></div>
+        </div>
+      </div>
+
+      <!-- Daily Missions -->
+      <div style="display:flex; flex-direction:column; gap:1px; margin-top:0; background:rgba(0,0,0,0.05);">
+        <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Misiones Diarias</h2>
+          <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">Se reinician mañana</span>
+        </div>
+        ${missionsState.daily.map((m) => renderMissionCard(m)).join('')}
+      </div>
+
+      <!-- Weekly Missions -->
+      <div style="display:flex; flex-direction:column; gap:1px; margin-top:16px; background:rgba(0,0,0,0.05);">
+        <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--accent-primary); text-transform:uppercase;">Misiones Semanales</h2>
+          <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">Se reinician el lunes</span>
+        </div>
+        ${missionsState.weekly.map((m) => renderMissionCard(m, true)).join('')}
+      </div>
+
+      <!-- Monthly Mission -->
+      <div style="display:flex; flex-direction:column; gap:1px; margin-top:16px; background:rgba(0,0,0,0.05);">
+        <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:#FFD700; text-transform:uppercase;">Misión Mensual</h2>
+          <span style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">Se reinicia el día 1</span>
+        </div>
+        ${renderMissionCard(missionsState.monthly, false, true)}
+      </div>
+
+      <!-- Weekly Ranking -->
+      <div style="display:flex; flex-direction:column; gap:1px; margin-top:16px; background:rgba(0,0,0,0.05);">
+        <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle);">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Ranking Semanal</h2>
+        </div>
+        <div style="background:var(--bg-card); padding:20px; text-align:center; color:var(--text-muted); font-size:0.8rem; font-weight:600;">
+          Completa entrenamientos para aparecer en el ranking
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMissionCard(m, isWeekly = false, isMonthly = false) {
+  const pct = m.target > 0 ? Math.min(100, Math.round((m.progress / m.target) * 100)) : 0;
+  const borderColor = isMonthly ? '#FFD700' : (isWeekly ? 'var(--accent-primary)' : 'var(--border-subtle)');
+  const bgColor = m.completed ? 'rgba(52, 199, 89, 0.1)' : 'var(--bg-card)';
+
+  return `
+    <div style="background:${bgColor}; padding:14px 16px; display:flex; align-items:center; gap:12px; border-left:3px solid ${m.completed ? '#34c759' : borderColor};">
+      <div style="width:44px; height:44px; border-radius:var(--radius-sm); background:${m.completed ? 'var(--accent-gradient)' : 'var(--bg-elevated)'}; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">
+        ${m.completed ? '✓' : m.icon}
+      </div>
+      <div style="flex:1; min-width:0;">
+        <h3 style="font-size:0.85rem; font-weight:700; margin-bottom:4px; color:var(--text-primary); text-transform:uppercase;">${m.name}</h3>
+        <div style="width:100%; height:4px; background:var(--bg-elevated); border-radius:2px; overflow:hidden; margin-bottom:4px;">
+          <div style="width:${pct}%; height:100%; background:${m.completed ? '#34c759' : 'var(--accent-gradient)'}; border-radius:2px; transition:width 0.3s;"></div>
+        </div>
+        <p style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">${m.progress} / ${m.target}</p>
+      </div>
+      <div style="text-align:right; flex-shrink:0;">
+        <div style="font-size:0.75rem; font-weight:800; color:var(--accent-primary);">+${m.xpReward} XP</div>
+        ${m.completed ? '<div style="font-size:0.6rem; color:#34c759; font-weight:600;">Completada</div>' : ''}
+      </div>
+    </div>
+  `;
+}
+
+function getMissionsState() {
+  const now = new Date();
+  const today = now.toDateString();
+  const weekKey = getWeekKey(now);
+  const monthKey = now.getFullYear() + '-' + (now.getMonth() + 1);
+
+  let saved = JSON.parse(localStorage.getItem('gymcoach_missions_v2') || 'null');
+
+  // Generar nuevas si no existen o cambiaron de período
+  if (!saved || saved.daily.date !== today) {
+    saved = saved || {};
+    saved.daily = { date: today, missions: generateDailyMissions() };
   }
+  if (!saved.weekly || saved.weekly.week !== weekKey) {
+    saved.weekly = { week: weekKey, missions: generateWeeklyMissions() };
+  }
+  if (!saved.monthly || saved.monthly.month !== monthKey) {
+    saved.monthly = { month: monthKey, mission: generateMonthlyMission() };
+  }
+
+  // Actualizar progreso desde el historial
+  updateMissionsProgress(saved);
+
+  localStorage.setItem('gymcoach_missions_v2', JSON.stringify(saved));
+
+  return {
+    daily: saved.daily.missions,
+    weekly: saved.weekly.missions,
+    monthly: saved.monthly.mission
+  };
+}
+
+function getWeekKey(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  return monday.toDateString();
+}
+
+function generateDailyMissions() {
+  const allMissions = [
+    { id: 'complete_workout', name: 'Completa un entrenamiento', icon: '🏋️', target: 1, xpReward: 50, progress: 0, completed: false },
+    { id: 'total_sets_15', name: 'Haz 15 series', icon: '', target: 15, xpReward: 30, progress: 0, completed: false },
+    { id: 'total_sets_25', name: 'Haz 25 series', icon: '📊', target: 25, xpReward: 45, progress: 0, completed: false },
+    { id: 'volume_3000', name: 'Alcanza 3000 kg de volumen', icon: '💪', target: 3000, xpReward: 40, progress: 0, completed: false },
+    { id: 'volume_5000', name: 'Alcanza 5000 kg de volumen', icon: '💪', target: 5000, xpReward: 60, progress: 0, completed: false },
+    { id: 'complete_3_exercises', name: 'Completa 3 ejercicios', icon: '✅', target: 3, xpReward: 25, progress: 0, completed: false },
+    { id: 'complete_5_exercises', name: 'Completa 5 ejercicios', icon: '✅', target: 5, xpReward: 40, progress: 0, completed: false },
+    { id: 'duration_30min', name: 'Entrena 30 minutos', icon: '⏱️', target: 1800, xpReward: 35, progress: 0, completed: false },
+    { id: 'duration_45min', name: 'Entrena 45 minutos', icon: '⏱️', target: 2700, xpReward: 50, progress: 0, completed: false },
+    { id: 'hit_pr', name: 'Bate un récord personal', icon: '🏅', target: 1, xpReward: 60, progress: 0, completed: false }
+  ];
+
+  // Seleccionar 5 aleatorias sin repetir
+  const shuffled = allMissions.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 5).map(m => ({...m}));
+}
+
+function generateWeeklyMissions() {
+  const allMissions = [
+    { id: 'weekly_workouts_3', name: 'Completa 3 entrenamientos', icon: '📅', target: 3, xpReward: 100, progress: 0, completed: false },
+    { id: 'weekly_workouts_5', name: 'Completa 5 entrenamientos', icon: '📅', target: 5, xpReward: 200, progress: 0, completed: false },
+    { id: 'weekly_sets_100', name: 'Haz 100 series', icon: '📊', target: 100, xpReward: 150, progress: 0, completed: false },
+    { id: 'weekly_volume_20000', name: 'Alcanza 20000 kg de volumen', icon: '💪', target: 20000, xpReward: 175, progress: 0, completed: false },
+    { id: 'weekly_pr_3', name: 'Bate 3 récords personales', icon: '🏅', target: 3, xpReward: 125, progress: 0, completed: false },
+    { id: 'weekly_minutes_180', name: 'Entrena 180 minutos', icon: '⏱️', target: 10800, xpReward: 130, progress: 0, completed: false }
+  ];
+
+  const shuffled = allMissions.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 3).map(m => ({...m}));
+}
+
+function generateMonthlyMission() {
+  const allMissions = [
+    { id: 'monthly_workouts_20', name: 'Completa 20 entrenamientos', icon: '🏆', target: 20, xpReward: 500, progress: 0, completed: false },
+    { id: 'monthly_volume_100000', name: 'Alcanza 100000 kg de volumen', icon: '', target: 100000, xpReward: 600, progress: 0, completed: false },
+    { id: 'monthly_sets_500', name: 'Haz 500 series', icon: '', target: 500, xpReward: 550, progress: 0, completed: false },
+    { id: 'monthly_pr_10', name: 'Bate 10 récords personales', icon: '⭐', target: 10, xpReward: 450, progress: 0, completed: false }
+  ];
+
+  const shuffled = allMissions.sort(() => Math.random() - 0.5);
+  return {...shuffled[0]};
+}
+
+function updateMissionsProgress(saved) {
+  // Calcular stats del día actual
+  const today = new Date().toDateString();
+  const todaySessions = state.history.filter(s => new Date(s.date).toDateString() === today);
+  const todayVolume = todaySessions.reduce((acc, s) => acc + (s.volume || 0), 0);
+  const todaySets = todaySessions.reduce((acc, s) => acc + (s.sets || 0), 0);
+  const todayDuration = todaySessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+  const todayPRs = todaySessions.reduce((acc, s) => acc + (s.prs || 0), 0);
+  const todayExercises = todaySessions.reduce((acc, s) => acc + (s.exercisesCompleted || 0), 0);
+  const todayWorkouts = todaySessions.length;
+
+  // Actualizar diarias
+  saved.daily.missions.forEach(m => {
+    switch(m.id) {
+      case 'complete_workout': m.progress = todayWorkouts; break;
+      case 'total_sets_15': case 'total_sets_25': m.progress = todaySets; break;
+      case 'volume_3000': case 'volume_5000': m.progress = todayVolume; break;
+      case 'complete_3_exercises': case 'complete_5_exercises': m.progress = todayExercises; break;
+      case 'duration_30min': case 'duration_45min': m.progress = todayDuration; break;
+      case 'hit_pr': m.progress = todayPRs; break;
+    }
+    m.completed = m.progress >= m.target;
+  });
+
+  // Calcular stats semanales
+  const weekKey = getWeekKey(new Date());
+  const weekSessions = state.history.filter(s => getWeekKey(new Date(s.date)) === weekKey);
+  const weekVolume = weekSessions.reduce((acc, s) => acc + (s.volume || 0), 0);
+  const weekSets = weekSessions.reduce((acc, s) => acc + (s.sets || 0), 0);
+  const weekDuration = weekSessions.reduce((acc, s) => acc + (s.duration || 0), 0);
+  const weekPRs = weekSessions.reduce((acc, s) => acc + (s.prs || 0), 0);
+  const weekWorkouts = weekSessions.length;
+
+  saved.weekly.missions.forEach(m => {
+    switch(m.id) {
+      case 'weekly_workouts_3': case 'weekly_workouts_5': m.progress = weekWorkouts; break;
+      case 'weekly_sets_100': m.progress = weekSets; break;
+      case 'weekly_volume_20000': m.progress = weekVolume; break;
+      case 'weekly_pr_3': m.progress = weekPRs; break;
+      case 'weekly_minutes_180': m.progress = weekDuration; break;
+    }
+    m.completed = m.progress >= m.target;
+  });
+
+  // Calcular stats mensuales
+  const now = new Date();
+  const monthKey = now.getFullYear() + '-' + (now.getMonth() + 1);
+  const monthSessions = state.history.filter(s => {
+    const d = new Date(s.date);
+    return d.getFullYear() === now.getFullYear() && (d.getMonth() + 1) === (now.getMonth() + 1);
+  });
+  const monthVolume = monthSessions.reduce((acc, s) => acc + (s.volume || 0), 0);
+  const monthSets = monthSessions.reduce((acc, s) => acc + (s.sets || 0), 0);
+  const monthPRs = monthSessions.reduce((acc, s) => acc + (s.prs || 0), 0);
+  const monthWorkouts = monthSessions.length;
+
+  const mm = saved.monthly.mission;
+  switch(mm.id) {
+    case 'monthly_workouts_20': mm.progress = monthWorkouts; break;
+    case 'monthly_volume_100000': mm.progress = monthVolume; break;
+    case 'monthly_sets_500': mm.progress = monthSets; break;
+    case 'monthly_pr_10': mm.progress = monthPRs; break;
+  }
+  mm.completed = mm.progress >= mm.target;
+}
 
   const xpData = JSON.parse(localStorage.getItem('gymcoach_xp') || '{"xp":0,"level":1}');
   const xpForNextLevel = xpData.level * 100;
