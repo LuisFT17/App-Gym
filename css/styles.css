@@ -435,7 +435,7 @@ body {
   background: rgba(0, 0, 0, 0.05);
   margin: 0;
   padding-top: 80px;
-  padding-bottom: 100px;
+  padding-bottom: 160px;
 }
 
 .exercise-card {
@@ -1921,12 +1921,12 @@ body {
 /* ── Floating Workout Mini-Player ── */
 #workoutMiniPlayer {
   position: fixed;
-  bottom: calc(70px + var(--safe-area-bottom));
+  bottom: calc(70px + var(--safe-area-bottom) + 8px);
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 32px);
   max-width: 448px;
-  z-index: 999;
+  z-index: 90;
   pointer-events: auto;
 }
 
@@ -1934,7 +1934,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #111;
+  background: rgba(17, 17, 17, 0.95);
   color: #fff;
   border-radius: 18px;
   padding: 12px 16px;
