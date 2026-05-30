@@ -1002,7 +1002,7 @@ function renderReorderView(container) {
     if (!ex) return '';
     const muscleGroup = MUSCLE_GROUPS[ex.muscleGroup] || { color: '#000000', name: ex.muscleGroup, icon: '' };
     return `
-      <div class="reorder-item" data-index="${index}" style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; display:flex; justify-content:space-between; align-items:center; user-select:none; touch-action:none; cursor:grab;">
+      <div class="reorder-item" data-index="${index}" style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:16px; display:flex; justify-content:space-between; align-items:center; user-select:none; touch-action:none; cursor:grab;" onpointerdown="initReorderDrag(event, ${index})">
         <div style="display:flex; align-items:center; gap:12px; pointer-events:none;">
           <div style="width:4px; height:20px; background:${muscleGroup.color}; border-radius:2px;"></div>
           <div>
@@ -1010,7 +1010,7 @@ function renderReorderView(container) {
             <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">${muscleGroup.name}</span>
           </div>
         </div>
-        <div class="reorder-handle" style="color:var(--text-muted); display:flex; align-items:center; justify-content:center; width:36px; height:36px; cursor:grab;" onpointerdown="initReorderDrag(event, ${index})">
+        <div style="color:var(--text-muted); display:flex; align-items:center; justify-content:center; width:36px; height:36px; pointer-events:none;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/></svg>
         </div>
       </div>
@@ -1025,7 +1025,7 @@ function renderReorderView(container) {
       </div>
       
       <div style="padding: 0 16px;">
-        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:16px; font-weight:500;">Arrastra el icono de las barras ☰ para cambiar el orden de los ejercicios.</p>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:16px; font-weight:500;">Mantén pulsado un ejercicio y arrástralo para reordenar.</p>
         <div id="reorderList" style="display:flex; flex-direction:column; gap:10px; position:relative;">
           ${itemsHtml}
         </div>
@@ -1040,10 +1040,7 @@ let activeDragIndex = null;
 function initReorderDrag(e, index) {
   if (e.button !== 0 && e.pointerType === 'mouse') return;
   
-  const handle = e.target.closest('.reorder-handle');
-  if (!handle) return;
-
-  const row = handle.closest('.reorder-item');
+  const row = e.target.closest('.reorder-item');
   if (!row) return;
 
   e.preventDefault();
@@ -1051,16 +1048,18 @@ function initReorderDrag(e, index) {
   activeDragIndex = index;
   
   try {
-    handle.setPointerCapture(e.pointerId);
+    row.setPointerCapture(e.pointerId);
   } catch(err) {}
   
   row.classList.add('dragging');
   row.style.cursor = 'grabbing';
-  handle.style.cursor = 'grabbing';
+  row.style.transform = 'scale(1.02)';
+  row.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+  row.style.zIndex = '100';
   
-  handle.addEventListener('pointermove', onReorderMove);
-  handle.addEventListener('pointerup', onReorderEnd);
-  handle.addEventListener('pointercancel', onReorderEnd);
+  row.addEventListener('pointermove', onReorderMove);
+  row.addEventListener('pointerup', onReorderEnd);
+  row.addEventListener('pointercancel', onReorderEnd);
 }
 
 function onReorderMove(e) {
@@ -1088,19 +1087,18 @@ function onReorderMove(e) {
 function onReorderEnd(e) {
   if (!activeDragItem) return;
   
-  const handle = e.target.closest('.reorder-handle');
-  if (handle) {
-    try {
-      handle.releasePointerCapture(e.pointerId);
-    } catch(err) {}
-    handle.removeEventListener('pointermove', onReorderMove);
-    handle.removeEventListener('pointerup', onReorderEnd);
-    handle.removeEventListener('pointercancel', onReorderEnd);
-    handle.style.cursor = '';
-  }
+  try {
+    activeDragItem.releasePointerCapture(e.pointerId);
+  } catch(err) {}
+  activeDragItem.removeEventListener('pointermove', onReorderMove);
+  activeDragItem.removeEventListener('pointerup', onReorderEnd);
+  activeDragItem.removeEventListener('pointercancel', onReorderEnd);
 
   activeDragItem.classList.remove('dragging');
   activeDragItem.style.cursor = '';
+  activeDragItem.style.transform = '';
+  activeDragItem.style.boxShadow = '';
+  activeDragItem.style.zIndex = '';
   
   const container = document.getElementById('reorderList');
   if (container) {
@@ -1965,7 +1963,7 @@ function openExerciseSelectorToReplace(index) {
   const isVacío = state.currentView === 'empty_workout';
   const exList = isVacío ? state.emptyWorkout.exercises : state.routine.days[state.currentDay].exercises;
   state.expandedExerciseId = exList[index].exerciseId;
-  state.exerciseDetailSource = isVacío ? 'empty_workout' : 'workout';
+  state.exerciseDetailSource = isVacío ? 'empty_workout' : 'routine';
   state.previousView = state.currentView;
   state.currentView = 'exercise_selector';
   renderApp();
@@ -2023,7 +2021,7 @@ function renderExerciseDetail(container) {
   let exerciseData = null;
 
   // Si viene del selector de ejercicios o es una sustitución, usar EXERCISE_DB directamente
-  if (state.exerciseDetailSource === 'exercise_selector' || state.exerciseDetailSource === 'empty_workout' || state.exerciseDetailSource === 'routine_builder' || state.replaceExerciseIndex !== null) {
+  if (state.exerciseDetailSource === 'exercise_selector' || state.exerciseDetailSource === 'empty_workout' || state.exerciseDetailSource === 'routine_builder' || state.exerciseDetailSource === 'workout' || state.exerciseDetailSource === 'routine' || state.replaceExerciseIndex !== null) {
     exerciseData = EXERCISE_DB[state.expandedExerciseId];
     exerciseConfig = { exerciseId: state.expandedExerciseId };
   } else {
@@ -2128,7 +2126,7 @@ function renderExerciseDetail(container) {
       ${state.exerciseDetailSource ? `
         <div style="margin-top:24px; margin-bottom:20px;">
           <button onclick="addExerciseFromDetailAndBack('${exerciseConfig.exerciseId}')" style="width:100%; padding:16px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; text-transform:uppercase; border-radius: var(--radius-md); box-shadow: var(--accent-glow); display:flex; align-items:center; justify-content:center; gap:8px;">
-            ${state.replaceExerciseIndex !== null && state.replaceExerciseIndex !== undefined ? `${ICON_REPLACE} SUSTITUIR EJERCICIO` : '+ AÑADIR AL ENTRENAMIENTO'}
+            ${state.replaceExerciseIndex !== null && state.replaceExerciseIndex !== undefined ? `${ICON_REPLACE} SUSTITUIR EJERCICIO` : (state.exerciseDetailSource === 'workout' || state.exerciseDetailSource === 'routine' ? '+ AÑADIR AL DÍA' : '+ AÑADIR AL ENTRENAMIENTO')}
           </button>
         </div>
       ` : ''}
@@ -2167,7 +2165,7 @@ function addExerciseFromDetailAndBack(exerciseId) {
     if (state.exerciseDetailSource === 'empty_workout') {
       state.emptyWorkout.exercises[state.replaceExerciseIndex] = ex;
       state.completedSets[`empty_ex${state.replaceExerciseIndex}`] = [];
-    } else {
+    } else if (state.exerciseDetailSource === 'routine' || state.exerciseDetailSource === 'workout') {
       state.routine.days[state.currentDay].exercises[state.replaceExerciseIndex] = ex;
       state.completedSets[`day${state.currentDay}_ex${state.replaceExerciseIndex}`] = [];
     }
@@ -2177,6 +2175,9 @@ function addExerciseFromDetailAndBack(exerciseId) {
     if (state.exerciseDetailSource === 'routine_builder') {
       state.builder.days[activeBuilderDay].exercises.push(ex);
       showToast('✅', `${EXERCISE_DB[exerciseId].name} añadido a la rutina`);
+    } else if (state.exerciseDetailSource === 'workout') {
+      state.routine.days[state.currentDay].exercises.push(ex);
+      showToast('✅', `${EXERCISE_DB[exerciseId].name} añadido al día actual`);
     } else if (state.exerciseDetailSource === 'empty_workout') {
       state.emptyWorkout.exercises.push({
         exerciseId: exerciseId,
@@ -2412,7 +2413,12 @@ let exerciseSelectorSource = null;
 let selectorQuery = '';
 
 function openExerciseSelector() {
-  exerciseSelectorSource = 'empty_workout';
+  // Detectar contexto: si estamos en workout (rutina activa), añadir al día actual
+  if (state.currentView === 'workout') {
+    exerciseSelectorSource = 'workout';
+  } else {
+    exerciseSelectorSource = 'empty_workout';
+  }
   selectorQuery = '';
   state.currentView = 'exercise_selector';
   renderApp();
@@ -2435,6 +2441,8 @@ function closeExerciseSelector() {
     state.expandedExerciseId = null;
   } else if (exerciseSelectorSource === 'routine_builder') {
     state.currentView = 'routine_builder';
+  } else if (exerciseSelectorSource === 'workout') {
+    state.currentView = 'workout';
   } else {
     state.currentView = 'empty_workout';
   }
