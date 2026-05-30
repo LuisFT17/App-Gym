@@ -434,6 +434,8 @@ body {
   gap: 1px;
   background: rgba(0, 0, 0, 0.05);
   margin: 0;
+  padding-top: 80px;
+  padding-bottom: 100px;
 }
 
 .exercise-card {
