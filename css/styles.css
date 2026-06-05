@@ -2158,8 +2158,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 220px;
-  height: 320px;
+  width: 260px;
+  height: 380px;
   border-radius: 50%;
   background: radial-gradient(ellipse at center, 
     rgba(255, 215, 0, 0.6) 0%, 
@@ -2178,8 +2178,8 @@ body {
   top: -20px;
   left: 50%;
   transform: translateX(-50%);
-  width: 180px;
-  height: 280px;
+  width: 220px;
+  height: 340px;
   border-radius: 50%;
   background: radial-gradient(ellipse at center, 
     rgba(255, 255, 100, 0.8) 0%, 
@@ -2195,8 +2195,8 @@ body {
   top: 10%;
   left: 50%;
   transform: translateX(-50%);
-  width: 160px;
-  height: 240px;
+  width: 200px;
+  height: 300px;
   border-radius: 50%;
   background: radial-gradient(ellipse at center, 
     rgba(255, 255, 150, 0.9) 0%, 

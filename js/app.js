@@ -1368,87 +1368,189 @@ function renderAvatarSVG() {
   const lvl = state.avatar.level;
   const hasHeadband = lvl >= 5;
   const hasBelt = lvl >= 10;
+  const hasShoes = lvl >= 15;
   const auraActive = state.avatar.levelUpTriggered;
 
   const skinColor = '#F4C2A1';
   const skinShadow = '#E0A88A';
+  const skinHighlight = '#FFE0C0';
   const tankColor = '#FFFFFF';
   const tankShadow = '#E8E8E8';
   const hairColor = '#4A3728';
   const pantsColor = '#3D5A80';
+  const pantsShadow = '#2D4A6A';
 
   return `
-    <div style="position:relative; width:180px; height:280px; margin:0 auto;">
+    <div style="position:relative; width:220px; height:340px; margin:0 auto;">
       ${auraActive ? '<div class="ssj-aura"></div>' : ''}
-      <svg viewBox="0 0 200 320" width="180" height="280" style="overflow:visible;">
+      <svg viewBox="0 0 240 380" width="220" height="340" style="overflow:visible;">
         <defs>
           <radialGradient id="skinGrad" cx="50%" cy="30%">
-            <stop offset="0%" stop-color="${skinColor}"/>
+            <stop offset="0%" stop-color="${skinHighlight}"/>
+            <stop offset="50%" stop-color="${skinColor}"/>
             <stop offset="100%" stop-color="${skinShadow}"/>
           </radialGradient>
-          <radialGradient id="tankGrad" cx="50%" cy="30%">
-            <stop offset="0%" stop-color="${tankColor}"/>
+          <radialGradient id="tankGrad" cx="50%" cy="40%">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="70%" stop-color="${tankColor}"/>
             <stop offset="100%" stop-color="${tankShadow}"/>
           </radialGradient>
+          <radialGradient id="pantsGrad" cx="50%" cy="30%">
+            <stop offset="0%" stop-color="${pantsColor}"/>
+            <stop offset="100%" stop-color="${pantsShadow}"/>
+          </radialGradient>
+          <filter id="muscleGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feComponentTransfer in="blur" result="glow">
+              <feFuncA type="linear" slope="0.6"/>
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode in="glow"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <linearGradient id="chestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--accent-primary)" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="var(--accent-primary)" stop-opacity="0.5"/>
+          </linearGradient>
         </defs>
 
-        <!-- PIERNAS (Base) -->
-        <path d="M 75 200 L 70 280 L 85 280 L 90 210 Z" fill="${pantsColor}"/>
-        <path d="M 125 200 L 130 280 L 115 280 L 110 210 Z" fill="${pantsColor}"/>
-        ${hasBelt ? `<rect x="70" y="195" width="60" height="10" fill="#8B4513" rx="3"/>` : ''}
+        <!-- SOMBRA DEL SUELO -->
+        <ellipse cx="120" cy="370" rx="50" ry="8" fill="rgba(0,0,0,0.1)"/>
+
+        <!-- PIERNAS (Pantalón) -->
+        <path d="M 85 210 L 78 340 Q 78 355 90 355 L 105 355 Q 110 355 108 340 L 102 210 Z" fill="url(#pantsGrad)"/>
+        <path d="M 155 210 L 162 340 Q 162 355 150 355 L 135 355 Q 130 355 132 340 L 138 210 Z" fill="url(#pantsGrad)"/>
+        
+        <!-- Pliegues del pantalón -->
+        <path d="M 90 240 Q 88 280 92 320" stroke="rgba(0,0,0,0.1)" stroke-width="2" fill="none"/>
+        <path d="M 150 240 Q 152 280 148 320" stroke="rgba(0,0,0,0.1)" stroke-width="2" fill="none"/>
+        
+        <!-- Zapatillas -->
+        ${hasShoes ? `
+          <path d="M 78 345 Q 75 360 90 365 L 108 365 Q 115 360 110 345 Z" fill="#FFFFFF" stroke="#DDD" stroke-width="1"/>
+          <path d="M 162 345 Q 165 360 150 365 L 132 365 Q 125 360 130 345 Z" fill="#FFFFFF" stroke="#DDD" stroke-width="1"/>
+          <path d="M 85 355 L 100 355" stroke="#333" stroke-width="2"/>
+          <path d="M 140 355 L 155 355" stroke="#333" stroke-width="2"/>
+        ` : `
+          <path d="M 78 345 Q 75 358 90 360 L 108 360 Q 112 358 110 345 Z" fill="${skinColor}"/>
+          <path d="M 162 345 Q 165 358 150 360 L 132 360 Q 128 358 130 345 Z" fill="${skinColor}"/>
+        `}
+        
+        ${hasBelt ? `<rect x="80" y="205" width="80" height="12" fill="#8B4513" rx="4" stroke="#6B3510" stroke-width="1"/><circle cx="120" cy="211" r="4" fill="#FFD700"/>` : ''}
 
         <!-- BRAZOS (Base) -->
-        <path d="M 45 110 C 30 120, 25 150, 30 180 C 35 190, 45 185, 50 170 C 50 140, 50 120, 45 110 Z" fill="url(#skinGrad)"/>
-        <path d="M 155 110 C 170 120, 175 150, 170 180 C 165 190, 155 185, 150 170 C 150 140, 150 120, 155 110 Z" fill="url(#skinGrad)"/>
+        <!-- Brazo izquierdo -->
+        <path d="M 55 115 C 35 125, 28 155, 32 190 C 35 205, 48 200, 55 185 C 58 160, 60 135, 55 115 Z" fill="url(#skinGrad)"/>
+        <!-- Brazo derecho -->
+        <path d="M 185 115 C 205 125, 212 155, 208 190 C 205 205, 192 200, 185 185 C 182 160, 180 135, 185 115 Z" fill="url(#skinGrad)"/>
+        
+        <!-- Antebrazos -->
+        <path d="M 32 190 C 28 210, 30 230, 35 245 C 40 250, 48 245, 50 230 C 52 210, 48 195, 32 190 Z" fill="url(#skinGrad)"/>
+        <path d="M 208 190 C 212 210, 210 230, 205 245 C 200 250, 192 245, 190 230 C 188 210, 192 195, 208 190 Z" fill="url(#skinGrad)"/>
+        
+        <!-- Manos -->
+        <circle cx="42" cy="252" r="8" fill="url(#skinGrad)"/>
+        <circle cx="198" cy="252" r="8" fill="url(#skinGrad)"/>
 
-        <!-- TORSO (Camiseta) -->
-        <path d="M 70 100 C 65 110, 60 150, 65 195 C 70 205, 130 205, 135 195 C 140 150, 135 110, 130 100 C 120 90, 80 90, 70 100 Z" fill="url(#tankGrad)" stroke="#DDD" stroke-width="1"/>
-        <path d="M 85 95 C 90 105, 110 105, 115 95 C 110 85, 90 85, 85 95 Z" fill="${skinColor}"/>
+        <!-- TORSO (Camiseta sin mangas) -->
+        <path d="M 75 105 C 68 115, 62 160, 68 205 C 72 215, 168 215, 172 205 C 178 160, 172 115, 165 105 C 150 95, 90 95, 75 105 Z" fill="url(#tankGrad)" stroke="#DDD" stroke-width="1"/>
+        
+        <!-- Cuello -->
+        <path d="M 95 95 C 95 85, 145 85, 145 95 C 145 105, 95 105, 95 95 Z" fill="url(#skinGrad)"/>
+        
+        <!-- Escote de la camiseta -->
+        <path d="M 100 95 C 105 105, 135 105, 140 95 C 135 88, 105 88, 100 95 Z" fill="${skinColor}"/>
+        
+        <!-- Costuras de la camiseta -->
+        <path d="M 120 105 L 120 205" stroke="rgba(0,0,0,0.05)" stroke-width="1" fill="none"/>
 
         <!-- CABEZA -->
-        <circle cx="100" cy="55" r="32" fill="url(#skinGrad)"/>
-        <path d="M 68 50 C 70 20, 100 15, 130 20 C 140 25, 145 40, 140 50 C 135 35, 100 30, 68 50 Z" fill="${hairColor}"/>
-        <path d="M 68 50 C 65 40, 70 30, 80 25 C 75 35, 70 45, 68 50 Z" fill="${hairColor}"/>
-        <path d="M 132 50 C 135 40, 130 30, 120 25 C 125 35, 130 45, 132 50 Z" fill="${hairColor}"/>
-        <ellipse cx="88" cy="55" rx="5" ry="6" fill="#FFF"/>
-        <circle cx="88" cy="55" r="3" fill="#333"/>
-        <ellipse cx="112" cy="55" rx="5" ry="6" fill="#FFF"/>
-        <circle cx="112" cy="55" r="3" fill="#333"/>
-        <path d="M 82 48 Q 88 45, 94 48" stroke="${hairColor}" stroke-width="2" fill="none"/>
-        <path d="M 106 48 Q 112 45, 118 48" stroke="${hairColor}" stroke-width="2" fill="none"/>
-        <path d="M 92 70 Q 100 78, 108 70" stroke="#C47A5A" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <circle cx="80" cy="65" r="4" fill="#FFB6C1" opacity="0.4"/>
-        <circle cx="120" cy="65" r="4" fill="#FFB6C1" opacity="0.4"/>
-        ${hasHeadband ? `<rect x="68" y="45" width="64" height="6" fill="#FF4444" rx="2"/>` : ''}
+        <!-- Cuello base -->
+        <rect x="105" y="80" width="30" height="20" rx="8" fill="url(#skinGrad)"/>
+        
+        <!-- Cabeza -->
+        <ellipse cx="120" cy="55" rx="38" ry="42" fill="url(#skinGrad)"/>
+        
+        <!-- Orejas -->
+        <ellipse cx="82" cy="58" rx="8" ry="12" fill="url(#skinGrad)"/>
+        <ellipse cx="158" cy="58" rx="8" ry="12" fill="url(#skinGrad)"/>
+        
+        <!-- Cabello -->
+        <path d="M 82 45 C 85 15, 120 10, 155 18 C 165 22, 168 35, 162 45 C 155 30, 120 25, 82 45 Z" fill="${hairColor}"/>
+        <path d="M 82 45 C 78 35, 82 25, 92 20 C 88 30, 85 40, 82 45 Z" fill="${hairColor}"/>
+        <path d="M 158 45 C 162 35, 158 25, 148 20 C 152 30, 155 40, 158 45 Z" fill="${hairColor}"/>
+        <!-- Flequillo -->
+        <path d="M 90 30 Q 100 25, 110 32 Q 105 28, 95 35 Z" fill="${hairColor}"/>
+        <path d="M 130 30 Q 140 25, 150 32 Q 145 28, 135 35 Z" fill="${hairColor}"/>
+        
+        <!-- Cejas -->
+        <path d="M 95 42 Q 105 38, 115 42" stroke="${hairColor}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M 125 42 Q 135 38, 145 42" stroke="${hairColor}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        
+        <!-- Ojos -->
+        <ellipse cx="105" cy="52" rx="7" ry="8" fill="#FFF"/>
+        <circle cx="106" cy="52" r="4" fill="#4A3728"/>
+        <circle cx="107" cy="51" r="1.5" fill="#FFF"/>
+        <ellipse cx="135" cy="52" rx="7" ry="8" fill="#FFF"/>
+        <circle cx="134" cy="52" r="4" fill="#4A3728"/>
+        <circle cx="133" cy="51" r="1.5" fill="#FFF"/>
+        
+        <!-- Pestañas -->
+        <path d="M 98 46 Q 105 44, 112 46" stroke="#333" stroke-width="1" fill="none"/>
+        <path d="M 128 46 Q 135 44, 142 46" stroke="#333" stroke-width="1" fill="none"/>
+        
+        <!-- Nariz -->
+        <path d="M 118 58 Q 120 65, 122 58" stroke="#C47A5A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        
+        <!-- Boca -->
+        <path d="M 108 72 Q 120 80, 132 72" stroke="#C47A5A" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M 112 72 Q 120 76, 128 72" fill="#E88A7A" opacity="0.6"/>
+        
+        <!-- Mejillas -->
+        <circle cx="92" cy="65" r="6" fill="#FFB6C1" opacity="0.3"/>
+        <circle cx="148" cy="65" r="6" fill="#FFB6C1" opacity="0.3"/>
+        
+        <!-- Barbilla -->
+        <path d="M 110 78 Q 120 85, 130 78" stroke="rgba(0,0,0,0.1)" stroke-width="1" fill="none"/>
+        
+        ${hasHeadband ? `<rect x="80" y="40" width="80" height="8" fill="#FF4444" rx="3" stroke="#CC3333" stroke-width="1"/><path d="M 160 44 L 175 50 L 172 42 Z" fill="#FF4444"/>` : ''}
 
-        <!-- MÚSCULOS (Corregidos anatómicamente) -->
-        <!-- Hombros -->
-        <g style="${getAvatarMuscleStyle(m.shoulders.growth)}">
-          <path d="M 60 105 C 50 105, 40 115, 40 125 C 40 135, 50 140, 60 135 C 65 130, 65 115, 60 105 Z" fill="var(--accent-primary)"/>
-          <path d="M 140 105 C 150 105, 160 115, 160 125 C 160 135, 150 140, 140 135 C 135 130, 135 115, 140 105 Z" fill="var(--accent-primary)"/>
+        <!-- MÚSCULOS (Zonas de calor) -->
+        <!-- Hombros (Deltoides) -->
+        <g style="${getAvatarMuscleStyle(m.shoulders.growth)}" filter="url(#muscleGlow)">
+          <path d="M 62 108 C 48 108, 38 120, 42 135 C 45 145, 55 148, 65 142 C 70 138, 68 120, 62 108 Z" fill="url(#chestGrad)" opacity="0.7"/>
+          <path d="M 178 108 C 192 108, 202 120, 198 135 C 195 145, 185 148, 175 142 C 170 138, 172 120, 178 108 Z" fill="url(#chestGrad)" opacity="0.7"/>
         </g>
-        <!-- Pecho -->
-        <g style="${getAvatarMuscleStyle(m.chest.growth)}">
-          <path d="M 75 115 C 85 110, 115 110, 125 115 C 130 130, 120 150, 100 150 C 80 150, 70 130, 75 115 Z" fill="var(--accent-primary)"/>
+        
+        <!-- Pecho (Pectorales) -->
+        <g style="${getAvatarMuscleStyle(m.chest.growth)}" filter="url(#muscleGlow)">
+          <path d="M 82 118 C 95 112, 110 112, 120 118 C 125 130, 120 148, 105 152 C 90 152, 78 135, 82 118 Z" fill="url(#chestGrad)" opacity="0.7"/>
+          <path d="M 158 118 C 145 112, 130 112, 120 118 C 115 130, 120 148, 135 152 C 150 152, 162 135, 158 118 Z" fill="url(#chestGrad)" opacity="0.7"/>
+          <!-- Línea central del pecho -->
+          <path d="M 120 118 L 120 150" stroke="rgba(0,0,0,0.15)" stroke-width="1" fill="none"/>
         </g>
-        <!-- Brazos -->
-        <g style="${getAvatarMuscleStyle(m.arms.growth)}">
-          <path d="M 35 120 C 25 130, 25 160, 35 170 C 40 175, 45 165, 45 150 C 45 135, 40 125, 35 120 Z" fill="var(--accent-primary)"/>
-          <path d="M 165 120 C 175 130, 175 160, 165 170 C 160 175, 155 165, 155 150 C 155 135, 160 125, 165 120 Z" fill="var(--accent-primary)"/>
+        
+        <!-- Brazos (Bíceps/Tríceps) -->
+        <g style="${getAvatarMuscleStyle(m.arms.growth)}" filter="url(#muscleGlow)">
+          <path d="M 38 125 C 28 135, 26 165, 38 178 C 45 182, 52 175, 50 160 C 50 140, 45 128, 38 125 Z" fill="url(#chestGrad)" opacity="0.7"/>
+          <path d="M 202 125 C 212 135, 214 165, 202 178 C 195 182, 188 175, 190 160 C 190 140, 195 128, 202 125 Z" fill="url(#chestGrad)" opacity="0.7"/>
         </g>
-        <!-- Piernas -->
-        <g style="${getAvatarMuscleStyle(m.legs.growth)}">
-          <path d="M 75 205 C 65 215, 65 250, 75 260 C 85 265, 90 250, 85 230 C 85 215, 80 210, 75 205 Z" fill="var(--accent-primary)"/>
-          <path d="M 125 205 C 135 215, 135 250, 125 260 C 115 265, 110 250, 115 230 C 115 215, 120 210, 125 205 Z" fill="var(--accent-primary)"/>
+        
+        <!-- Piernas (Cuádriceps) -->
+        <g style="${getAvatarMuscleStyle(m.legs.growth)}" filter="url(#muscleGlow)">
+          <path d="M 85 215 C 75 225, 72 265, 85 280 C 95 288, 105 275, 100 250 C 98 230, 92 220, 85 215 Z" fill="url(#chestGrad)" opacity="0.7"/>
+          <path d="M 155 215 C 165 225, 168 265, 155 280 C 145 288, 135 275, 140 250 C 142 230, 148 220, 155 215 Z" fill="url(#chestGrad)" opacity="0.7"/>
         </g>
-        <!-- Espalda -->
-        <g style="${getAvatarMuscleStyle(m.back.growth)}">
-          <path d="M 70 100 L 60 110 L 65 130 L 80 130 L 80 110 Z" fill="var(--accent-primary)" opacity="0.5"/>
-          <path d="M 130 100 L 140 110 L 135 130 L 120 130 L 120 110 Z" fill="var(--accent-primary)" opacity="0.5"/>
+        
+        <!-- Espalda (Trapecios/Dorsales - visibles desde atrás pero simulados lateralmente) -->
+        <g style="${getAvatarMuscleStyle(m.back.growth)}" filter="url(#muscleGlow)">
+          <path d="M 75 105 L 62 115 L 68 140 L 85 140 L 82 115 Z" fill="url(#chestGrad)" opacity="0.5"/>
+          <path d="M 165 105 L 178 115 L 172 140 L 155 140 L 158 115 Z" fill="url(#chestGrad)" opacity="0.5"/>
         </g>
 
       </svg>
-      <div style="text-align:center; font-size:0.7rem; color:var(--text-muted); font-weight:700; margin-top:-10px;">
+      <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); font-weight:700; margin-top:-5px;">
         Nivel ${lvl}
       </div>
     </div>
