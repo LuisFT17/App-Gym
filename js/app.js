@@ -1453,17 +1453,20 @@ function renderAvatarSVG() {
         <circle cx="42" cy="252" r="8" fill="url(#skinGrad)"/>
         <circle cx="198" cy="252" r="8" fill="url(#skinGrad)"/>
 
-        <!-- TORSO (Camiseta sin mangas) -->
-        <path d="M 75 105 C 68 115, 62 160, 68 205 C 72 215, 168 215, 172 205 C 178 160, 172 115, 165 105 C 150 95, 90 95, 75 105 Z" fill="url(#tankGrad)" stroke="#DDD" stroke-width="1"/>
-        
+        <!-- RESPIRACIÓN SUTIL (Animación en el torso) -->
+        <g class="avatar-breathing">
+          <!-- TORSO (Camiseta sin mangas) -->
+          <path d="M 75 105 C 68 115, 62 160, 68 205 C 72 215, 168 215, 172 205 C 178 160, 172 115, 165 105 C 150 95, 90 95, 75 105 Z" fill="url(#tankGrad)" stroke="#DDD" stroke-width="1"/>
+          
+          <!-- Costuras de la camiseta -->
+          <path d="M 120 105 L 120 205" stroke="rgba(0,0,0,0.05)" stroke-width="1" fill="none"/>
+        </g>
+
         <!-- Cuello -->
         <path d="M 95 95 C 95 85, 145 85, 145 95 C 145 105, 95 105, 95 95 Z" fill="url(#skinGrad)"/>
         
         <!-- Escote de la camiseta -->
         <path d="M 100 95 C 105 105, 135 105, 140 95 C 135 88, 105 88, 100 95 Z" fill="${skinColor}"/>
-        
-        <!-- Costuras de la camiseta -->
-        <path d="M 120 105 L 120 205" stroke="rgba(0,0,0,0.05)" stroke-width="1" fill="none"/>
 
         <!-- CABEZA -->
         <!-- Cuello base -->
@@ -1515,39 +1518,6 @@ function renderAvatarSVG() {
         <path d="M 110 78 Q 120 85, 130 78" stroke="rgba(0,0,0,0.1)" stroke-width="1" fill="none"/>
         
         ${hasHeadband ? `<rect x="80" y="40" width="80" height="8" fill="#FF4444" rx="3" stroke="#CC3333" stroke-width="1"/><path d="M 160 44 L 175 50 L 172 42 Z" fill="#FF4444"/>` : ''}
-
-        <!-- MÚSCULOS (Zonas de calor) -->
-        <!-- Hombros (Deltoides) - Parte superior de los brazos, donde se unen con el torso -->
-        <g style="${getAvatarMuscleStyle(m.shoulders.growth)}" filter="url(#muscleGlow)">
-          <path d="M 58 112 C 48 115, 42 125, 45 138 C 48 148, 58 150, 65 145 C 70 140, 68 125, 58 112 Z" fill="url(#chestGrad)" opacity="0.7"/>
-          <path d="M 182 112 C 192 115, 198 125, 195 138 C 192 148, 182 150, 175 145 C 170 140, 172 125, 182 112 Z" fill="url(#chestGrad)" opacity="0.7"/>
-        </g>
-        
-        <!-- Pecho (Pectorales) - Centro del torso, debajo del escote -->
-        <g style="${getAvatarMuscleStyle(m.chest.growth)}" filter="url(#muscleGlow)">
-          <path d="M 88 125 C 100 118, 112 118, 120 125 C 125 138, 122 155, 108 160 C 95 160, 85 145, 88 125 Z" fill="url(#chestGrad)" opacity="0.7"/>
-          <path d="M 152 125 C 140 118, 128 118, 120 125 C 115 138, 118 155, 132 160 C 145 160, 155 145, 152 125 Z" fill="url(#chestGrad)" opacity="0.7"/>
-          <!-- Línea central del pecho -->
-          <path d="M 120 125 L 120 158" stroke="rgba(0,0,0,0.15)" stroke-width="1" fill="none"/>
-        </g>
-        
-        <!-- Brazos (Bíceps/Tríceps) - Parte superior de los brazos -->
-        <g style="${getAvatarMuscleStyle(m.arms.growth)}" filter="url(#muscleGlow)">
-          <path d="M 42 130 C 32 140, 30 165, 40 178 C 48 182, 55 175, 52 160 C 52 145, 48 135, 42 130 Z" fill="url(#chestGrad)" opacity="0.7"/>
-          <path d="M 198 130 C 208 140, 210 165, 200 178 C 192 182, 185 175, 188 160 C 188 145, 192 135, 198 130 Z" fill="url(#chestGrad)" opacity="0.7"/>
-        </g>
-        
-        <!-- Piernas (Cuádriceps) - Parte frontal de los muslos -->
-        <g style="${getAvatarMuscleStyle(m.legs.growth)}" filter="url(#muscleGlow)">
-          <path d="M 88 225 C 80 235, 78 270, 88 285 C 98 292, 105 280, 102 255 C 100 238, 95 228, 88 225 Z" fill="url(#chestGrad)" opacity="0.7"/>
-          <path d="M 152 225 C 160 235, 162 270, 152 285 C 142 292, 135 280, 138 255 C 140 238, 145 228, 152 225 Z" fill="url(#chestGrad)" opacity="0.7"/>
-        </g>
-        
-        <!-- Espalda (Trapecios/Dorsales) - Parte superior de la espalda, visibles lateralmente -->
-        <g style="${getAvatarMuscleStyle(m.back.growth)}" filter="url(#muscleGlow)">
-          <path d="M 78 110 L 68 120 L 72 145 L 88 145 L 85 120 Z" fill="url(#chestGrad)" opacity="0.5"/>
-          <path d="M 162 110 L 172 120 L 168 145 L 152 145 L 155 120 Z" fill="url(#chestGrad)" opacity="0.5"/>
-        </g>
 
       </svg>
       <div style="text-align:center; font-size:0.75rem; color:var(--text-muted); font-weight:700; margin-top:-5px;">

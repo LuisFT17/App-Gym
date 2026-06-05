@@ -2243,3 +2243,18 @@ body {
     opacity: 1;
   }
 }
+
+/* ── Avatar Breathing Animation ── */
+.avatar-breathing {
+  animation: avatar-breathe 3s ease-in-out infinite;
+  transform-origin: 120px 155px;
+}
+
+@keyframes avatar-breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015, 1.02);
+  }
+}
