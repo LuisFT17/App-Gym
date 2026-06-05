@@ -4672,30 +4672,71 @@ function renderNutritionTab(container) {
 
   const kcalRemaining = Math.round(targetCals - totals.kcal);
   const kcalPercent = Math.min(100, Math.round((totals.kcal / targetCals) * 100));
+  const isOver = totals.kcal > targetCals;
+
+  // Porcentajes de macros
+  const pPercent = Math.min(100, Math.round((totals.p / pTarget) * 100));
+  const cPercent = Math.min(100, Math.round((totals.c / cTarget) * 100));
+  const fPercent = Math.min(100, Math.round((totals.f / fTarget) * 100));
+
+  // Colores dinámicos
+  const kcalColor = isOver ? '#ff3b30' : (kcalPercent > 80 ? '#ff9500' : '#34c759');
+  const pColor = totals.p >= pTarget ? '#34c759' : 'var(--accent-primary)';
+  const cColor = totals.c >= cTarget ? '#34c759' : 'var(--accent-primary)';
+  const fColor = totals.f >= fTarget ? '#34c759' : 'var(--accent-primary)';
 
   container.innerHTML = `
     <div class="home-screen" style="padding-bottom:100px;">
-      <!-- Resumen del día -->
-      <div style="background:var(--bg-card); padding:16px; margin-bottom:12px; border-bottom:0.5px solid var(--border-subtle);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Hoy</h2>
-          <span style="font-size:0.75rem; font-weight:700; color:${kcalRemaining >= 0 ? 'var(--accent-primary)' : '#ff3b30'};">${kcalRemaining >= 0 ? kcalRemaining + ' kcal restantes' : '+' + Math.abs(kcalRemaining) + ' kcal extra'}</span>
-        </div>
-        <div style="width:100%; height:8px; background:var(--bg-elevated); border-radius:4px; overflow:hidden; margin-bottom:12px;">
-          <div style="width:${kcalPercent}%; height:100%; background:${kcalPercent > 100 ? '#ff3b30' : 'var(--accent-gradient)'}; border-radius:4px; transition:width 0.3s;"></div>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center;">
-          <div>
-            <div style="font-size:0.9rem; font-weight:800; color:var(--accent-primary);">${totals.p}g <span style="font-size:0.7rem; color:var(--text-muted);">/ ${pTarget}g</span></div>
-            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Proteína</div>
+      <!-- Panel de Progreso Visual -->
+      <div style="background:var(--bg-card); padding:20px 16px; margin-bottom:12px;">
+        <!-- Calorías Principales -->
+        <div style="text-align:center; margin-bottom:16px;">
+          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Calorías Hoy</div>
+          <div style="font-size:2.5rem; font-weight:900; color:${kcalColor}; line-height:1;">${totals.kcal}</div>
+          <div style="font-size:0.85rem; color:var(--text-muted); font-weight:600; margin-top:4px;">/ ${Math.round(targetCals)} kcal</div>
+          <div style="font-size:0.75rem; font-weight:700; color:${isOver ? '#ff3b30' : '#34c759'}; margin-top:4px;">
+            ${isOver ? '+' + Math.abs(kcalRemaining) + ' kcal extra' : kcalRemaining + ' kcal restantes'}
           </div>
-          <div>
-            <div style="font-size:0.9rem; font-weight:800; color:var(--text-primary);">${totals.c}g <span style="font-size:0.7rem; color:var(--text-muted);">/ ${cTarget}g</span></div>
-            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Carbos</div>
+        </div>
+
+        <!-- Barra Grande de Calorías -->
+        <div style="width:100%; height:12px; background:var(--bg-elevated); border-radius:6px; overflow:hidden; margin-bottom:20px; position:relative;">
+          <div style="width:${kcalPercent}%; height:100%; background:${kcalColor}; border-radius:6px; transition:width 0.5s ease; position:relative;">
+            ${kcalPercent > 10 ? '<div style="position:absolute; right:8px; top:50%; transform:translateY(-50%); width:4px; height:4px; background:rgba(255,255,255,0.8); border-radius:50%;"></div>' : ''}
           </div>
+        </div>
+
+        <!-- Barras de Macros -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Proteína -->
           <div>
-            <div style="font-size:0.9rem; font-weight:800; color:var(--text-primary);">${totals.f}g <span style="font-size:0.7rem; color:var(--text-muted);">/ ${fTarget}g</span></div>
-            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Grasas</div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Proteína</span>
+              <span style="font-size:0.75rem; font-weight:800; color:${pColor};">${totals.p}g / ${pTarget}g</span>
+            </div>
+            <div style="width:100%; height:8px; background:var(--bg-elevated); border-radius:4px; overflow:hidden;">
+              <div style="width:${pPercent}%; height:100%; background:${pColor}; border-radius:4px; transition:width 0.5s ease;"></div>
+            </div>
+          </div>
+          <!-- Carbos -->
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Carbos</span>
+              <span style="font-size:0.75rem; font-weight:800; color:${cColor};">${totals.c}g / ${cTarget}g</span>
+            </div>
+            <div style="width:100%; height:8px; background:var(--bg-elevated); border-radius:4px; overflow:hidden;">
+              <div style="width:${cPercent}%; height:100%; background:${cColor}; border-radius:4px; transition:width 0.5s ease;"></div>
+            </div>
+          </div>
+          <!-- Grasas -->
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Grasas</span>
+              <span style="font-size:0.75rem; font-weight:800; color:${fColor};">${totals.f}g / ${fTarget}g</span>
+            </div>
+            <div style="width:100%; height:8px; background:var(--bg-elevated); border-radius:4px; overflow:hidden;">
+              <div style="width:${fPercent}%; height:100%; background:${fColor}; border-radius:4px; transition:width 0.5s ease;"></div>
+            </div>
           </div>
         </div>
       </div>
