@@ -84,7 +84,8 @@ const state = {
   },
 
   // Nutrición Tracker
-  nutritionLog: [] // [{date: 'YYYY-MM-DD', name: '', kcal: 0, p: 0, c: 0, f: 0}]
+  nutritionLog: [], // [{date: 'YYYY-MM-DD', name: '', kcal: 0, p: 0, c: 0, f: 0}]
+  nutritionSelectedDate: new Date().toISOString().split('T')[0]
 };
 
 // ── Inicialización ──
@@ -2403,6 +2404,7 @@ function loadState() {
       state.workoutMinimized = saved.workoutMinimized || false;
       state.avatar = saved.avatar || state.avatar;
       state.nutritionLog = saved.nutritionLog || [];
+      state.nutritionSelectedDate = saved.nutritionSelectedDate || new Date().toISOString().split('T')[0];
 
       // Inicializar avatar desde historial si es nuevo
       if (!saved.avatar || (saved.avatar && saved.avatar.muscles.chest.volume === 0)) {
@@ -4659,11 +4661,14 @@ function renderNutritionTab(container) {
   const cTarget = Math.round((targetCals * (split.c / 100)) / 4);
   const fTarget = Math.round((targetCals * (split.f / 100)) / 9);
 
-  // Datos del día actual
+  // Fecha seleccionada
+  const selectedDate = state.nutritionSelectedDate || new Date().toISOString().split('T')[0];
   const today = new Date().toISOString().split('T')[0];
-  const todayMeals = state.nutritionLog.filter(m => m.date === today);
   
-  const totals = todayMeals.reduce((acc, m) => ({
+  // Filtrar comidas por fecha seleccionada
+  const selectedMeals = state.nutritionLog.filter(m => m.date === selectedDate);
+  
+  const totals = selectedMeals.reduce((acc, m) => ({
     kcal: acc.kcal + (m.kcal || 0),
     p: acc.p + (m.p || 0),
     c: acc.c + (m.c || 0),
@@ -4685,13 +4690,35 @@ function renderNutritionTab(container) {
   const cColor = totals.c >= cTarget ? '#34c759' : 'var(--accent-primary)';
   const fColor = totals.f >= fTarget ? '#34c759' : 'var(--accent-primary)';
 
+  // Formato de fecha para mostrar
+  const dateObj = new Date(selectedDate + 'T00:00:00');
+  const isToday = selectedDate === today;
+  const dateLabel = isToday ? 'Hoy' : dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+  
+  // Navegación de fecha
+  const canGoBack = selectedDate !== today; // Simplificado: solo permitir volver al pasado si hay datos o es hoy
+  // Mejor lógica: permitir navegar siempre al pasado, pero bloquear futuro
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const canGoForward = selectedDate < tomorrow.toISOString().split('T')[0];
+
   container.innerHTML = `
     <div class="home-screen" style="padding-bottom:100px;">
+      <!-- Selector de Fecha -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--bg-card); margin-bottom:12px; border-bottom:0.5px solid var(--border-subtle);">
+        <button onclick="changeNutritionDate(-1)" style="background:transparent; border:none; color:var(--text-primary); font-size:1.2rem; cursor:pointer; padding:8px; ${!canGoBack ? 'opacity:0.3; pointer-events:none;' : ''}">‹</button>
+        <div style="text-align:center;">
+          <div style="font-size:0.95rem; font-weight:800; color:var(--text-primary); text-transform:uppercase;">${dateLabel}</div>
+          ${!isToday ? `<div style="font-size:0.65rem; color:var(--text-muted); font-weight:600;">${dateObj.toLocaleDateString('es-ES', { year: 'numeric' })}</div>` : ''}
+        </div>
+        <button onclick="changeNutritionDate(1)" style="background:transparent; border:none; color:var(--text-primary); font-size:1.2rem; cursor:pointer; padding:8px; ${!canGoForward ? 'opacity:0.3; pointer-events:none;' : ''}">›</button>
+      </div>
+
       <!-- Panel de Progreso Visual -->
       <div style="background:var(--bg-card); padding:20px 16px; margin-bottom:12px;">
         <!-- Calorías Principales -->
         <div style="text-align:center; margin-bottom:16px;">
-          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Calorías Hoy</div>
+          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-bottom:4px;">Calorías</div>
           <div style="font-size:2.5rem; font-weight:900; color:${kcalColor}; line-height:1;">${totals.kcal}</div>
           <div style="font-size:0.85rem; color:var(--text-muted); font-weight:600; margin-top:4px;">/ ${Math.round(targetCals)} kcal</div>
           <div style="font-size:0.75rem; font-weight:700; color:${isOver ? '#ff3b30' : '#34c759'}; margin-top:4px;">
@@ -4744,14 +4771,14 @@ function renderNutritionTab(container) {
       <!-- Lista de comidas -->
       <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05); margin-bottom:12px;">
         <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
-          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Comidas de hoy</h2>
-          <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${todayMeals.length} registros</span>
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Comidas</h2>
+          <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${selectedMeals.length} registros</span>
         </div>
-        ${todayMeals.length === 0 ? `
+        ${selectedMeals.length === 0 ? `
           <div style="background:var(--bg-card); padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">
-            No hay comidas registradas hoy
+            No hay comidas registradas este día
           </div>
-        ` : todayMeals.map((m, i) => `
+        ` : selectedMeals.map((m, i) => `
           <div style="background:var(--bg-card); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:0.5px solid var(--border-subtle);">
             <div>
               <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);">${m.name}</div>
@@ -4765,8 +4792,14 @@ function renderNutritionTab(container) {
         `).join('')}
       </div>
 
-      <!-- Botón Añadir Comida -->
-      <button onclick="openAddMealModal()" style="width:100%; padding:14px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; border-radius:var(--radius-md); box-shadow:var(--accent-glow); text-transform:uppercase; letter-spacing:0.3px;">+ Añadir Comida</button>
+      <!-- Botón Añadir Comida (Solo si es hoy) -->
+      ${isToday ? `
+        <button onclick="openAddMealModal()" style="width:100%; padding:14px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; border-radius:var(--radius-md); box-shadow:var(--accent-glow); text-transform:uppercase; letter-spacing:0.3px;">+ Añadir Comida</button>
+      ` : `
+        <div style="text-align:center; padding:10px; color:var(--text-muted); font-size:0.8rem; font-weight:600;">
+          Navega a "Hoy" para añadir comidas
+        </div>
+      `}
     </div>
 
     <!-- Modal Añadir Comida -->
@@ -4791,6 +4824,20 @@ function renderNutritionTab(container) {
       </div>
     </div>
   `;
+}
+
+function changeNutritionDate(days) {
+  const current = new Date(state.nutritionSelectedDate + 'T00:00:00');
+  current.setDate(current.getDate() + days);
+  
+  // No permitir fechas futuras
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  if (current > today) return;
+
+  state.nutritionSelectedDate = current.toISOString().split('T')[0];
+  saveState();
+  renderApp();
 }
 
 function openAddMealModal() {
@@ -4833,9 +4880,9 @@ function saveMeal() {
 }
 
 function deleteMeal(index) {
-  const today = new Date().toISOString().split('T')[0];
-  const todayMeals = state.nutritionLog.filter(m => m.date === today);
-  const mealToDelete = todayMeals[index];
+  const selectedDate = state.nutritionSelectedDate || new Date().toISOString().split('T')[0];
+  const selectedMeals = state.nutritionLog.filter(m => m.date === selectedDate);
+  const mealToDelete = selectedMeals[index];
   
   if (mealToDelete) {
     const realIndex = state.nutritionLog.indexOf(mealToDelete);
@@ -4843,7 +4890,7 @@ function deleteMeal(index) {
       state.nutritionLog.splice(realIndex, 1);
       saveState();
       renderApp();
-      showToast('🗑️', 'Comida eliminada');
+      showToast('️', 'Comida eliminada');
     }
   }
 }
