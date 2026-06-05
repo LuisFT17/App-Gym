@@ -81,8 +81,8 @@
 - [ ] E47 — Persistencia eficiente del estado del avatar (optimizar localStorage)
 - [ ] E75 — Animación de "Level Up" al subir de nivel (efecto visual)
 - [x] E76 — Animación de respiración sutil en el torso (idle) ✅ Implementado
-- [ ] E77 — Efecto de brillo en músculos que acaban de crecer
-- [ ] E78 — Pose dinámica al pulsar el avatar (flexión de brazos)
+- [x] E77 — Efecto de brillo en músculos que acaban de crecer ✅ Implementado (brillo dorado en brazos/hombros nivel 10+)
+- [x] E78 — Pose dinámica al pulsar el avatar (flexión de brazos) ✅ Implementado
 - [ ] E79 — Investigar y corregir posicionamiento de zonas de calor (heatmaps) en la anatomía del avatar
 
 ### 🎨 Estética Pixel Art (REVOLUCIONARIA)

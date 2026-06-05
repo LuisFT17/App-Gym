@@ -2258,3 +2258,50 @@ body {
     transform: scale(1.015, 1.02);
   }
 }
+
+/* ── Avatar Muscle Shine Animation ── */
+.avatar-muscle-shine {
+  animation: muscle-shine-pulse 2s ease-in-out infinite;
+}
+
+@keyframes muscle-shine-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* ── Avatar Flexing Pose Animation ── */
+.avatar-arms {
+  transition: transform 0.3s ease;
+  transform-origin: 120px 115px;
+}
+
+.avatar-arms.avatar-flexing {
+  animation: avatar-flex 1.5s ease-in-out;
+}
+
+@keyframes avatar-flex {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  20% {
+    transform: translateY(-5px) rotate(-2deg);
+  }
+  40% {
+    transform: translateY(-8px) rotate(-5deg);
+  }
+  60% {
+    transform: translateY(-5px) rotate(-2deg);
+  }
+  80% {
+    transform: translateY(-2px) rotate(0deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}

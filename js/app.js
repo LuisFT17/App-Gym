@@ -1369,6 +1369,7 @@ function renderAvatarSVG() {
   const hasHeadband = lvl >= 5;
   const hasBelt = lvl >= 10;
   const hasShoes = lvl >= 15;
+  const hasMuscleGlow = lvl >= 10;
   const auraActive = state.avatar.levelUpTriggered;
 
   const skinColor = '#F4C2A1';
@@ -1381,7 +1382,7 @@ function renderAvatarSVG() {
   const pantsShadow = '#2D4A6A';
 
   return `
-    <div style="position:relative; width:220px; height:340px; margin:0 auto;">
+    <div style="position:relative; width:220px; height:340px; margin:0 auto; cursor:pointer;" onclick="toggleAvatarPose()">
       ${auraActive ? '<div class="ssj-aura"></div>' : ''}
       <svg viewBox="0 0 240 380" width="220" height="340" style="overflow:visible;">
         <defs>
@@ -1413,6 +1414,22 @@ function renderAvatarSVG() {
             <stop offset="0%" stop-color="var(--accent-primary)" stop-opacity="0.9"/>
             <stop offset="100%" stop-color="var(--accent-primary)" stop-opacity="0.5"/>
           </linearGradient>
+          <!-- Brillo muscular dorado -->
+          <filter id="muscleShine" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feComponentTransfer in="blur" result="shine">
+              <feFuncA type="linear" slope="0.8"/>
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode in="shine"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <radialGradient id="muscleShineGrad" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#FFD700" stop-opacity="0.6"/>
+            <stop offset="50%" stop-color="#FFA500" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+          </radialGradient>
         </defs>
 
         <!-- SOMBRA DEL SUELO -->
@@ -1439,19 +1456,34 @@ function renderAvatarSVG() {
         
         ${hasBelt ? `<rect x="80" y="205" width="80" height="12" fill="#8B4513" rx="4" stroke="#6B3510" stroke-width="1"/><circle cx="120" cy="211" r="4" fill="#FFD700"/>` : ''}
 
-        <!-- BRAZOS (Base) -->
-        <!-- Brazo izquierdo -->
-        <path d="M 55 115 C 35 125, 28 155, 32 190 C 35 205, 48 200, 55 185 C 58 160, 60 135, 55 115 Z" fill="url(#skinGrad)"/>
-        <!-- Brazo derecho -->
-        <path d="M 185 115 C 205 125, 212 155, 208 190 C 205 205, 192 200, 185 185 C 182 160, 180 135, 185 115 Z" fill="url(#skinGrad)"/>
-        
-        <!-- Antebrazos -->
-        <path d="M 32 190 C 28 210, 30 230, 35 245 C 40 250, 48 245, 50 230 C 52 210, 48 195, 32 190 Z" fill="url(#skinGrad)"/>
-        <path d="M 208 190 C 212 210, 210 230, 205 245 C 200 250, 192 245, 190 230 C 188 210, 192 195, 208 190 Z" fill="url(#skinGrad)"/>
-        
-        <!-- Manos -->
-        <circle cx="42" cy="252" r="8" fill="url(#skinGrad)"/>
-        <circle cx="198" cy="252" r="8" fill="url(#skinGrad)"/>
+        <!-- BRAZOS (Base) - Con animación de pose -->
+        <g class="avatar-arms">
+          <!-- Brazo izquierdo -->
+          <path d="M 55 115 C 35 125, 28 155, 32 190 C 35 205, 48 200, 55 185 C 58 160, 60 135, 55 115 Z" fill="url(#skinGrad)"/>
+          <!-- Brazo derecho -->
+          <path d="M 185 115 C 205 125, 212 155, 208 190 C 205 205, 192 200, 185 185 C 182 160, 180 135, 185 115 Z" fill="url(#skinGrad)"/>
+          
+          <!-- Antebrazos -->
+          <path d="M 32 190 C 28 210, 30 230, 35 245 C 40 250, 48 245, 50 230 C 52 210, 48 195, 32 190 Z" fill="url(#skinGrad)"/>
+          <path d="M 208 190 C 212 210, 210 230, 205 245 C 200 250, 192 245, 190 230 C 188 210, 192 195, 208 190 Z" fill="url(#skinGrad)"/>
+          
+          <!-- Manos -->
+          <circle cx="42" cy="252" r="8" fill="url(#skinGrad)"/>
+          <circle cx="198" cy="252" r="8" fill="url(#skinGrad)"/>
+        </g>
+
+        <!-- BRILLO MUSCULAR (Nivel 10+) -->
+        ${hasMuscleGlow ? `
+          <g class="avatar-muscle-shine" filter="url(#muscleShine)">
+            <!-- Brillo en bíceps izquierdo -->
+            <ellipse cx="42" cy="155" rx="12" ry="18" fill="url(#muscleShineGrad)" opacity="0.8"/>
+            <!-- Brillo en bíceps derecho -->
+            <ellipse cx="198" cy="155" rx="12" ry="18" fill="url(#muscleShineGrad)" opacity="0.8"/>
+            <!-- Brillo en hombros -->
+            <ellipse cx="62" cy="125" rx="10" ry="12" fill="url(#muscleShineGrad)" opacity="0.6"/>
+            <ellipse cx="178" cy="125" rx="10" ry="12" fill="url(#muscleShineGrad)" opacity="0.6"/>
+          </g>
+        ` : ''}
 
         <!-- RESPIRACIÓN SUTIL (Animación en el torso) -->
         <g class="avatar-breathing">
@@ -1525,6 +1557,23 @@ function renderAvatarSVG() {
       </div>
     </div>
   `;
+}
+
+let avatarPoseActive = false;
+function toggleAvatarPose() {
+  avatarPoseActive = !avatarPoseActive;
+  const container = document.querySelector('.avatar-arms');
+  if (container) {
+    container.classList.toggle('avatar-flexing', avatarPoseActive);
+  }
+  // Volver a pose normal después de 1.5 segundos
+  if (avatarPoseActive) {
+    setTimeout(() => {
+      avatarPoseActive = false;
+      const c = document.querySelector('.avatar-arms');
+      if (c) c.classList.remove('avatar-flexing');
+    }, 1500);
+  }
 }
 
 function renderPerfil(container) {
