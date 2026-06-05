@@ -81,7 +81,10 @@ const state = {
     },
     accessories: [],
     levelUpTriggered: false
-  }
+  },
+
+  // Nutrición Tracker
+  nutritionLog: [] // [{date: 'YYYY-MM-DD', name: '', kcal: 0, p: 0, c: 0, f: 0}]
 };
 
 // ── Inicialización ──
@@ -2399,6 +2402,7 @@ function loadState() {
       state.emptyWorkout = saved.emptyWorkout || state.emptyWorkout;
       state.workoutMinimized = saved.workoutMinimized || false;
       state.avatar = saved.avatar || state.avatar;
+      state.nutritionLog = saved.nutritionLog || [];
 
       // Inicializar avatar desde historial si es nuevo
       if (!saved.avatar || (saved.avatar && saved.avatar.muscles.chest.volume === 0)) {
@@ -4651,59 +4655,156 @@ function renderNutritionTab(container) {
     split = { p: 40, c: 30, f: 30 };
   }
 
-  const pGrams = Math.round((targetCals * (split.p / 100)) / 4);
-  const cGrams = Math.round((targetCals * (split.c / 100)) / 4);
-  const fGrams = Math.round((targetCals * (split.f / 100)) / 9);
+  const pTarget = Math.round((targetCals * (split.p / 100)) / 4);
+  const cTarget = Math.round((targetCals * (split.c / 100)) / 4);
+  const fTarget = Math.round((targetCals * (split.f / 100)) / 9);
+
+  // Datos del día actual
+  const today = new Date().toISOString().split('T')[0];
+  const todayMeals = state.nutritionLog.filter(m => m.date === today);
+  
+  const totals = todayMeals.reduce((acc, m) => ({
+    kcal: acc.kcal + (m.kcal || 0),
+    p: acc.p + (m.p || 0),
+    c: acc.c + (m.c || 0),
+    f: acc.f + (m.f || 0)
+  }), { kcal: 0, p: 0, c: 0, f: 0 });
+
+  const kcalRemaining = Math.round(targetCals - totals.kcal);
+  const kcalPercent = Math.min(100, Math.round((totals.kcal / targetCals) * 100));
 
   container.innerHTML = `
-    <div class="home-screen">
-      <!-- Objetivo calórico -->
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1px; background:rgba(0,0,0,0.05); margin-bottom:0;">
-        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
-          <div style="font-size:1.3rem; font-weight:800; color:var(--accent-primary);">${Math.round(targetCals)}</div>
-          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Kcal/día</div>
+    <div class="home-screen" style="padding-bottom:100px;">
+      <!-- Resumen del día -->
+      <div style="background:var(--bg-card); padding:16px; margin-bottom:12px; border-bottom:0.5px solid var(--border-subtle);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Hoy</h2>
+          <span style="font-size:0.75rem; font-weight:700; color:${kcalRemaining >= 0 ? 'var(--accent-primary)' : '#ff3b30'};">${kcalRemaining >= 0 ? kcalRemaining + ' kcal restantes' : '+' + Math.abs(kcalRemaining) + ' kcal extra'}</span>
         </div>
-        <div style="background:var(--bg-card); padding:14px 12px; text-align:center;">
-          <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${profile.goals === 'gain' ? 'Superávit' : profile.goals === 'lose' ? 'Déficit' : 'Mantenimiento'}</div>
-          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Objetivo</div>
+        <div style="width:100%; height:8px; background:var(--bg-elevated); border-radius:4px; overflow:hidden; margin-bottom:12px;">
+          <div style="width:${kcalPercent}%; height:100%; background:${kcalPercent > 100 ? '#ff3b30' : 'var(--accent-gradient)'}; border-radius:4px; transition:width 0.3s;"></div>
         </div>
-      </div>
-
-      <!-- Macros -->
-      <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05);">
-        <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle);">
-          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Macros diarios</h2>
-        </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1px; background:rgba(0,0,0,0.05);">
-          <div style="background:var(--bg-card); padding:16px 12px; text-align:center;">
-            <div style="font-size:1.1rem; font-weight:800; color:var(--accent-primary);">${pGrams}g</div>
-            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Proteína</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center;">
+          <div>
+            <div style="font-size:0.9rem; font-weight:800; color:var(--accent-primary);">${totals.p}g <span style="font-size:0.7rem; color:var(--text-muted);">/ ${pTarget}g</span></div>
+            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Proteína</div>
           </div>
-          <div style="background:var(--bg-card); padding:16px 12px; text-align:center;">
-            <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);">${cGrams}g</div>
-            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Carbos</div>
+          <div>
+            <div style="font-size:0.9rem; font-weight:800; color:var(--text-primary);">${totals.c}g <span style="font-size:0.7rem; color:var(--text-muted);">/ ${cTarget}g</span></div>
+            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Carbos</div>
           </div>
-          <div style="background:var(--bg-card); padding:16px 12px; text-align:center;">
-            <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);">${fGrams}g</div>
-            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-top:2px;">Grasas</div>
+          <div>
+            <div style="font-size:0.9rem; font-weight:800; color:var(--text-primary);">${totals.f}g <span style="font-size:0.7rem; color:var(--text-muted);">/ ${fTarget}g</span></div>
+            <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Grasas</div>
           </div>
         </div>
       </div>
 
-      <!-- Estrategia -->
-      <div style="padding:16px;">
-        <h3 style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:12px; letter-spacing:0.5px;">Estrategia recomendada</h3>
-        <div style="background:var(--bg-surface); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:10px;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--accent-primary); text-transform:uppercase; margin-bottom:4px;">Pre-entreno</div>
-          <div style="font-size:0.8rem; color:var(--text-secondary); font-weight:500;">Carbohidratos rápidos + proteína ligera. Plátano con proteína o crema de arroz.</div>
+      <!-- Lista de comidas -->
+      <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05); margin-bottom:12px;">
+        <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+          <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Comidas de hoy</h2>
+          <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${todayMeals.length} registros</span>
         </div>
-        <div style="background:var(--bg-surface); border-radius:var(--radius-md); padding:14px 16px;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--accent-primary); text-transform:uppercase; margin-bottom:4px;">Post-entreno</div>
-          <div style="font-size:0.8rem; color:var(--text-secondary); font-weight:500;">Mayor ingesta del día. ~${Math.round(cGrams * 0.4)}g carbos + ~${Math.round(pGrams * 0.4)}g proteína para recuperación.</div>
+        ${todayMeals.length === 0 ? `
+          <div style="background:var(--bg-card); padding:30px; text-align:center; color:var(--text-muted); font-size:0.85rem; font-weight:600;">
+            No hay comidas registradas hoy
+          </div>
+        ` : todayMeals.map((m, i) => `
+          <div style="background:var(--bg-card); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:0.5px solid var(--border-subtle);">
+            <div>
+              <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);">${m.name}</div>
+              <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">P:${m.p}g C:${m.c}g G:${m.f}g</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span style="font-size:0.9rem; font-weight:800; color:var(--accent-primary);">${m.kcal} kcal</span>
+              <button onclick="deleteMeal(${i})" style="background:transparent; border:none; color:#ff3b30; font-size:1rem; cursor:pointer; padding:4px;">✕</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Botón Añadir Comida -->
+      <button onclick="openAddMealModal()" style="width:100%; padding:14px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; border-radius:var(--radius-md); box-shadow:var(--accent-glow); text-transform:uppercase; letter-spacing:0.3px;">+ Añadir Comida</button>
+    </div>
+
+    <!-- Modal Añadir Comida -->
+    <div id="addMealModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:flex-end; justify-content:center;">
+      <div style="background:var(--bg-primary); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px; animation:slideUp 0.3s ease;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="margin:0; font-size:1.1rem; font-weight:800; text-transform:uppercase;">Añadir Comida</h3>
+          <button onclick="closeAddMealModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:4px;">✕</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <input type="text" id="mealName" placeholder="Nombre (ej: Pechuga de pollo)" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <input type="number" id="mealKcal" placeholder="Kcal" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
+            <input type="number" id="mealP" placeholder="Proteína (g)" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <input type="number" id="mealC" placeholder="Carbos (g)" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
+            <input type="number" id="mealF" placeholder="Grasas (g)" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
+          </div>
+          <button onclick="saveMeal()" style="width:100%; padding:14px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; border-radius:var(--radius-md); box-shadow:var(--accent-glow); text-transform:uppercase; margin-top:8px;">Guardar</button>
         </div>
       </div>
     </div>
   `;
+}
+
+function openAddMealModal() {
+  const modal = document.getElementById('addMealModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeAddMealModal() {
+  const modal = document.getElementById('addMealModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function saveMeal() {
+  const name = document.getElementById('mealName').value.trim();
+  const kcal = parseInt(document.getElementById('mealKcal').value) || 0;
+  const p = parseInt(document.getElementById('mealP').value) || 0;
+  const c = parseInt(document.getElementById('mealC').value) || 0;
+  const f = parseInt(document.getElementById('mealF').value) || 0;
+
+  if (!name) {
+    showToast('⚠️', 'Introduce un nombre para la comida');
+    return;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  state.nutritionLog.push({
+    date: today,
+    name,
+    kcal,
+    p,
+    c,
+    f,
+    timestamp: Date.now()
+  });
+
+  saveState();
+  closeAddMealModal();
+  renderApp();
+  showToast('✅', `${name} añadido`);
+}
+
+function deleteMeal(index) {
+  const today = new Date().toISOString().split('T')[0];
+  const todayMeals = state.nutritionLog.filter(m => m.date === today);
+  const mealToDelete = todayMeals[index];
+  
+  if (mealToDelete) {
+    const realIndex = state.nutritionLog.indexOf(mealToDelete);
+    if (realIndex > -1) {
+      state.nutritionLog.splice(realIndex, 1);
+      saveState();
+      renderApp();
+      showToast('🗑️', 'Comida eliminada');
+    }
+  }
 }
 
 function renderNutrition(container) {

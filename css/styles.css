@@ -2305,3 +2305,8 @@ body {
     transform: translateY(0) rotate(0deg);
   }
 }
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
