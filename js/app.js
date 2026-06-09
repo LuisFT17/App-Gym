@@ -2,33 +2,112 @@
 // GymCoach - Lógica Principal de la Aplicación
 // ============================================================
 
-// ── Base de Datos de Alimentos (por 100g) ──
+// ── Base de Datos de Alimentos (por 100g) ─
 const FOOD_DB = [
+  // CARNES
   { id: 'chicken_breast', name: 'Pechuga de pollo', kcal: 165, p: 31, c: 0, f: 3.6, icon: '' },
-  { id: 'rice_white', name: 'Arroz blanco cocido', kcal: 130, p: 2.7, c: 28, f: 0.3, icon: '🍚' },
-  { id: 'rice_brown', name: 'Arroz integral', kcal: 111, p: 2.6, c: 23, f: 0.9, icon: '🍚' },
-  { id: 'egg', name: 'Huevo entero', kcal: 155, p: 13, c: 1.1, f: 11, icon: '🥚' },
-  { id: 'egg_white', name: 'Clara de huevo', kcal: 52, p: 11, c: 0.7, f: 0.2, icon: '🥚' },
-  { id: 'tuna', name: 'Atún en agua', kcal: 116, p: 26, c: 0, f: 1, icon: '🐟' },
-  { id: 'salmon', name: 'Salmón', kcal: 208, p: 20, c: 0, f: 13, icon: '🐟' },
-  { id: 'beef', name: 'Carne de res magra', kcal: 250, p: 26, c: 0, f: 15, icon: '🥩' },
-  { id: 'pasta', name: 'Pasta cocida', kcal: 131, p: 5, c: 25, f: 1.1, icon: '🍝' },
-  { id: 'potato', name: 'Patata cocida', kcal: 87, p: 1.9, c: 20, f: 0.1, icon: '' },
-  { id: 'sweet_potato', name: 'Boniatos', kcal: 86, p: 1.6, c: 20, f: 0.1, icon: '🍠' },
-  { id: 'oats', name: 'Avena', kcal: 389, p: 16.9, c: 66, f: 6.9, icon: '🥣' },
-  { id: 'banana', name: 'Plátano', kcal: 89, p: 1.1, c: 23, f: 0.3, icon: '🍌' },
-  { id: 'apple', name: 'Manzana', kcal: 52, p: 0.3, c: 14, f: 0.2, icon: '🍎' },
+  { id: 'chicken_thigh', name: 'Muslo de pollo', kcal: 177, p: 26, c: 0, f: 8, icon: '' },
+  { id: 'chicken_wing', name: 'Alitas de pollo', kcal: 203, p: 30, c: 0, f: 8, icon: '' },
+  { id: 'turkey_breast', name: 'Pechuga de pavo', kcal: 135, p: 30, c: 0, f: 1, icon: '' },
+  { id: 'beef_steak', name: 'Filete de ternera', kcal: 250, p: 26, c: 0, f: 15, icon: '' },
+  { id: 'beef_mince', name: 'Carne picada ternera', kcal: 250, p: 26, c: 0, f: 15, icon: '' },
+  { id: 'pork_loin', name: 'Lomo de cerdo', kcal: 143, p: 26, c: 0, f: 3.5, icon: '' },
+  { id: 'pork_ribs', name: 'Costillas de cerdo', kcal: 277, p: 24, c: 0, f: 19, icon: '' },
+  { id: 'lamb', name: 'Cordero', kcal: 294, p: 25, c: 0, f: 21, icon: '' },
+  { id: 'bacon', name: 'Bacon', kcal: 541, p: 37, c: 1.4, f: 42, icon: '' },
+  { id: 'ham_serrano', name: 'Jamón serrano', kcal: 240, p: 32, c: 0, f: 12, icon: '' },
+  { id: 'ham_york', name: 'Jamón York', kcal: 100, p: 18, c: 1, f: 2.5, icon: '' },
+
+  // PESCADO Y MARISCO
+  { id: 'tuna', name: 'Atún en agua', kcal: 116, p: 26, c: 0, f: 1, icon: '' },
+  { id: 'tuna_oil', name: 'Atún en aceite', kcal: 198, p: 29, c: 0, f: 8, icon: '' },
+  { id: 'salmon', name: 'Salmón', kcal: 208, p: 20, c: 0, f: 13, icon: '' },
+  { id: 'hake', name: 'Merluza', kcal: 80, p: 17, c: 0, f: 1, icon: '' },
+  { id: 'cod', name: 'Bacalao', kcal: 82, p: 18, c: 0, f: 0.7, icon: '' },
+  { id: 'sardine', name: 'Sardinas', kcal: 208, p: 25, c: 0, f: 11, icon: '' },
+  { id: 'shrimp', name: 'Gambas/Langostinos', kcal: 99, p: 24, c: 0.2, f: 0.3, icon: '' },
+  { id: 'octopus', name: 'Pulpo', kcal: 82, p: 15, c: 2, f: 1, icon: '' },
+  { id: 'squid', name: 'Calamares', kcal: 92, p: 16, c: 3, f: 1.4, icon: '' },
+  { id: 'sea_bass', name: 'Lubina', kcal: 97, p: 18, c: 0, f: 2, icon: '' },
+
+  // HUEVOS Y LÁCTEOS
+  { id: 'egg', name: 'Huevo entero', kcal: 155, p: 13, c: 1.1, f: 11, icon: '' },
+  { id: 'egg_white', name: 'Clara de huevo', kcal: 52, p: 11, c: 0.7, f: 0.2, icon: '' },
+  { id: 'milk_whole', name: 'Leche entera', kcal: 61, p: 3.2, c: 4.8, f: 3.3, icon: '' },
+  { id: 'milk_skim', name: 'Leche desnatada', kcal: 34, p: 3.4, c: 5, f: 0.1, icon: '' },
+  { id: 'yogurt_greek', name: 'Yogur griego 0%', kcal: 59, p: 10, c: 3.6, f: 0.4, icon: '' },
+  { id: 'yogurt_natural', name: 'Yogur natural', kcal: 61, p: 3.5, c: 4.7, f: 3.3, icon: '' },
+  { id: 'cheese_fresh', name: 'Queso fresco', kcal: 170, p: 11, c: 3, f: 12, icon: '' },
+  { id: 'cheese_manchego', name: 'Queso Manchego', kcal: 390, p: 25, c: 0, f: 32, icon: '' },
+  { id: 'cheese_cottage', name: 'Queso Cottage', kcal: 98, p: 11, c: 3.4, f: 4.3, icon: '' },
+  { id: 'mozzarella', name: 'Mozzarella', kcal: 280, p: 22, c: 2.2, f: 20, icon: '' },
+  { id: 'butter', name: 'Mantequilla', kcal: 717, p: 0.9, c: 0.1, f: 81, icon: '' },
+
+  // FRUTAS
+  { id: 'banana', name: 'Plátano', kcal: 89, p: 1.1, c: 23, f: 0.3, icon: '' },
+  { id: 'apple', name: 'Manzana', kcal: 52, p: 0.3, c: 14, f: 0.2, icon: '' },
+  { id: 'orange', name: 'Naranja', kcal: 47, p: 0.9, c: 12, f: 0.1, icon: '' },
+  { id: 'strawberry', name: 'Fresas', kcal: 32, p: 0.7, c: 8, f: 0.3, icon: '' },
+  { id: 'blueberry', name: 'Arándanos', kcal: 57, p: 0.7, c: 14, f: 0.3, icon: '' },
+  { id: 'watermelon', name: 'Sandía', kcal: 30, p: 0.6, c: 8, f: 0.2, icon: '' },
+  { id: 'grape', name: 'Uvas', kcal: 69, p: 0.7, c: 18, f: 0.2, icon: '' },
+  { id: 'kiwi', name: 'Kiwi', kcal: 61, p: 1.1, c: 15, f: 0.5, icon: '' },
+  { id: 'pineapple', name: 'Piña', kcal: 50, p: 0.5, c: 13, f: 0.1, icon: '' },
   { id: 'avocado', name: 'Aguacate', kcal: 160, p: 2, c: 9, f: 15, icon: '' },
-  { id: 'almonds', name: 'Almendras', kcal: 579, p: 21, c: 22, f: 50, icon: '🥜' },
-  { id: 'olive_oil', name: 'Aceite de oliva', kcal: 884, p: 0, c: 0, f: 100, icon: '🫒' },
-  { id: 'milk', name: 'Leche entera', kcal: 61, p: 3.2, c: 4.8, f: 3.3, icon: '' },
-  { id: 'yogurt', name: 'Yogur griego 0%', kcal: 59, p: 10, c: 3.6, f: 0.4, icon: '🥛' },
-  { id: 'bread', name: 'Pan integral', kcal: 247, p: 13, c: 41, f: 3.4, icon: '🍞' },
-  { id: 'lentils', name: 'Lentejas cocidas', kcal: 116, p: 9, c: 20, f: 0.4, icon: '🥘' },
-  { id: 'beans', name: 'Frijoles negros', kcal: 132, p: 8.9, c: 24, f: 0.5, icon: '🥘' },
-  { id: 'broccoli', name: 'Brócoli', kcal: 34, p: 2.8, c: 7, f: 0.4, icon: '🥦' },
-  { id: 'spinach', name: 'Espinacas', kcal: 23, p: 2.9, c: 3.6, f: 0.4, icon: '🥬' },
-  { id: 'protein_powder', name: 'Proteína en polvo (scoop)', kcal: 120, p: 24, c: 3, f: 1.5, icon: '🥤' }
+
+  // VERDURAS Y HORTALIZAS
+  { id: 'broccoli', name: 'Brócoli', kcal: 34, p: 2.8, c: 7, f: 0.4, icon: '' },
+  { id: 'spinach', name: 'Espinacas', kcal: 23, p: 2.9, c: 3.6, f: 0.4, icon: '' },
+  { id: 'tomato', name: 'Tomate', kcal: 18, p: 0.9, c: 3.9, f: 0.2, icon: '' },
+  { id: 'cucumber', name: 'Pepino', kcal: 15, p: 0.7, c: 3.6, f: 0.1, icon: '' },
+  { id: 'lettuce', name: 'Lechuga', kcal: 15, p: 1.4, c: 2.9, f: 0.2, icon: '' },
+  { id: 'carrot', name: 'Zanahoria', kcal: 41, p: 0.9, c: 10, f: 0.2, icon: '' },
+  { id: 'pepper', name: 'Pimiento', kcal: 20, p: 0.9, c: 4.6, f: 0.2, icon: '' },
+  { id: 'onion', name: 'Cebolla', kcal: 40, p: 1.1, c: 9, f: 0.1, icon: '' },
+  { id: 'mushroom', name: 'Champiñones', kcal: 22, p: 3.1, c: 3.3, f: 0.3, icon: '' },
+  { id: 'zucchini', name: 'Calabacín', kcal: 17, p: 1.2, c: 3.1, f: 0.3, icon: '' },
+  { id: 'eggplant', name: 'Berenjena', kcal: 25, p: 1, c: 6, f: 0.2, icon: '' },
+  { id: 'green_beans', name: 'Judías verdes', kcal: 31, p: 1.8, c: 7, f: 0.2, icon: '' },
+  { id: 'asparagus', name: 'Espárragos', kcal: 20, p: 2.2, c: 3.9, f: 0.1, icon: '' },
+
+  // LEGUMBRES Y CEREALES
+  { id: 'rice_white', name: 'Arroz blanco cocido', kcal: 130, p: 2.7, c: 28, f: 0.3, icon: '' },
+  { id: 'rice_brown', name: 'Arroz integral', kcal: 111, p: 2.6, c: 23, f: 0.9, icon: '' },
+  { id: 'pasta', name: 'Pasta cocida', kcal: 131, p: 5, c: 25, f: 1.1, icon: '' },
+  { id: 'potato', name: 'Patata cocida', kcal: 87, p: 1.9, c: 20, f: 0.1, icon: '' },
+  { id: 'sweet_potato', name: 'Boniatos', kcal: 86, p: 1.6, c: 20, f: 0.1, icon: '' },
+  { id: 'oats', name: 'Avena', kcal: 389, p: 16.9, c: 66, f: 6.9, icon: '' },
+  { id: 'bread', name: 'Pan integral', kcal: 247, p: 13, c: 41, f: 3.4, icon: '' },
+  { id: 'bread_white', name: 'Pan blanco', kcal: 265, p: 9, c: 49, f: 3.2, icon: '' },
+  { id: 'lentils', name: 'Lentejas cocidas', kcal: 116, p: 9, c: 20, f: 0.4, icon: '' },
+  { id: 'chickpeas', name: 'Garbanzos', kcal: 164, p: 8.9, c: 27, f: 2.6, icon: '' },
+  { id: 'beans', name: 'Frijoles negros', kcal: 132, p: 8.9, c: 24, f: 0.5, icon: '' },
+  { id: 'quinoa', name: 'Quinoa cocida', kcal: 120, p: 4.4, c: 21, f: 1.9, icon: '' },
+  { id: 'corn', name: 'Maíz dulce', kcal: 96, p: 3.4, c: 21, f: 1.5, icon: '' },
+
+  // FRUTOS SECOS Y SNACKS
+  { id: 'almonds', name: 'Almendras', kcal: 579, p: 21, c: 22, f: 50, icon: '' },
+  { id: 'walnuts', name: 'Nueces', kcal: 654, p: 15, c: 14, f: 65, icon: '' },
+  { id: 'peanuts', name: 'Cacahuetes', kcal: 567, p: 26, c: 16, f: 49, icon: '' },
+  { id: 'cashews', name: 'Anacardos', kcal: 553, p: 18, c: 30, f: 44, icon: '' },
+  { id: 'peanut_butter', name: 'Crema de cacahuete', kcal: 588, p: 25, c: 20, f: 50, icon: '' },
+  { id: 'dark_chocolate', name: 'Chocolate negro 85%', kcal: 598, p: 7.8, c: 46, f: 43, icon: '' },
+  { id: 'protein_bar', name: 'Barrita proteica', kcal: 350, p: 20, c: 40, f: 12, icon: '' },
+  { id: 'rice_cakes', name: 'Tortitas de arroz', kcal: 387, p: 8, c: 82, f: 3, icon: '' },
+
+  // GRASAS Y ACEITES
+  { id: 'olive_oil', name: 'Aceite de oliva', kcal: 884, p: 0, c: 0, f: 100, icon: '' },
+  { id: 'coconut_oil', name: 'Aceite de coco', kcal: 862, p: 0, c: 0, f: 100, icon: '' },
+  { id: 'honey', name: 'Miel', kcal: 304, p: 0.3, c: 82, f: 0, icon: '' },
+  { id: 'jam', name: 'Mermelada', kcal: 250, p: 0.4, c: 65, f: 0, icon: '' },
+
+  // BEBIDAS Y SUPLEMENTOS
+  { id: 'protein_powder', name: 'Proteína en polvo (scoop)', kcal: 120, p: 24, c: 3, f: 1.5, icon: '' },
+  { id: 'creatine', name: 'Creatina (5g)', kcal: 0, p: 0, c: 0, f: 0, icon: '' },
+  { id: 'coke', name: 'Coca-Cola', kcal: 42, p: 0, c: 11, f: 0, icon: '' },
+  { id: 'beer', name: 'Cerveza', kcal: 43, p: 0.5, c: 3.6, f: 0, icon: '' },
+  { id: 'wine', name: 'Vino tinto', kcal: 85, p: 0.1, c: 2.6, f: 0, icon: '' },
+  { id: 'orange_juice', name: 'Zumo de naranja', kcal: 45, p: 0.7, c: 10, f: 0.2, icon: '' }
 ];
 
 // ── Estado Global ──
