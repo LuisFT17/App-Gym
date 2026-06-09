@@ -2,6 +2,35 @@
 // GymCoach - Lógica Principal de la Aplicación
 // ============================================================
 
+// ── Base de Datos de Alimentos (por 100g) ──
+const FOOD_DB = [
+  { id: 'chicken_breast', name: 'Pechuga de pollo', kcal: 165, p: 31, c: 0, f: 3.6, icon: '' },
+  { id: 'rice_white', name: 'Arroz blanco cocido', kcal: 130, p: 2.7, c: 28, f: 0.3, icon: '🍚' },
+  { id: 'rice_brown', name: 'Arroz integral', kcal: 111, p: 2.6, c: 23, f: 0.9, icon: '🍚' },
+  { id: 'egg', name: 'Huevo entero', kcal: 155, p: 13, c: 1.1, f: 11, icon: '🥚' },
+  { id: 'egg_white', name: 'Clara de huevo', kcal: 52, p: 11, c: 0.7, f: 0.2, icon: '🥚' },
+  { id: 'tuna', name: 'Atún en agua', kcal: 116, p: 26, c: 0, f: 1, icon: '🐟' },
+  { id: 'salmon', name: 'Salmón', kcal: 208, p: 20, c: 0, f: 13, icon: '🐟' },
+  { id: 'beef', name: 'Carne de res magra', kcal: 250, p: 26, c: 0, f: 15, icon: '🥩' },
+  { id: 'pasta', name: 'Pasta cocida', kcal: 131, p: 5, c: 25, f: 1.1, icon: '🍝' },
+  { id: 'potato', name: 'Patata cocida', kcal: 87, p: 1.9, c: 20, f: 0.1, icon: '' },
+  { id: 'sweet_potato', name: 'Boniatos', kcal: 86, p: 1.6, c: 20, f: 0.1, icon: '🍠' },
+  { id: 'oats', name: 'Avena', kcal: 389, p: 16.9, c: 66, f: 6.9, icon: '🥣' },
+  { id: 'banana', name: 'Plátano', kcal: 89, p: 1.1, c: 23, f: 0.3, icon: '🍌' },
+  { id: 'apple', name: 'Manzana', kcal: 52, p: 0.3, c: 14, f: 0.2, icon: '🍎' },
+  { id: 'avocado', name: 'Aguacate', kcal: 160, p: 2, c: 9, f: 15, icon: '' },
+  { id: 'almonds', name: 'Almendras', kcal: 579, p: 21, c: 22, f: 50, icon: '🥜' },
+  { id: 'olive_oil', name: 'Aceite de oliva', kcal: 884, p: 0, c: 0, f: 100, icon: '🫒' },
+  { id: 'milk', name: 'Leche entera', kcal: 61, p: 3.2, c: 4.8, f: 3.3, icon: '' },
+  { id: 'yogurt', name: 'Yogur griego 0%', kcal: 59, p: 10, c: 3.6, f: 0.4, icon: '🥛' },
+  { id: 'bread', name: 'Pan integral', kcal: 247, p: 13, c: 41, f: 3.4, icon: '🍞' },
+  { id: 'lentils', name: 'Lentejas cocidas', kcal: 116, p: 9, c: 20, f: 0.4, icon: '🥘' },
+  { id: 'beans', name: 'Frijoles negros', kcal: 132, p: 8.9, c: 24, f: 0.5, icon: '🥘' },
+  { id: 'broccoli', name: 'Brócoli', kcal: 34, p: 2.8, c: 7, f: 0.4, icon: '🥦' },
+  { id: 'spinach', name: 'Espinacas', kcal: 23, p: 2.9, c: 3.6, f: 0.4, icon: '🥬' },
+  { id: 'protein_powder', name: 'Proteína en polvo (scoop)', kcal: 120, p: 24, c: 3, f: 1.5, icon: '🥤' }
+];
+
 // ── Estado Global ──
 const state = {
   currentView: 'home',    // 'home' | 'workout'
@@ -4804,23 +4833,53 @@ function renderNutritionTab(container) {
 
     <!-- Modal Añadir Comida -->
     <div id="addMealModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:flex-end; justify-content:center;">
-      <div style="background:var(--bg-primary); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px; animation:slideUp 0.3s ease;">
+      <div style="background:var(--bg-primary); width:100%; max-width:480px; border-radius:20px 20px 0 0; padding:20px; animation:slideUp 0.3s ease; max-height:90vh; overflow-y:auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
           <h3 style="margin:0; font-size:1.1rem; font-weight:800; text-transform:uppercase;">Añadir Comida</h3>
           <button onclick="closeAddMealModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; padding:4px;">✕</button>
         </div>
-        <div style="display:flex; flex-direction:column; gap:12px;">
-          <input type="text" id="mealName" placeholder="Nombre (ej: Pechuga de pollo)" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <input type="number" id="mealKcal" placeholder="Kcal" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
-            <input type="number" id="mealP" placeholder="Proteína (g)" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
+        
+        <!-- Buscador de alimentos -->
+        <div style="margin-bottom:16px;">
+          <input type="text" id="foodSearch" placeholder="Buscar alimento..." oninput="filterFoodList(this.value)" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600; margin-bottom:8px;">
+          <div id="foodSearchResults" style="max-height:150px; overflow-y:auto; display:none; background:var(--bg-surface); border:0.5px solid var(--border-subtle); border-radius:var(--radius-sm);">
+            <!-- Resultados dinámicos -->
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <input type="number" id="mealC" placeholder="Carbos (g)" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
-            <input type="number" id="mealF" placeholder="Grasas (g)" style="width:100%; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600;">
-          </div>
-          <button onclick="saveMeal()" style="width:100%; padding:14px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; border-radius:var(--radius-md); box-shadow:var(--accent-glow); text-transform:uppercase; margin-top:8px;">Guardar</button>
         </div>
+
+        <!-- Alimento seleccionado -->
+        <div id="selectedFoodInfo" style="display:none; background:var(--bg-surface); padding:12px; border-radius:var(--radius-sm); margin-bottom:12px; border-left:3px solid var(--accent-primary);">
+          <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);" id="selectedFoodName"></div>
+          <div style="font-size:0.7rem; color:var(--text-muted);">Por 100g: <span id="selectedFoodMacros"></span></div>
+        </div>
+
+        <!-- Cantidad -->
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; white-space:nowrap;">Cantidad (g)</label>
+          <input type="number" id="mealGrams" value="100" oninput="updateMealMacros()" style="flex:1; padding:12px; background:var(--bg-surface); border:0.5px solid var(--border-subtle); color:var(--text-primary); border-radius:var(--radius-sm); font-size:0.9rem; font-weight:600; text-align:center;">
+        </div>
+
+        <!-- Macros calculados -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
+          <div style="background:var(--bg-elevated); padding:10px; border-radius:var(--radius-sm); text-align:center;">
+            <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Kcal</div>
+            <div style="font-size:1.1rem; font-weight:800; color:var(--accent-primary);" id="calcKcal">0</div>
+          </div>
+          <div style="background:var(--bg-elevated); padding:10px; border-radius:var(--radius-sm); text-align:center;">
+            <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Proteína</div>
+            <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);" id="calcP">0g</div>
+          </div>
+          <div style="background:var(--bg-elevated); padding:10px; border-radius:var(--radius-sm); text-align:center;">
+            <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Carbos</div>
+            <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);" id="calcC">0g</div>
+          </div>
+          <div style="background:var(--bg-elevated); padding:10px; border-radius:var(--radius-sm); text-align:center;">
+            <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:600;">Grasas</div>
+            <div style="font-size:1.1rem; font-weight:800; color:var(--text-primary);" id="calcF">0g</div>
+          </div>
+        </div>
+
+        <button onclick="saveMealFromDB()" style="width:100%; padding:14px; background:var(--accent-gradient); color:#fff; border:none; font-weight:700; font-size:0.9rem; cursor:pointer; border-radius:var(--radius-md); box-shadow:var(--accent-glow); text-transform:uppercase;">Guardar Comida</button>
       </div>
     </div>
   `;
@@ -4848,35 +4907,118 @@ function openAddMealModal() {
 function closeAddMealModal() {
   const modal = document.getElementById('addMealModal');
   if (modal) modal.style.display = 'none';
+  // Resetear selección
+  state.selectedFood = null;
+  document.getElementById('foodSearch').value = '';
+  document.getElementById('foodSearchResults').style.display = 'none';
+  document.getElementById('selectedFoodInfo').style.display = 'none';
+  document.getElementById('mealGrams').value = 100;
+  updateMealMacros();
 }
 
-function saveMeal() {
-  const name = document.getElementById('mealName').value.trim();
-  const kcal = parseInt(document.getElementById('mealKcal').value) || 0;
-  const p = parseInt(document.getElementById('mealP').value) || 0;
-  const c = parseInt(document.getElementById('mealC').value) || 0;
-  const f = parseInt(document.getElementById('mealF').value) || 0;
+let state.selectedFood = null;
 
-  if (!name) {
-    showToast('⚠️', 'Introduce un nombre para la comida');
+function filterFoodList(query) {
+  const resultsDiv = document.getElementById('foodSearchResults');
+  if (!query || query.length < 2) {
+    resultsDiv.style.display = 'none';
     return;
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const q = query.toLowerCase();
+  const matches = FOOD_DB.filter(f => f.name.toLowerCase().includes(q));
+
+  if (matches.length === 0) {
+    resultsDiv.innerHTML = '<div style="padding:12px; text-align:center; color:var(--text-muted); font-size:0.8rem;">No encontrado</div>';
+    resultsDiv.style.display = 'block';
+    return;
+  }
+
+  resultsDiv.innerHTML = matches.map(f => `
+    <div onclick="selectFood('${f.id}')" style="padding:12px; border-bottom:0.5px solid var(--border-subtle); cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onmouseover="this.style.background='var(--bg-elevated)'" onmouseout="this.style.background='transparent'">
+      <span style="font-size:0.9rem; font-weight:600; color:var(--text-primary);">${f.icon} ${f.name}</span>
+      <span style="font-size:0.75rem; color:var(--text-muted);">${f.kcal} kcal</span>
+    </div>
+  `).join('');
+  resultsDiv.style.display = 'block';
+}
+
+function selectFood(foodId) {
+  const food = FOOD_DB.find(f => f.id === foodId);
+  if (!food) return;
+
+  state.selectedFood = food;
+  
+  // Mostrar info seleccionada
+  document.getElementById('selectedFoodInfo').style.display = 'block';
+  document.getElementById('selectedFoodName').textContent = `${food.icon} ${food.name}`;
+  document.getElementById('selectedFoodMacros').textContent = `P:${food.p}g C:${food.c}g G:${food.f}g`;
+  
+  // Ocultar resultados
+  document.getElementById('foodSearchResults').style.display = 'none';
+  document.getElementById('foodSearch').value = food.name;
+
+  updateMealMacros();
+}
+
+function updateMealMacros() {
+  if (!state.selectedFood) {
+    document.getElementById('calcKcal').textContent = '0';
+    document.getElementById('calcP').textContent = '0g';
+    document.getElementById('calcC').textContent = '0g';
+    document.getElementById('calcF').textContent = '0g';
+    return;
+  }
+
+  const grams = parseInt(document.getElementById('mealGrams').value) || 0;
+  const factor = grams / 100;
+
+  const kcal = Math.round(state.selectedFood.kcal * factor);
+  const p = Math.round(state.selectedFood.p * factor * 10) / 10;
+  const c = Math.round(state.selectedFood.c * factor * 10) / 10;
+  const f = Math.round(state.selectedFood.f * factor * 10) / 10;
+
+  document.getElementById('calcKcal').textContent = kcal;
+  document.getElementById('calcP').textContent = p + 'g';
+  document.getElementById('calcC').textContent = c + 'g';
+  document.getElementById('calcF').textContent = f + 'g';
+}
+
+function saveMealFromDB() {
+  if (!state.selectedFood) {
+    showToast('️', 'Selecciona un alimento de la lista');
+    return;
+  }
+
+  const grams = parseInt(document.getElementById('mealGrams').value) || 0;
+  if (grams <= 0) {
+    showToast('⚠️', 'Introduce una cantidad válida');
+    return;
+  }
+
+  const factor = grams / 100;
+  const selectedDate = state.nutritionSelectedDate || new Date().toISOString().split('T')[0];
+
   state.nutritionLog.push({
-    date: today,
-    name,
-    kcal,
-    p,
-    c,
-    f,
+    date: selectedDate,
+    name: state.selectedFood.name,
+    grams: grams,
+    kcal: Math.round(state.selectedFood.kcal * factor),
+    p: Math.round(state.selectedFood.p * factor * 10) / 10,
+    c: Math.round(state.selectedFood.c * factor * 10) / 10,
+    f: Math.round(state.selectedFood.f * factor * 10) / 10,
     timestamp: Date.now()
   });
 
   saveState();
   closeAddMealModal();
   renderApp();
-  showToast('✅', `${name} añadido`);
+  showToast('✅', `${state.selectedFood.name} (${grams}g) añadido`);
+}
+
+function saveMeal() {
+  // Fallback por si acaso, aunque ahora usamos saveMealFromDB
+  saveMealFromDB();
 }
 
 function deleteMeal(index) {
