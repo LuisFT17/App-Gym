@@ -2609,6 +2609,8 @@ function openExerciseSelector() {
     exerciseSelectorSource = 'empty_workout';
   }
   selectorQuery = '';
+  // Colapsar todos los grupos por defecto para evitar scroll excesivo
+  Object.keys(MUSCLE_GROUPS).forEach(mg => collapsedGroups[mg] = true);
   state.currentView = 'exercise_selector';
   renderApp();
 }
@@ -2618,6 +2620,8 @@ function openExerciseSelectorForBuilder(dIdx) {
   exerciseSelectorSource = 'routine_builder';
   activeBuilderDay = dIdx;
   selectorQuery = '';
+  // Colapsar todos los grupos por defecto
+  Object.keys(MUSCLE_GROUPS).forEach(mg => collapsedGroups[mg] = true);
   state.currentView = 'exercise_selector';
   renderApp();
 }

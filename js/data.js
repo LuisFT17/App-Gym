@@ -1245,6 +1245,977 @@ const EXERCISE_DB = {
     ],
     progression: 'Sube peso cuando completes 15 reps estrictas',
     restRecommended: 60
+  },
+
+  // === PECHO ===
+  press_plano_mancuernas: {
+    name: 'Press plano mancuernas',
+    muscleGroup: 'pecho',
+    secondaryMuscles: ['tríceps', 'hombro anterior'],
+    icon: '',
+    tips: [
+      'Retrae omóplatos y mantén contacto con el banco',
+      'Baja las mancuernas controlando la excéntrica 2-3 seg',
+      'Sube sin chocar las mancuernas arriba, aprieta el pecho',
+      'No bloquees los codos completamente en la parte alta'
+    ],
+    commonMistakes: [
+      'Separar los omóplatos del banco al empujar',
+      'Bajar demasiado profundo (estrés en el hombro)',
+      'Abrir los codos a 90° (mejor 45-75°)'
+    ],
+    progression: 'Cuando alcances 12 reps en 3 series, sube 2 kg',
+    warmup: '2 series: 12 reps al 40%, 6 reps al 60%',
+    restRecommended: 120
+  },
+  aperturas_mancuernas: {
+    name: 'Aperturas mancuernas',
+    muscleGroup: 'pecho',
+    secondaryMuscles: ['hombro anterior'],
+    icon: '',
+    tips: [
+      'Mantén ligera flexión en los codos durante todo el movimiento',
+      'Abre hasta sentir el estiramiento del pecho, no más',
+      'Concéntrate en juntar las mancuernas arriba apretando el pecho'
+    ],
+    commonMistakes: [
+      'Usar demasiado peso (riesgo de lesión en el hombro)',
+      'Mover los brazos como si fuera press en vez de apertura'
+    ],
+    progression: 'Prioriza la conexión mente-músculo sobre el peso',
+    restRecommended: 90
+  },
+  press_declinado_maquina: {
+    name: 'Press declinado máquina',
+    muscleGroup: 'pecho',
+    secondaryMuscles: ['tríceps'],
+    icon: '',
+    tips: [
+      'Ajusta el asiento para que los agarres queden a la altura del pecho inferior',
+      'Empuja hacia delante y ligeramente hacia abajo',
+      'Aprieta el pecho abajo en la contracción'
+    ],
+    commonMistakes: [
+      'No completar el rango de movimiento',
+      'Levantar los glúteos del asiento'
+    ],
+    progression: 'Cuando alcances 12 reps en 2 series, sube 5 kg',
+    restRecommended: 90
+  },
+  press_declinado_mancuernas: {
+    name: 'Press declinado mancuernas',
+    muscleGroup: 'pecho',
+    secondaryMuscles: ['tríceps'],
+    icon: '',
+    tips: [
+      'Banco declinado a 15-30 grados',
+      'Empuja hacia arriba y ligeramente hacia dentro',
+      'Controla la bajada 2-3 segundos'
+    ],
+    commonMistakes: [
+      'Bajar demasiado profundo',
+      'Separar los omóplatos del banco'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 90
+  },
+  cruce_poleas: {
+    name: 'Cruce de poleas',
+    muscleGroup: 'pecho',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Pecho fuera, brazos levemente flexionados',
+      'Acerca las manos como si abrazaras un árbol',
+      'Aprieta el pecho en la contracción'
+    ],
+    commonMistakes: [
+      'Hacer press en vez de apertura',
+      'Usar demasiado peso'
+    ],
+    progression: 'Llega a 15 reps perfecto',
+    restRecommended: 60
+  },
+  pullover_mancuerna: {
+    name: 'Pullover mancuerna',
+    muscleGroup: 'pecho',
+    secondaryMuscles: ['dorsal', 'tríceps largo'],
+    icon: '',
+    tips: [
+      'Baja la mancuerna detrás de la cabeza controlando',
+      'Mantén ligera flexión en los codos',
+      'Sube apretando el pecho y dorsales'
+    ],
+    commonMistakes: [
+      'Bajar demasiado rápido',
+      'Extender completamente los codos'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 90
+  },
+
+  // === ESPALDA ===
+  remo_maquina: {
+    name: 'Remo en máquina',
+    muscleGroup: 'espalda',
+    secondaryMuscles: ['bíceps', 'lumbares'],
+    icon: '',
+    tips: [
+      'Tira con los codos hacia atrás, no con las manos',
+      'Aprieta los dorsales 1 seg en la contracción',
+      'Controla la vuelta del peso 2-3 seg',
+      'Mantén el pecho apoyado contra el soporte'
+    ],
+    commonMistakes: [
+      'Usar los bíceps más que la espalda',
+      'No completar el rango de movimiento',
+      'Balancear el torso para generar impulso'
+    ],
+    progression: 'Cuando alcances 10 reps en 3 series, sube 5 kg',
+    warmup: '1-2 series de calentamiento: 12 reps al 50%, 6 reps al 70%',
+    restRecommended: 90
+  },
+  jalons_agarre_neutro: {
+    name: 'Jalón agarre neutro (triángulo)',
+    muscleGroup: 'espalda',
+    secondaryMuscles: ['bíceps', 'lumbares'],
+    icon: '',
+    tips: [
+      'Inclínate ligeramente hacia atrás al tirar',
+      'Lleva el agarre hacia la parte superior del pecho',
+      'Aprieta los dorsales abajo, siente el estiramiento arriba'
+    ],
+    commonMistakes: [
+      'Tirar hacia la barriga en vez del pecho',
+      'Inclinarse demasiado hacia atrás'
+    ],
+    progression: 'Cuando alcances 10 reps en 3 series, sube 5 kg',
+    restRecommended: 90
+  },
+  remo_con_mancuerna_unilateral: {
+    name: 'Remo mancuerna unilateral',
+    muscleGroup: 'espalda',
+    secondaryMuscles: ['bíceps', 'lumbares'],
+    icon: '',
+    tips: [
+      'Apoya la rodilla y la mano del mismo lado en el banco',
+      'Tira la mancuerna hacia la cadera, no hacia el pecho',
+      'Mantén la espalda recta, no redondees'
+    ],
+    commonMistakes: [
+      'Rotar el torso excesivamente al subir',
+      'Usar impulso de las caderas'
+    ],
+    progression: 'Iguala reps y peso en ambos lados',
+    restRecommended: 90
+  },
+  remo_t_barra: {
+    name: 'Remo en T',
+    muscleGroup: 'espalda',
+    secondaryMuscles: ['bíceps', 'lumbares'],
+    icon: '',
+    tips: [
+      'Inclinación de 45 grados, barra entre las piernas',
+      'Tira hacia el ombligo apretando la espalda',
+      'Mantén el core activado'
+    ],
+    commonMistakes: [
+      'Redondear la espalda baja',
+      'Usar impulso del torso'
+    ],
+    progression: 'Sube peso al llegar a 10 reps',
+    restRecommended: 120
+  },
+  dominadas_agarre_supino: {
+    name: 'Dominadas agarre supino (Chin-ups)',
+    muscleGroup: 'espalda',
+    secondaryMuscles: ['bíceps'],
+    icon: '',
+    tips: [
+      'Agarre supino (palmas hacia ti)',
+      'Sube hasta pasar la barbilla',
+      'Controla la bajada'
+    ],
+    commonMistakes: [
+      'Kipping o balanceo',
+      'No completar el rango'
+    ],
+    progression: 'Usa lastre al llegar a 12 reps',
+    restRecommended: 120
+  },
+  dominadas_agarre_neutro: {
+    name: 'Dominadas agarre neutro',
+    muscleGroup: 'espalda',
+    secondaryMuscles: ['bíceps'],
+    icon: '',
+    tips: [
+      'Agarre neutro (palmas enfrentadas)',
+      'Tira con los codos hacia abajo',
+      'Aprieta los dorsales arriba'
+    ],
+    commonMistakes: [
+      'Subir los hombros',
+      'No controlar la bajada'
+    ],
+    progression: 'Usa lastre al llegar a 10 reps',
+    restRecommended: 120
+  },
+  jalons_agarre_ancho: {
+    name: 'Jalón agarre ancho',
+    muscleGroup: 'espalda',
+    secondaryMuscles: ['bíceps'],
+    icon: '',
+    tips: [
+      'Agarre más ancho que los hombros',
+      'Tira hacia el pecho superior',
+      'Aprieta los dorsales abajo'
+    ],
+    commonMistakes: [
+      'Tirar detrás de la cabeza',
+      'Inclinarse demasiado'
+    ],
+    progression: 'Sube peso al llegar a 10 reps',
+    restRecommended: 90
+  },
+  pulldown_brazo_recto: {
+    name: 'Pulldown con brazo recto',
+    muscleGroup: 'espalda',
+    secondaryMuscles: ['tríceps largo'],
+    icon: '',
+    tips: [
+      'Brazos rectos, imagina llevar la barra al ombligo en un semicírculo',
+      'Espalda arqueada, pecho fuera',
+      'Aprieta los dorsales abajo'
+    ],
+    commonMistakes: [
+      'Doblar codos',
+      'Usar impulso'
+    ],
+    progression: 'Llega a 15 reps',
+    restRecommended: 60
+  },
+
+  // === HOMBRO ===
+  press_militar_mancuernas_sentado: {
+    name: 'Press militar mancuernas sentado',
+    muscleGroup: 'hombro',
+    secondaryMuscles: ['tríceps', 'core'],
+    icon: '',
+    tips: [
+      'Ajusta el banco a 90°, apoya la espalda',
+      'Sube las mancuernas sin que choquen arriba',
+      'Baja hasta que las mancuernas lleguen a la altura de las orejas'
+    ],
+    commonMistakes: [
+      'Arquear la espalda baja en exceso',
+      'Bloquear los codos arriba completamente'
+    ],
+    progression: 'Cuando alcances 10 reps en 3 series, sube 2 kg',
+    warmup: '2 series: 12 reps al 40%, 6 reps al 60%',
+    restRecommended: 120
+  },
+  elevaciones_frontales_mancuerna: {
+    name: 'Elevaciones frontales mancuerna',
+    muscleGroup: 'hombro',
+    secondaryMuscles: ['trapecio'],
+    icon: '',
+    tips: [
+      'Sube la mancuerna al frente hasta la altura del hombro',
+      'Controla la bajada 2-3 seg',
+      'Alterna brazos o haz ambos simultáneamente'
+    ],
+    commonMistakes: [
+      'Usar impulso balanceando el torso',
+      'Subir más allá de paralelo (activa trapecio)'
+    ],
+    progression: 'Sube peso cuando completes 12 reps perfectas',
+    restRecommended: 60
+  },
+  elevaciones_frontales_polea: {
+    name: 'Elevaciones frontales polea',
+    muscleGroup: 'hombro',
+    secondaryMuscles: ['trapecio'],
+    icon: '',
+    tips: [
+      'Tira la polea hacia delante hasta la altura del hombro',
+      'Controla la vuelta',
+      'Mantén el core activado'
+    ],
+    commonMistakes: [
+      'Inclinarse hacia atrás',
+      'Usar impulso'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 60
+  },
+  press_arnold: {
+    name: 'Press Arnold',
+    muscleGroup: 'hombro',
+    secondaryMuscles: ['tríceps'],
+    icon: '',
+    tips: [
+      'Empieza con palmas hacia ti, rota al subir',
+      'Termina con palmas hacia fuera',
+      'Movimiento fluido y controlado'
+    ],
+    commonMistakes: [
+      'Usar demasiado peso',
+      'No completar la rotación'
+    ],
+    progression: 'Sube peso al llegar a 10 reps',
+    restRecommended: 90
+  },
+  elevacion_lateral_polea_unilateral: {
+    name: 'Elevación lateral polea unilateral',
+    muscleGroup: 'hombro',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'La polea da tensión constante',
+      'Lidera con el codo',
+      'Sube hasta paralelo'
+    ],
+    commonMistakes: [
+      'Encoger el hombro',
+      'Subir la mano por encima del codo'
+    ],
+    progression: 'Prioriza conexión mente-músculo',
+    restRecommended: 45
+  },
+  face_pull_cuerda: {
+    name: 'Face pull cuerda',
+    muscleGroup: 'hombro posterior',
+    secondaryMuscles: ['trapecio', 'romboides'],
+    icon: '',
+    tips: [
+      'Tira la cuerda hacia la cara separando las manos',
+      'Codos a la altura de los hombros',
+      'Rotación externa al final'
+    ],
+    commonMistakes: [
+      'Tirar demasiado bajo',
+      'No separar las manos'
+    ],
+    progression: 'Prioriza técnica perfecta',
+    restRecommended: 45
+  },
+
+  // === TRÍCEPS ===
+  extension_triceps_sobre_cabeza: {
+    name: 'Extensión tríceps sobre cabeza (polea/manco)',
+    muscleGroup: 'tríceps',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Mantén los codos apuntando al techo',
+      'Estira completamente el brazo arriba',
+      'Controla la bajada detrás de la cabeza'
+    ],
+    commonMistakes: [
+      'Abrir los codos hacia los lados',
+      'No extender completamente'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 60
+  },
+  press_triceps_polea: {
+    name: 'Press tríceps polea (barra recta/V)',
+    muscleGroup: 'tríceps',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Pega los codos al cuerpo',
+      'Extiende completamente abajo',
+      'Aprieta el tríceps en extensión'
+    ],
+    commonMistakes: [
+      'Separar los codos',
+      'Inclinar el torso'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 60
+  },
+  patada_triceps_mancuerna: {
+    name: 'Patada tríceps mancuerna',
+    muscleGroup: 'tríceps',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Inclínate hacia delante, brazo paralelo al suelo',
+      'Extiende el brazo atrás hasta bloqueo',
+      'Aprieta el tríceps 1 seg'
+    ],
+    commonMistakes: [
+      'Mover el codo',
+      'Usar demasiado peso'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 60
+  },
+  extension_triceps_banca: {
+    name: 'Extensión tríceps en banca (Skullcrushers)',
+    muscleGroup: 'tríceps',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Baja la barra hacia la frente',
+      'Mantén los codos apuntando al techo',
+      'Extiende completamente arriba'
+    ],
+    commonMistakes: [
+      'Abrir los codos',
+      'Mover los hombros'
+    ],
+    progression: 'Sube peso al llegar a 10 reps',
+    restRecommended: 90
+  },
+
+  // === BÍCEPS ===
+  curl_martillo_mancuernas: {
+    name: 'Curl martillo mancuernas',
+    muscleGroup: 'bíceps',
+    secondaryMuscles: ['antebrazo'],
+    icon: '',
+    tips: [
+      'Agarre neutro (palmas enfrentadas)',
+      'Sube controlando la velocidad',
+      'Aprieta el bíceps arriba 1 seg'
+    ],
+    commonMistakes: [
+      'Balancear el torso',
+      'Mover los codos hacia atrás'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 60
+  },
+  curl_polea_cuerda: {
+    name: 'Curl bíceps polea cuerda',
+    muscleGroup: 'bíceps',
+    secondaryMuscles: ['antebrazo'],
+    icon: '',
+    tips: [
+      'Tensión constante de la polea',
+      'Aprieta el bíceps en contracción',
+      'Controla la extensión completa'
+    ],
+    commonMistakes: [
+      'Mover los codos',
+      'Usar demasiado peso'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 60
+  },
+  curl_inclinado_mancuernas: {
+    name: 'Curl inclinado mancuernas',
+    muscleGroup: 'bíceps',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Banco a 45-60°, apoya la espalda',
+      'Deja colgar los brazos, estiramiento completo',
+      'Sube apretando el bíceps'
+    ],
+    commonMistakes: [
+      'Inclinar el torso',
+      'No completar la extensión'
+    ],
+    progression: 'Sube peso al llegar a 10 reps',
+    restRecommended: 60
+  },
+  curl_concentrado: {
+    name: 'Curl concentrado',
+    muscleGroup: 'bíceps',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Apoya el codo en la parte interna del muslo',
+      'Sube la mancuerna apretando el bíceps',
+      'Controla la bajada'
+    ],
+    commonMistakes: [
+      'Mover el torso',
+      'Usar impulso'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 60
+  },
+  curl_polea_barra_recta: {
+    name: 'Curl bíceps polea barra recta',
+    muscleGroup: 'bíceps',
+    secondaryMuscles: ['antebrazo'],
+    icon: '',
+    tips: [
+      'Agarre a la anchura de los hombros',
+      'Mantén los codos pegados al costado',
+      'Aprieta el bíceps arriba'
+    ],
+    commonMistakes: [
+      'Balancearse',
+      'Mover los codos'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 60
+  },
+
+  // === PIERNA - CUÁDRICEPS ===
+  prensa_piernas: {
+    name: 'Prensa de piernas',
+    muscleGroup: 'cuádriceps',
+    secondaryMuscles: ['glúteos', 'isquiotibiales'],
+    icon: '',
+    tips: [
+      'Pies a la anchura de los hombros',
+      'Baja controlando hasta 90° de rodilla',
+      'Empuja con los talones',
+      'No bloquees las rodillas arriba'
+    ],
+    commonMistakes: [
+      'Levantar los glúteos',
+      'Bajar demasiado profundo',
+      'Bloquear las rodillas'
+    ],
+    progression: 'Sube 10 kg al llegar a 12 reps',
+    warmup: '2 series: 15 reps al 40%, 8 reps al 60%',
+    restRecommended: 120
+  },
+  extension_cuadriceps_maquina: {
+    name: 'Extensión de cuádriceps máquina',
+    muscleGroup: 'cuádriceps',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Extiende completamente arriba',
+      'Aprieta el cuádriceps 1-2 seg',
+      'Baja controlando 2-3 seg'
+    ],
+    commonMistakes: [
+      'Usar impulso con la cadera',
+      'No completar el rango'
+    ],
+    progression: 'Sube peso al llegar a 15 reps',
+    restRecommended: 90
+  },
+  sentadilla_bulgarra: {
+    name: 'Sentadilla búlgara',
+    muscleGroup: 'cuádriceps',
+    secondaryMuscles: ['glúteos', 'core'],
+    icon: '',
+    tips: [
+      'Apoya el empeine en el banco',
+      'Baja la rodilla trasera hacia el suelo',
+      'Mantén el torso recto'
+    ],
+    commonMistakes: [
+      'Inclinar el torso',
+      'No bajar suficiente'
+    ],
+    progression: 'Empieza con peso corporal, luego mancuernas',
+    restRecommended: 90
+  },
+  sentadilla_hack: {
+    name: 'Sentadilla Hack',
+    muscleGroup: 'cuádriceps',
+    secondaryMuscles: ['glúteos'],
+    icon: '',
+    tips: [
+      'Espalda apoyada en el respaldo',
+      'Baja hasta paralelo',
+      'Empuja con los talones'
+    ],
+    commonMistakes: [
+      'Levantar los talones',
+      'No bajar suficiente'
+    ],
+    progression: 'Sube peso al llegar a 10 reps',
+    restRecommended: 120
+  },
+  zancadas_caminando: {
+    name: 'Zancadas caminando',
+    muscleGroup: 'cuádriceps',
+    secondaryMuscles: ['glúteos'],
+    icon: '',
+    tips: [
+      'Paso largo, rodilla no pasa la punta',
+      'Mantén el equilibrio',
+      'Alterna piernas'
+    ],
+    commonMistakes: [
+      'Paso corto',
+      'Inclinar el torso'
+    ],
+    progression: 'Sube peso al llegar a 12 reps por pierna',
+    restRecommended: 90
+  },
+
+  // === PIERNA - ISQUIOTIBIALES ===
+  curl_femoral_maquina_sentado: {
+    name: 'Curl femoral máquina sentado',
+    muscleGroup: 'isquiotibiales',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Apoya bien la espalda',
+      'Flexiona llevando talones a glúteos',
+      'Aprieta los isquios 1 seg'
+    ],
+    commonMistakes: [
+      'Levantar los glúteos',
+      'Usar impulso'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 90
+  },
+  curl_femoral_maquina_tumbado: {
+    name: 'Curl femoral máquina tumbado',
+    muscleGroup: 'isquiotibiales',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Caderas pegadas al banco',
+      'Flexiona controlando',
+      'Aprieta los isquios arriba'
+    ],
+    commonMistakes: [
+      'Levantar las caderas',
+      'Bajar rápido'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 90
+  },
+  peso_muerto_rumano_mancuernas: {
+    name: 'Peso muerto rumano mancuernas',
+    muscleGroup: 'isquiotibiales',
+    secondaryMuscles: ['glúteos', 'lumbares'],
+    icon: '',
+    tips: [
+      'Lleva caderas atrás',
+      'Ligera flexión de rodilla',
+      'Mancuernas rozando piernas'
+    ],
+    commonMistakes: [
+      'Redondear espalda',
+      'Bajar solo moviendo el torso'
+    ],
+    progression: 'Sube 2 kg por mancuerna al llegar a 12 reps',
+    restRecommended: 120
+  },
+
+  // === GLÚTEOS ===
+  hip_thrust_maquina: {
+    name: 'Hip Thrust en máquina',
+    muscleGroup: 'glúteos',
+    secondaryMuscles: ['isquiotibiales'],
+    icon: '',
+    tips: [
+      'Apoya la espalda alta en el soporte',
+      'Empuja con los talones',
+      'Aprieta los glúteos arriba'
+    ],
+    commonMistakes: [
+      'Extender demasiado la espalda',
+      'Empujar con la espalda'
+    ],
+    progression: 'Sube 5 kg al llegar a 12 reps',
+    restRecommended: 120
+  },
+  patada_gluteo_polea: {
+    name: 'Patada de glúteo en polea',
+    muscleGroup: 'glúteos',
+    secondaryMuscles: ['isquiotibiales'],
+    icon: '',
+    tips: [
+      'Core activado, espalda neutra',
+      'Empuja la pierna atrás apretando el glúteo',
+      'Controla la vuelta'
+    ],
+    commonMistakes: [
+      'Arquear la espalda',
+      'Usar impulso'
+    ],
+    progression: 'Sube peso al llegar a 15 reps',
+    restRecommended: 60
+  },
+  abduccion_cadera_maquina: {
+    name: 'Abducción cadera máquina',
+    muscleGroup: 'glúteos',
+    secondaryMuscles: ['abductores'],
+    icon: '',
+    tips: [
+      'Abre controlando',
+      'Aprieta los glúteos abiertos',
+      'Vuelve despacio'
+    ],
+    commonMistakes: [
+      'Inclinarse hacia delante',
+      'Hacer rápido'
+    ],
+    progression: 'Prioriza contracción sobre peso',
+    restRecommended: 45
+  },
+  sumo_sentadilla: {
+    name: 'Sentadilla Sumo',
+    muscleGroup: 'glúteos',
+    secondaryMuscles: ['aductores', 'cuádriceps'],
+    icon: '',
+    tips: [
+      'Pies más anchos que hombros, puntas hacia fuera',
+      'Baja manteniendo rodillas en línea con puntas',
+      'Empuja con los talones'
+    ],
+    commonMistakes: [
+      'Meter rodillas hacia dentro',
+      'No bajar suficiente'
+    ],
+    progression: 'Sube peso al llegar a 10 reps',
+    restRecommended: 120
+  },
+
+  // === ADUCTORES ===
+  aductor_maquina: {
+    name: 'Aductor en máquina',
+    muscleGroup: 'aductores',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Aprieta las piernas juntas 1-2 seg',
+      'Controla la apertura 2-3 seg',
+      'Espalda apoyada'
+    ],
+    commonMistakes: [
+      'Usar impulso',
+      'No completar rango'
+    ],
+    progression: 'Sube peso al llegar a 15 reps',
+    restRecommended: 60
+  },
+
+  // === GEMELOS ===
+  elevacion_gemelos_de_pie_maquina: {
+    name: 'Elevación de gemelos de pie (máquina)',
+    muscleGroup: 'gemelos',
+    secondaryMuscles: ['sóleo'],
+    icon: '',
+    tips: [
+      'Sube lo más alto posible',
+      'Aprieta los gemelos 1-2 seg',
+      'Baja hasta estiramiento completo'
+    ],
+    commonMistakes: [
+      'Hacer rebotes',
+      'No completar rango'
+    ],
+    progression: 'Sube peso al llegar a 15 reps',
+    restRecommended: 60
+  },
+  elevacion_gemelos_prensa: {
+    name: 'Elevación de gemelos en prensa',
+    muscleGroup: 'gemelos',
+    secondaryMuscles: ['sóleo'],
+    icon: '',
+    tips: [
+      'Puntas en el borde inferior de la plataforma',
+      'Empuja con las puntas',
+      'Piernas casi rectas'
+    ],
+    commonMistakes: [
+      'Flexionar demasiado rodillas',
+      'Hacer rebotes'
+    ],
+    progression: 'Sube peso al llegar a 15 reps',
+    restRecommended: 60
+  },
+  elevacion_gemelos_sentado_maquina: {
+    name: 'Elevación de gemelos sentado (máquina)',
+    muscleGroup: 'gemelos',
+    secondaryMuscles: ['sóleo'],
+    icon: '',
+    tips: [
+      'Trabaja más el sóleo',
+      'Sube explosivo y aguanta 2 seg',
+      'Baja controlando'
+    ],
+    commonMistakes: [
+      'No bajar del todo',
+      'Usar impulso'
+    ],
+    progression: 'Sube peso al llegar a 20 reps',
+    restRecommended: 60
+  },
+
+  // === CORE ===
+  plancha_abdominal: {
+    name: 'Plancha abdominal',
+    muscleGroup: 'core',
+    secondaryMuscles: ['oblicuos', 'hombro'],
+    icon: '',
+    tips: [
+      'Cuerpo en línea recta',
+      'Activa core y glúteos',
+      'Respira controlado'
+    ],
+    commonMistakes: [
+      'Dejar caer caderas',
+      'Levantar glúteos demasiado'
+    ],
+    progression: 'Aguanta 30-60 seg, progresa tiempo',
+    restRecommended: 60
+  },
+  rueda_abdominal: {
+    name: 'Rueda abdominal',
+    muscleGroup: 'core',
+    secondaryMuscles: ['hombro', 'espalda baja'],
+    icon: '',
+    tips: [
+      'Empuja controlando el core',
+      'Vuelve tirando con abdomen',
+      'Mantén espalda neutra'
+    ],
+    commonMistakes: [
+      'Arquear espalda baja',
+      'Ir demasiado lejos'
+    ],
+    progression: 'Empieza con recorrido corto',
+    restRecommended: 60
+  },
+  elevacion_piernas_colgado: {
+    name: 'Elevación de piernas colgado',
+    muscleGroup: 'core',
+    secondaryMuscles: ['flexores de cadera'],
+    icon: '',
+    tips: [
+      'Cuelga de la barra',
+      'Eleva piernas hasta paralelo',
+      'Controla la bajada'
+    ],
+    commonMistakes: [
+      'Balancearse',
+      'Usar impulso'
+    ],
+    progression: 'Empieza con rodillas al pecho',
+    restRecommended: 60
+  },
+  crunch_polea: {
+    name: 'Crunch en polea',
+    muscleGroup: 'core',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'De espaldas a la polea',
+      'Flexiona el torso hacia abajo',
+      'Aprieta el abdomen'
+    ],
+    commonMistakes: [
+      'Usar los brazos',
+      'Redondear espalda'
+    ],
+    progression: 'Sube peso al llegar a 15 reps',
+    restRecommended: 60
+  },
+  oblicuos_polea: {
+    name: 'Rotación oblicua en polea',
+    muscleGroup: 'core',
+    secondaryMuscles: ['oblicuos'],
+    icon: '',
+    tips: [
+      'De lado a la polea',
+      'Rota el torso controlando',
+      'Aprieta los oblicuos'
+    ],
+    commonMistakes: [
+      'Usar los brazos',
+      'Mover las caderas'
+    ],
+    progression: 'Sube peso al llegar a 12 reps por lado',
+    restRecommended: 60
+  },
+
+  // === TRAPECIO ===
+  encogimientos_mancuernas: {
+    name: 'Encogimientos con mancuernas (Trapecio)',
+    muscleGroup: 'trapecio',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Sube los hombros hacia las orejas',
+      'Aprieta los trapecios 1-2 seg',
+      'Baja controlando'
+    ],
+    commonMistakes: [
+      'Rotar los hombros',
+      'Usar demasiado peso'
+    ],
+    progression: 'Sube peso al llegar a 15 reps',
+    restRecommended: 60
+  },
+  encogimientos_barra: {
+    name: 'Encogimientos con barra',
+    muscleGroup: 'trapecio',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Agarre prono a la anchura de los hombros',
+      'Sube los hombros rectos',
+      'Aprieta los trapecios arriba'
+    ],
+    commonMistakes: [
+      'Flexionar los codos',
+      'Inclinar el torso'
+    ],
+    progression: 'Sube peso al llegar a 12 reps',
+    restRecommended: 60
+  },
+
+  // === ANTEBRAZO ===
+  curl_antebrazo_polea: {
+    name: 'Curl de antebrazo en polea',
+    muscleGroup: 'antebrazo',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Apoya los antebrazos en el banco',
+      'Flexiona las muñecas hacia arriba',
+      'Controla la extensión'
+    ],
+    commonMistakes: [
+      'Mover los codos',
+      'Usar demasiado peso'
+    ],
+    progression: 'Sube peso al llegar a 15 reps',
+    restRecommended: 60
+  },
+  curl_antebrazo_mancuerna_invertido: {
+    name: 'Curl invertido de muñeca (manco)',
+    muscleGroup: 'antebrazo',
+    secondaryMuscles: [],
+    icon: '',
+    tips: [
+      'Agarre prono (palmas hacia abajo)',
+      'Extiende las muñecas hacia arriba',
+      'Controla la bajada 2-3 seg'
+    ],
+    commonMistakes: [
+      'Mover los codos',
+      'Usar impulso'
+    ],
+    progression: 'Sube peso al llegar a 15 reps',
+    restRecommended: 60
+  },
+  farmer_walk: {
+    name: 'Farmer Walk (Caminata del granjero)',
+    muscleGroup: 'antebrazo',
+    secondaryMuscles: ['core', 'trapecio'],
+    icon: '',
+    tips: [
+      'Sujeta mancuernas pesadas a los lados',
+      'Camina con pasos cortos y controlados',
+      'Mantén el core activado y la espalda recta'
+    ],
+    commonMistakes: [
+      'Inclinar el torso hacia delante',
+      'Soltar el agarre antes de tiempo'
+    ],
+    progression: 'Aumenta distancia o peso gradualmente',
+    restRecommended: 90
   }
 };
 
