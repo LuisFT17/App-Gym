@@ -4908,12 +4908,22 @@ function openAddMealModal() {
 function closeAddMealModal() {
   const modal = document.getElementById('addMealModal');
   if (modal) modal.style.display = 'none';
-  // Resetear selección
+  
+  // Resetear selección con verificación de existencia
   state.selectedFood = null;
-  document.getElementById('foodSearch').value = '';
-  document.getElementById('foodSearchResults').style.display = 'none';
-  document.getElementById('selectedFoodInfo').style.display = 'none';
-  document.getElementById('mealGrams').value = 100;
+  
+  const searchInput = document.getElementById('foodSearch');
+  if (searchInput) searchInput.value = '';
+  
+  const resultsDiv = document.getElementById('foodSearchResults');
+  if (resultsDiv) resultsDiv.style.display = 'none';
+  
+  const infoDiv = document.getElementById('selectedFoodInfo');
+  if (infoDiv) infoDiv.style.display = 'none';
+  
+  const gramsInput = document.getElementById('mealGrams');
+  if (gramsInput) gramsInput.value = 100;
+  
   updateMealMacros();
 }
 
