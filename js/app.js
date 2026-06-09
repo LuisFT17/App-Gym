@@ -114,7 +114,8 @@ const state = {
 
   // Nutrición Tracker
   nutritionLog: [], // [{date: 'YYYY-MM-DD', name: '', kcal: 0, p: 0, c: 0, f: 0}]
-  nutritionSelectedDate: new Date().toISOString().split('T')[0]
+  nutritionSelectedDate: new Date().toISOString().split('T')[0],
+  selectedFood: null
 };
 
 // ── Inicialización ──
@@ -4915,8 +4916,6 @@ function closeAddMealModal() {
   document.getElementById('mealGrams').value = 100;
   updateMealMacros();
 }
-
-let state.selectedFood = null;
 
 function filterFoodList(query) {
   const resultsDiv = document.getElementById('foodSearchResults');
