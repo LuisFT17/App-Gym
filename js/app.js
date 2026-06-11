@@ -1479,119 +1479,163 @@ function getAvatarMuscleStyle(growth) {
 function renderAvatarSVG() {
   const m = state.avatar.muscles;
   const lvl = state.avatar.level;
-  const hasHeadband = lvl >= 5;
-  const hasBelt = lvl >= 10;
-  const hasShoes = lvl >= 15;
   const auraActive = state.avatar.levelUpTriggered;
-
-  // Colores base para el estilo "Premium 3D"
-  const skinBase = '#F4C2A1';
-  const skinShadow = '#D9A07A';
-  const skinHighlight = '#FFE5CC';
-  const skinRim = '#FFD0A0';
   
-  const tankBase = '#FFFFFF';
-  const tankShadow = '#E0E0E0';
-  const tankHighlight = '#FFFFFF';
-  
-  const pantsBase = '#2C3E50';
-  const pantsShadow = '#1A252F';
-  const pantsHighlight = '#34495E';
+  // Factores de crecimiento muscular (0-1)
+  const chestGrowth = m.chest.growth / 100;
+  const armsGrowth = m.arms.growth / 100;
+  const legsGrowth = m.legs.growth / 100;
+  const shouldersGrowth = m.shoulders.growth / 100;
+  const backGrowth = m.back.growth / 100;
 
-  const hairColor = '#2C1B12';
-  const hairHighlight = '#4A3020';
+  // Colores premium
+  const skinTone = '#F5C6A5';
+  const skinShadow = '#D4A574';
+  const skinHighlight = '#FFE8D6';
+  const skinRim = '#FFDCC8';
+  
+  const tankTop = '#1A1A2E';
+  const tankShadow = '#0F0F1A';
+  const tankHighlight = '#2A2A42';
+  const tankAccent = '#E94560';
+  
+  const shortsColor = '#16213E';
+  const shortsShadow = '#0F1528';
+  const shortsHighlight = '#1F2B4D';
+  
+  const hairColor = '#2C1810';
+  const hairShadow = '#1A0F0A';
+  const hairHighlight = '#4A2C1A';
+
+  // Dimensiones dinámicas basadas en crecimiento muscular
+  const shoulderWidth = 110 + (shouldersGrowth * 15);
+  const chestWidth = 95 + (chestGrowth * 20);
+  const waistWidth = 72 - (chestGrowth * 5);
+  const armThickness = 22 + (armsGrowth * 12);
+  const thighWidth = 28 + (legsGrowth * 15);
+  const calfWidth = 20 + (legsGrowth * 10);
 
   return `
-    <div style="position:relative; width:240px; height:360px; margin:0 auto; cursor:pointer;" onclick="toggleAvatarPose()">
+    <div style="position:relative; width:280px; height:420px; margin:0 auto; cursor:pointer;" onclick="toggleAvatarPose()">
       ${auraActive ? '<div class="ssj-aura"></div>' : ''}
-      <svg viewBox="0 0 240 380" width="240" height="360" style="overflow:visible; filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.15));">
+      <svg viewBox="0 0 280 420" width="280" height="420" style="overflow:visible;">
         <defs>
-          <!-- Gradiente de Piel con Volumen 3D -->
-          <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <!-- Gradiente Piel Premium con Iluminación 3D -->
+          <linearGradient id="skinGrad" x1="30%" y1="0%" x2="70%" y2="100%">
             <stop offset="0%" stop-color="${skinHighlight}"/>
-            <stop offset="40%" stop-color="${skinBase}"/>
-            <stop offset="100%" stop-color="${skinShadow}"/>
+            <stop offset="40%" stop-color="${skinTone}"/>
+            <stop offset="85%" stop-color="${skinShadow}"/>
+            <stop offset="100%" stop-color="#B8845C"/>
           </linearGradient>
           
-          <!-- Gradiente de Piel Inverso (para zonas sombreadas) -->
-          <linearGradient id="skinGradInv" x1="100%" y1="100%" x2="0%" y2="0%">
+          <linearGradient id="skinGradSide" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="${skinShadow}"/>
-            <stop offset="100%" stop-color="${skinBase}"/>
+            <stop offset="50%" stop-color="${skinTone}"/>
+            <stop offset="100%" stop-color="${skinHighlight}"/>
           </linearGradient>
 
-          <!-- Gradiente Camiseta -->
+          <!-- Gradiente Camiseta Premium -->
           <linearGradient id="tankGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="${tankHighlight}"/>
-            <stop offset="50%" stop-color="${tankBase}"/>
+            <stop offset="30%" stop-color="${tankTop}"/>
+            <stop offset="100%" stop-color="${tankShadow}"/>
+          </linearGradient>
+          
+          <linearGradient id="tankGradFront" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%" stop-color="${tankHighlight}"/>
+            <stop offset="60%" stop-color="${tankTop}"/>
             <stop offset="100%" stop-color="${tankShadow}"/>
           </linearGradient>
 
           <!-- Gradiente Pantalón -->
-          <linearGradient id="pantsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="${pantsHighlight}"/>
-            <stop offset="50%" stop-color="${pantsBase}"/>
-            <stop offset="100%" stop-color="${pantsShadow}"/>
+          <linearGradient id="shortsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="${shortsHighlight}"/>
+            <stop offset="50%" stop-color="${shortsColor}"/>
+            <stop offset="100%" stop-color="${shortsShadow}"/>
           </linearGradient>
 
           <!-- Gradiente Cabello -->
           <linearGradient id="hairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="${hairHighlight}"/>
-            <stop offset="100%" stop-color="${hairColor}"/>
+            <stop offset="60%" stop-color="${hairColor}"/>
+            <stop offset="100%" stop-color="${hairShadow}"/>
           </linearGradient>
 
-          <!-- Filtro de Sombra Suave -->
+          <!-- Filtro Sombra Proyectada -->
+          <filter id="dropShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000" flood-opacity="0.25"/>
+          </filter>
+          
           <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="2" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.2"/>
+            <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.2"/>
           </filter>
 
-          <!-- Filtro de Brillo Muscular (Rim Light) -->
-          <filter id="rimLight" x="-10%" y="-10%" width="120%" height="120%">
+          <!-- Filtro Rim Light para Músculos -->
+          <filter id="muscleRim" x="-10%" y="-10%" width="120%" height="120%">
             <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
             <feOffset dx="1" dy="1" result="offsetBlur"/>
-            <feFlood flood-color="#FFF" flood-opacity="0.4" result="glowColor"/>
+            <feFlood flood-color="#FFF" flood-opacity="0.3" result="glowColor"/>
             <feComposite in="glowColor" in2="offsetBlur" operator="in" result="glow"/>
             <feMerge>
               <feMergeNode in="glow"/>
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
+
+          <!-- Gradiente para Zonas Musculares -->
+          <linearGradient id="muscleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--accent-primary)" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="var(--accent-primary)" stop-opacity="0.3"/>
+          </linearGradient>
         </defs>
 
         <!-- SOMBRA DEL SUELO -->
-        <ellipse cx="120" cy="370" rx="60" ry="10" fill="rgba(0,0,0,0.15)" filter="blur(4px)"/>
+        <ellipse cx="140" cy="410" rx="70" ry="12" fill="rgba(0,0,0,0.2)" filter="blur(6px)"/>
 
         <!-- ========================================== -->
-        <!-- CAPA 1: PIERNAS (Pantalón) -->
+        <!-- CAPA 1: PIERNAS (Shorts + Musculatura) -->
         <!-- ========================================== -->
-        <g id="legs-layer">
-          <!-- Pierna Izquierda -->
-          <path d="M 80 200 
-                   C 75 240, 72 290, 75 330 
-                   C 76 345, 85 350, 95 348 
-                   C 105 345, 108 330, 105 290 
-                   C 102 250, 100 220, 105 200 Z" 
-                fill="url(#pantsGrad)" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+        <g id="legs-layer" filter="url(#softShadow)">
+          <!-- Pierna Izquierda - Muslo -->
+          <path d="M ${140 - waistWidth/2 - 5} 210 
+                   C ${140 - waistWidth/2 - 10} 240, ${140 - thighWidth - 5} 260, ${140 - thighWidth} 290 
+                   C ${140 - thighWidth + 5} 310, ${140 - calfWidth} 330, ${140 - calfWidth - 5} 360 
+                   C ${140 - calfWidth - 8} 380, ${140 - 15} 390, ${140 - 25} 390 
+                   C ${140 - 35} 390, ${140 - 30} 370, ${140 - 25} 350 
+                   C ${140 - 20} 330, ${140 - 10} 300, ${140 - 5} 270 
+                   C ${140} 240, ${140 - waistWidth/2} 220, ${140 - waistWidth/2 - 5} 210 Z" 
+                fill="url(#shortsGrad)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
           
-          <!-- Pierna Derecha -->
-          <path d="M 160 200 
-                   C 165 240, 168 290, 165 330 
-                   C 164 345, 155 350, 145 348 
-                   C 135 345, 132 330, 135 290 
-                   C 138 250, 140 220, 135 200 Z" 
-                fill="url(#pantsGrad)" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+          <!-- Pierna Derecha - Muslo -->
+          <path d="M ${140 + waistWidth/2 + 5} 210 
+                   C ${140 + waistWidth/2 + 10} 240, ${140 + thighWidth + 5} 260, ${140 + thighWidth} 290 
+                   C ${140 + thighWidth - 5} 310, ${140 + calfWidth} 330, ${140 + calfWidth + 5} 360 
+                   C ${140 + calfWidth + 8} 380, ${140 + 15} 390, ${140 + 25} 390 
+                   C ${140 + 35} 390, ${140 + 30} 370, ${140 + 25} 350 
+                   C ${140 + 20} 330, ${140 + 10} 300, ${140 + 5} 270 
+                   C ${140} 240, ${140 + waistWidth/2} 220, ${140 + waistWidth/2 + 5} 210 Z" 
+                fill="url(#shortsGrad)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+
+          <!-- Pantorrillas (Piel visible) -->
+          <path d="M ${140 - calfWidth - 5} 360 
+                   C ${140 - calfWidth - 8} 380, ${140 - 15} 390, ${140 - 25} 390 
+                   C ${140 - 35} 390, ${140 - 30} 370, ${140 - 25} 350 
+                   C ${140 - 20} 330, ${140 - 10} 300, ${140 - 5} 270 
+                   C ${140 - calfWidth + 5} 280, ${140 - calfWidth} 300, ${140 - calfWidth - 5} 360 Z" 
+                fill="url(#skinGrad)"/>
+          
+          <path d="M ${140 + calfWidth + 5} 360 
+                   C ${140 + calfWidth + 8} 380, ${140 + 15} 390, ${140 + 25} 390 
+                   C ${140 + 35} 390, ${140 + 30} 370, ${140 + 25} 350 
+                   C ${140 + 20} 330, ${140 + 10} 300, ${140 + 5} 270 
+                   C ${140 + calfWidth - 5} 280, ${140 + calfWidth} 300, ${140 + calfWidth + 5} 360 Z" 
+                fill="url(#skinGrad)"/>
 
           <!-- Zapatillas -->
-          ${hasShoes ? `
-            <path d="M 70 335 C 65 345, 75 355, 95 355 C 105 355, 110 345, 105 335 Z" fill="#FFFFFF" stroke="#DDD" stroke-width="1"/>
-            <path d="M 170 335 C 175 345, 165 355, 145 355 C 135 355, 130 345, 135 335 Z" fill="#FFFFFF" stroke="#DDD" stroke-width="1"/>
-            <path d="M 75 345 L 100 345" stroke="#333" stroke-width="2" stroke-linecap="round"/>
-            <path d="M 165 345 L 140 345" stroke="#333" stroke-width="2" stroke-linecap="round"/>
-          ` : `
-            <path d="M 72 335 C 68 345, 78 352, 95 350 C 102 348, 108 340, 105 335 Z" fill="${skinBase}"/>
-            <path d="M 168 335 C 172 345, 162 352, 145 350 C 138 348, 132 340, 135 335 Z" fill="${skinBase}"/>
-          `}
-          
-          ${hasBelt ? `<rect x="75" y="195" width="90" height="12" fill="#222" rx="4" stroke="#444" stroke-width="1"/><circle cx="120" cy="201" r="5" fill="#FFD700" stroke="#B8860B" stroke-width="1"/>` : ''}
+          <path d="M ${140 - 35} 385 C ${140 - 40} 395, ${140 - 30} 405, ${140 - 15} 405 C ${140 - 5} 405, ${140} 395, ${140 - 5} 385 Z" fill="#FFFFFF" stroke="#DDD" stroke-width="1"/>
+          <path d="M ${140 + 35} 385 C ${140 + 40} 395, ${140 + 30} 405, ${140 + 15} 405 C ${140 + 5} 405, ${140} 395, ${140 + 5} 385 Z" fill="#FFFFFF" stroke="#DDD" stroke-width="1"/>
+          <path d="M ${140 - 30} 395 L ${140 - 10} 395" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+          <path d="M ${140 + 30} 395 L ${140 + 10} 395" stroke="#333" stroke-width="2" stroke-linecap="round"/>
         </g>
 
         <!-- ========================================== -->
@@ -1600,23 +1644,57 @@ function renderAvatarSVG() {
         <g id="arms-layer" filter="url(#softShadow)">
           <!-- Brazo Izquierdo -->
           <!-- Deltoides -->
-          <path d="M 65 110 C 50 115, 45 135, 50 155 C 55 165, 65 160, 70 145 C 75 130, 70 115, 65 110 Z" fill="url(#skinGrad)"/>
+          <path d="M ${140 - shoulderWidth/2 - 5} 100 
+                   C ${140 - shoulderWidth/2 - 15} 110, ${140 - shoulderWidth/2 - 20} 130, ${140 - shoulderWidth/2 - 15} 150 
+                   C ${140 - shoulderWidth/2 - 10} 165, ${140 - shoulderWidth/2} 170, ${140 - shoulderWidth/2 + 5} 160 
+                   C ${140 - shoulderWidth/2 + 10} 145, ${140 - shoulderWidth/2 + 5} 120, ${140 - shoulderWidth/2 - 5} 100 Z" 
+                fill="url(#skinGrad)"/>
+          
           <!-- Bíceps/Tríceps -->
-          <path d="M 50 155 C 40 170, 38 195, 45 215 C 50 225, 60 220, 65 205 C 70 185, 65 165, 50 155 Z" fill="url(#skinGrad)"/>
+          <path d="M ${140 - shoulderWidth/2 - 15} 150 
+                   C ${140 - shoulderWidth/2 - 25 - armThickness/2} 170, ${140 - shoulderWidth/2 - 30 - armThickness/2} 195, ${140 - shoulderWidth/2 - 25 - armThickness/2} 215 
+                   C ${140 - shoulderWidth/2 - 20 - armThickness/2} 230, ${140 - shoulderWidth/2 - 10} 235, ${140 - shoulderWidth/2 - 5} 225 
+                   C ${140 - shoulderWidth/2} 210, ${140 - shoulderWidth/2 - 5} 185, ${140 - shoulderWidth/2 - 10} 165 
+                   C ${140 - shoulderWidth/2 - 15} 155, ${140 - shoulderWidth/2 - 15} 150 Z" 
+                fill="url(#skinGrad)"/>
+          
           <!-- Antebrazo -->
-          <path d="M 45 215 C 38 230, 35 250, 40 265 C 45 275, 55 270, 60 255 C 65 235, 60 220, 45 215 Z" fill="url(#skinGradInv)"/>
+          <path d="M ${140 - shoulderWidth/2 - 25 - armThickness/2} 215 
+                   C ${140 - shoulderWidth/2 - 30 - armThickness/2} 235, ${140 - shoulderWidth/2 - 35 - armThickness/2} 255, ${140 - shoulderWidth/2 - 30 - armThickness/2} 275 
+                   C ${140 - shoulderWidth/2 - 25 - armThickness/2} 290, ${140 - shoulderWidth/2 - 15} 295, ${140 - shoulderWidth/2 - 10} 285 
+                   C ${140 - shoulderWidth/2 - 5} 270, ${140 - shoulderWidth/2 - 10} 245, ${140 - shoulderWidth/2 - 15} 225 
+                   C ${140 - shoulderWidth/2 - 20 - armThickness/2} 220, ${140 - shoulderWidth/2 - 25 - armThickness/2} 215 Z" 
+                fill="url(#skinGradSide)"/>
+          
           <!-- Mano -->
-          <circle cx="48" cy="275" r="9" fill="url(#skinBase)"/>
+          <ellipse cx="${140 - shoulderWidth/2 - 20}" cy="295" rx="10" ry="12" fill="url(#skinTone)"/>
 
           <!-- Brazo Derecho -->
           <!-- Deltoides -->
-          <path d="M 175 110 C 190 115, 195 135, 190 155 C 185 165, 175 160, 170 145 C 165 130, 170 115, 175 110 Z" fill="url(#skinGrad)"/>
+          <path d="M ${140 + shoulderWidth/2 + 5} 100 
+                   C ${140 + shoulderWidth/2 + 15} 110, ${140 + shoulderWidth/2 + 20} 130, ${140 + shoulderWidth/2 + 15} 150 
+                   C ${140 + shoulderWidth/2 + 10} 165, ${140 + shoulderWidth/2} 170, ${140 + shoulderWidth/2 - 5} 160 
+                   C ${140 + shoulderWidth/2 - 10} 145, ${140 + shoulderWidth/2 - 5} 120, ${140 + shoulderWidth/2 + 5} 100 Z" 
+                fill="url(#skinGrad)"/>
+          
           <!-- Bíceps/Tríceps -->
-          <path d="M 190 155 C 200 170, 202 195, 195 215 C 190 225, 180 220, 175 205 C 170 185, 175 165, 190 155 Z" fill="url(#skinGrad)"/>
+          <path d="M ${140 + shoulderWidth/2 + 15} 150 
+                   C ${140 + shoulderWidth/2 + 25 + armThickness/2} 170, ${140 + shoulderWidth/2 + 30 + armThickness/2} 195, ${140 + shoulderWidth/2 + 25 + armThickness/2} 215 
+                   C ${140 + shoulderWidth/2 + 20 + armThickness/2} 230, ${140 + shoulderWidth/2 + 10} 235, ${140 + shoulderWidth/2 + 5} 225 
+                   C ${140 + shoulderWidth/2} 210, ${140 + shoulderWidth/2 + 5} 185, ${140 + shoulderWidth/2 + 10} 165 
+                   C ${140 + shoulderWidth/2 + 15} 155, ${140 + shoulderWidth/2 + 15} 150 Z" 
+                fill="url(#skinGrad)"/>
+          
           <!-- Antebrazo -->
-          <path d="M 195 215 C 202 230, 205 250, 200 265 C 195 275, 185 270, 180 255 C 175 235, 180 220, 195 215 Z" fill="url(#skinGradInv)"/>
+          <path d="M ${140 + shoulderWidth/2 + 25 + armThickness/2} 215 
+                   C ${140 + shoulderWidth/2 + 30 + armThickness/2} 235, ${140 + shoulderWidth/2 + 35 + armThickness/2} 255, ${140 + shoulderWidth/2 + 30 + armThickness/2} 275 
+                   C ${140 + shoulderWidth/2 + 25 + armThickness/2} 290, ${140 + shoulderWidth/2 + 15} 295, ${140 + shoulderWidth/2 + 10} 285 
+                   C ${140 + shoulderWidth/2 + 5} 270, ${140 + shoulderWidth/2 + 10} 245, ${140 + shoulderWidth/2 + 15} 225 
+                   C ${140 + shoulderWidth/2 + 20 + armThickness/2} 220, ${140 + shoulderWidth/2 + 25 + armThickness/2} 215 Z" 
+                fill="url(#skinGradSide)"/>
+          
           <!-- Mano -->
-          <circle cx="192" cy="275" r="9" fill="url(#skinBase)"/>
+          <ellipse cx="${140 + shoulderWidth/2 + 20}" cy="295" rx="10" ry="12" fill="url(#skinTone)"/>
         </g>
 
         <!-- ========================================== -->
@@ -1624,116 +1702,182 @@ function renderAvatarSVG() {
         <!-- ========================================== -->
         <g id="torso-layer" class="avatar-breathing" filter="url(#softShadow)">
           <!-- Cuello -->
-          <path d="M 105 95 C 105 80, 135 80, 135 95 C 135 110, 105 110, 105 95 Z" fill="url(#skinGrad)"/>
+          <path d="M ${140 - 18} 85 
+                   C ${140 - 20} 70, ${140 + 20} 70, ${140 + 18} 85 
+                   C ${140 + 22} 100, ${140 - 22} 100, ${140 - 18} 85 Z" 
+                fill="url(#skinGrad)"/>
           
-          <!-- Camiseta (Tank Top) -->
-          <path d="M 75 105 
-                   C 70 120, 65 160, 70 200 
-                   C 75 215, 165 215, 170 200 
-                   C 175 160, 170 120, 165 105 
-                   C 150 95, 90 95, 75 105 Z" 
-                fill="url(#tankGrad)" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+          <!-- Camiseta (Tank Top Ajustada) -->
+          <path d="M ${140 - shoulderWidth/2} 95 
+                   C ${140 - shoulderWidth/2 - 5} 110, ${140 - chestWidth/2 - 5} 140, ${140 - chestWidth/2} 180 
+                   C ${140 - chestWidth/2 + 5} 210, ${140 - waistWidth/2} 220, ${140 - waistWidth/2} 230 
+                   C ${140 - waistWidth/2 + 5} 240, ${140 + waistWidth/2 - 5} 240, ${140 + waistWidth/2} 230 
+                   C ${140 + waistWidth/2} 220, ${140 + chestWidth/2 - 5} 210, ${140 + chestWidth/2} 180 
+                   C ${140 + chestWidth/2 + 5} 140, ${140 + shoulderWidth/2 + 5} 110, ${140 + shoulderWidth/2} 95 
+                   C ${140 + 25} 85, ${140 - 25} 85, ${140 - shoulderWidth/2} 95 Z" 
+                fill="url(#tankGradFront)" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>
           
           <!-- Escote -->
-          <path d="M 100 95 C 105 105, 135 105, 140 95 C 135 85, 105 85, 100 95 Z" fill="${skinBase}"/>
+          <path d="M ${140 - 22} 88 
+                   C ${140 - 15} 100, ${140 + 15} 100, ${140 + 22} 88 
+                   C ${140 + 18} 80, ${140 - 18} 80, ${140 - 22} 88 Z" 
+                fill="${skinTone}"/>
           
-          <!-- Costuras y detalles camiseta -->
-          <path d="M 120 105 L 120 205" stroke="rgba(0,0,0,0.05)" stroke-width="1" fill="none"/>
-          <path d="M 75 105 Q 90 115, 100 105" stroke="rgba(0,0,0,0.1)" stroke-width="1" fill="none"/>
-          <path d="M 165 105 Q 150 115, 140 105" stroke="rgba(0,0,0,0.1)" stroke-width="1" fill="none"/>
+          <!-- Detalles Camiseta -->
+          <path d="M ${140} 95 L ${140} 230" stroke="rgba(255,255,255,0.1)" stroke-width="1" fill="none"/>
+          <path d="M ${140 - shoulderWidth/2} 95 Q ${140 - 30} 105, ${140 - 22} 88" stroke="rgba(0,0,0,0.15)" stroke-width="1" fill="none"/>
+          <path d="M ${140 + shoulderWidth/2} 95 Q ${140 + 30} 105, ${140 + 22} 88" stroke="rgba(0,0,0,0.15)" stroke-width="1" fill="none"/>
+          
+          <!-- Logo/Acento en camiseta -->
+          <circle cx="${140}" cy="130" r="8" fill="none" stroke="${tankAccent}" stroke-width="2" opacity="0.6"/>
+          <path d="M ${140 - 4} 130 L ${140} 126 L ${140 + 4} 130 L ${140} 134 Z" fill="${tankAccent}" opacity="0.6"/>
         </g>
 
         <!-- ========================================== -->
         <!-- CAPA 4: CABEZA -->
         <!-- ========================================== -->
-        <g id="head-layer" filter="url(#softShadow)">
+        <g id="head-layer" filter="url(#dropShadow)">
           <!-- Orejas -->
-          <ellipse cx="80" cy="60" rx="7" ry="12" fill="url(#skinGrad)"/>
-          <ellipse cx="160" cy="60" rx="7" ry="12" fill="url(#skinGrad)"/>
+          <ellipse cx="${140 - 38}" cy="55" rx="8" ry="14" fill="url(#skinGrad)"/>
+          <ellipse cx="${140 + 38}" cy="55" rx="8" ry="14" fill="url(#skinGrad)"/>
           
           <!-- Cabeza Base -->
-          <ellipse cx="120" cy="55" rx="38" ry="45" fill="url(#skinGrad)"/>
+          <path d="M ${140 - 38} 40 
+                   C ${140 - 40} 20, ${140 - 20} 10, ${140} 10 
+                   C ${140 + 20} 10, ${140 + 40} 20, ${140 + 40} 40 
+                   C ${140 + 42} 60, ${140 + 38} 80, ${140 + 30} 90 
+                   C ${140 + 20} 100, ${140 - 20} 100, ${140 - 30} 90 
+                   C ${140 - 38} 80, ${140 - 42} 60, ${140 - 38} 40 Z" 
+                fill="url(#skinGrad)"/>
           
-          <!-- Mandíbula y Cuello (Sombreado) -->
-          <path d="M 85 70 C 95 85, 145 85, 155 70 C 150 90, 140 100, 120 100 C 100 100, 90 90, 85 70 Z" fill="rgba(0,0,0,0.05)"/>
+          <!-- Mandíbula Definida -->
+          <path d="M ${140 - 30} 75 
+                   C ${140 - 25} 85, ${140 - 15} 92, ${140} 95 
+                   C ${140 + 15} 92, ${140 + 25} 85, ${140 + 30} 75 
+                   C ${140 + 28} 85, ${140 + 20} 95, ${140} 98 
+                   C ${140 - 20} 95, ${140 - 28} 85, ${140 - 30} 75 Z" 
+                fill="rgba(0,0,0,0.08)"/>
 
-          <!-- Cabello -->
-          <path d="M 82 45 C 85 15, 120 10, 155 18 C 165 22, 168 35, 162 45 C 155 30, 120 25, 82 45 Z" fill="url(#hairGrad)"/>
-          <path d="M 82 45 C 78 35, 82 25, 92 20 C 88 30, 85 40, 82 45 Z" fill="url(#hairGrad)"/>
-          <path d="M 158 45 C 162 35, 158 25, 148 20 C 152 30, 155 40, 158 45 Z" fill="url(#hairGrad)"/>
-          <!-- Flequillo detallado -->
-          <path d="M 90 30 Q 100 25, 110 32 Q 105 28, 95 35 Z" fill="url(#hairGrad)"/>
-          <path d="M 130 30 Q 140 25, 150 32 Q 145 28, 135 35 Z" fill="url(#hairGrad)"/>
+          <!-- Cabello Estilo Moderno -->
+          <path d="M ${140 - 40} 35 
+                   C ${140 - 42} 15, ${140 - 20} 5, ${140} 5 
+                   C ${140 + 20} 5, ${140 + 42} 15, ${140 + 40} 35 
+                   C ${140 + 38} 25, ${140 + 25} 15, ${140} 15 
+                   C ${140 - 25} 15, ${140 - 38} 25, ${140 - 40} 35 Z" 
+                fill="url(#hairGrad)"/>
           
-          <!-- Cejas -->
-          <path d="M 95 42 Q 105 38, 115 42" stroke="${hairColor}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <path d="M 125 42 Q 135 38, 145 42" stroke="${hairColor}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- Flequillo Lateral -->
+          <path d="M ${140 - 35} 25 
+                   C ${140 - 25} 15, ${140 - 10} 20, ${140 - 5} 30 
+                   C ${140 - 15} 25, ${140 - 25} 20, ${140 - 35} 25 Z" 
+                fill="url(#hairGrad)"/>
           
-          <!-- Ojos con Brillo -->
-          <ellipse cx="105" cy="55" rx="7" ry="8" fill="#FFF"/>
-          <circle cx="106" cy="55" r="4" fill="#333"/>
-          <circle cx="107" cy="53" r="1.5" fill="#FFF"/>
-          <ellipse cx="135" cy="55" rx="7" ry="8" fill="#FFF"/>
-          <circle cx="134" cy="55" r="4" fill="#333"/>
-          <circle cx="133" cy="53" r="1.5" fill="#FFF"/>
+          <!-- Cejas Definidas -->
+          <path d="M ${140 - 28} 42 Q ${140 - 18} 38, ${140 - 8} 42" stroke="${hairColor}" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M ${140 + 8} 42 Q ${140 + 18} 38, ${140 + 28} 42" stroke="${hairColor}" stroke-width="3" fill="none" stroke-linecap="round"/>
           
-          <!-- Pestañas -->
-          <path d="M 98 48 Q 105 46, 112 48" stroke="#333" stroke-width="1" fill="none"/>
-          <path d="M 128 48 Q 135 46, 142 48" stroke="#333" stroke-width="1" fill="none"/>
+          <!-- Ojos con Brillo Profesional -->
+          <ellipse cx="${140 - 18}" cy="52" rx="9" ry="10" fill="#FFF"/>
+          <circle cx="${140 - 17}" cy="52" r="5" fill="#2C3E50"/>
+          <circle cx="${140 - 16}" cy="50" r="2" fill="#FFF"/>
+          <circle cx="${140 - 18}" cy="54" r="1" fill="#FFF" opacity="0.6"/>
           
-          <!-- Nariz -->
-          <path d="M 118 60 Q 120 68, 122 60" stroke="${skinShadow}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <ellipse cx="${140 + 18}" cy="52" rx="9" ry="10" fill="#FFF"/>
+          <circle cx="${140 + 17}" cy="52" r="5" fill="#2C3E50"/>
+          <circle cx="${140 + 16}" cy="50" r="2" fill="#FFF"/>
+          <circle cx="${140 + 18}" cy="54" r="1" fill="#FFF" opacity="0.6"/>
           
-          <!-- Boca -->
-          <path d="M 108 75 Q 120 82, 132 75" stroke="#C47A5A" stroke-width="2" fill="none" stroke-linecap="round"/>
-          <path d="M 112 75 Q 120 78, 128 75" fill="#E88A7A" opacity="0.6"/>
+          <!-- Pestañas Superiores -->
+          <path d="M ${140 - 27} 46 Q ${140 - 18} 44, ${140 - 9} 46" stroke="#2C3E50" stroke-width="1.5" fill="none"/>
+          <path d="M ${140 + 9} 46 Q ${140 + 18} 44, ${140 + 27} 46" stroke="#2C3E50" stroke-width="1.5" fill="none"/>
           
-          <!-- Mejillas -->
-          <circle cx="92" cy="68" r="6" fill="#FFB6C1" opacity="0.2"/>
-          <circle cx="148" cy="68" r="6" fill="#FFB6C1" opacity="0.2"/>
+          <!-- Nariz Estructurada -->
+          <path d="M ${140 - 4} 58 Q ${140} 68, ${140 + 4} 58" stroke="${skinShadow}" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M ${140 - 3} 62 Q ${140} 65, ${140 + 3} 62" stroke="${skinShadow}" stroke-width="1" fill="none"/>
           
-          ${hasHeadband ? `<rect x="78" y="38" width="84" height="10" fill="#FF4444" rx="4" stroke="#CC3333" stroke-width="1"/><path d="M 162 43 L 178 50 L 175 40 Z" fill="#FF4444"/>` : ''}
+          <!-- Boca con Volumen -->
+          <path d="M ${140 - 12} 78 Q ${140} 85, ${140 + 12} 78" stroke="#C47A5A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M ${140 - 8} 78 Q ${140} 82, ${140 + 8} 78" fill="#D4856A" opacity="0.5"/>
+          
+          <!-- Mejillas Sutil -->
+          <circle cx="${140 - 25}" cy="65" r="7" fill="#FFB6C1" opacity="0.15"/>
+          <circle cx="${140 + 25}" cy="65" r="7" fill="#FFB6C1" opacity="0.15"/>
         </g>
 
         <!-- ========================================== -->
-        <!-- CAPA 5: MÚSCULOS (Heatmap - Overlay) -->
+        <!-- CAPA 5: MÚSCULOS (Heatmap Overlay) -->
         <!-- ========================================== -->
-        <!-- Nota: Estas capas se superponen a la ropa/piel y usan opacidad para mostrar el progreso -->
-        <g id="muscles-layer" filter="url(#rimLight)">
+        <g id="muscles-layer" filter="url(#muscleRim)">
           <!-- Hombros (Deltoides) -->
-          <g style="opacity: ${m.shoulders.growth / 100 * 0.6}">
-            <path d="M 65 110 C 50 115, 45 135, 50 155 C 55 165, 65 160, 70 145 C 75 130, 70 115, 65 110 Z" fill="var(--accent-primary)"/>
-            <path d="M 175 110 C 190 115, 195 135, 190 155 C 185 165, 175 160, 170 145 C 165 130, 170 115, 175 110 Z" fill="var(--accent-primary)"/>
+          <g style="opacity: ${shouldersGrowth * 0.7}">
+            <path d="M ${140 - shoulderWidth/2 - 5} 100 
+                     C ${140 - shoulderWidth/2 - 15} 110, ${140 - shoulderWidth/2 - 20} 130, ${140 - shoulderWidth/2 - 15} 150 
+                     C ${140 - shoulderWidth/2 - 10} 165, ${140 - shoulderWidth/2} 170, ${140 - shoulderWidth/2 + 5} 160 
+                     C ${140 - shoulderWidth/2 + 10} 145, ${140 - shoulderWidth/2 + 5} 120, ${140 - shoulderWidth/2 - 5} 100 Z" 
+                  fill="url(#muscleGrad)"/>
+            <path d="M ${140 + shoulderWidth/2 + 5} 100 
+                     C ${140 + shoulderWidth/2 + 15} 110, ${140 + shoulderWidth/2 + 20} 130, ${140 + shoulderWidth/2 + 15} 150 
+                     C ${140 + shoulderWidth/2 + 10} 165, ${140 + shoulderWidth/2} 170, ${140 + shoulderWidth/2 - 5} 160 
+                     C ${140 + shoulderWidth/2 - 10} 145, ${140 + shoulderWidth/2 - 5} 120, ${140 + shoulderWidth/2 + 5} 100 Z" 
+                  fill="url(#muscleGrad)"/>
           </g>
           
           <!-- Pecho (Pectorales) -->
-          <g style="opacity: ${m.chest.growth / 100 * 0.6}">
-            <path d="M 85 120 C 100 115, 115 115, 120 125 C 125 140, 120 160, 105 165 C 90 165, 80 145, 85 120 Z" fill="var(--accent-primary)"/>
-            <path d="M 155 120 C 140 115, 125 115, 120 125 C 115 140, 120 160, 135 165 C 150 165, 160 145, 155 120 Z" fill="var(--accent-primary)"/>
+          <g style="opacity: ${chestGrowth * 0.7}">
+            <path d="M ${140 - chestWidth/2 + 5} 120 
+                     C ${140 - 10} 115, ${140 - 5} 115, ${140} 125 
+                     C ${140 + 5} 140, ${140} 160, ${140 - 10} 165 
+                     C ${140 - 20} 165, ${140 - chestWidth/2} 145, ${140 - chestWidth/2 + 5} 120 Z" 
+                  fill="url(#muscleGrad)"/>
+            <path d="M ${140 + chestWidth/2 - 5} 120 
+                     C ${140 + 10} 115, ${140 + 5} 115, ${140} 125 
+                     C ${140 - 5} 140, ${140} 160, ${140 + 10} 165 
+                     C ${140 + 20} 165, ${140 + chestWidth/2} 145, ${140 + chestWidth/2 - 5} 120 Z" 
+                  fill="url(#muscleGrad)"/>
           </g>
           
           <!-- Brazos (Bíceps) -->
-          <g style="opacity: ${m.arms.growth / 100 * 0.6}">
-            <path d="M 50 155 C 40 170, 38 195, 45 215 C 50 225, 60 220, 65 205 C 70 185, 65 165, 50 155 Z" fill="var(--accent-primary)"/>
-            <path d="M 190 155 C 200 170, 202 195, 195 215 C 190 225, 180 220, 175 205 C 170 185, 175 165, 190 155 Z" fill="var(--accent-primary)"/>
+          <g style="opacity: ${armsGrowth * 0.7}">
+            <path d="M ${140 - shoulderWidth/2 - 15} 150 
+                     C ${140 - shoulderWidth/2 - 25 - armThickness/2} 170, ${140 - shoulderWidth/2 - 30 - armThickness/2} 195, ${140 - shoulderWidth/2 - 25 - armThickness/2} 215 
+                     C ${140 - shoulderWidth/2 - 20 - armThickness/2} 230, ${140 - shoulderWidth/2 - 10} 235, ${140 - shoulderWidth/2 - 5} 225 
+                     C ${140 - shoulderWidth/2} 210, ${140 - shoulderWidth/2 - 5} 185, ${140 - shoulderWidth/2 - 10} 165 
+                     C ${140 - shoulderWidth/2 - 15} 155, ${140 - shoulderWidth/2 - 15} 150 Z" 
+                  fill="url(#muscleGrad)"/>
+            <path d="M ${140 + shoulderWidth/2 + 15} 150 
+                     C ${140 + shoulderWidth/2 + 25 + armThickness/2} 170, ${140 + shoulderWidth/2 + 30 + armThickness/2} 195, ${140 + shoulderWidth/2 + 25 + armThickness/2} 215 
+                     C ${140 + shoulderWidth/2 + 20 + armThickness/2} 230, ${140 + shoulderWidth/2 + 10} 235, ${140 + shoulderWidth/2 + 5} 225 
+                     C ${140 + shoulderWidth/2} 210, ${140 + shoulderWidth/2 + 5} 185, ${140 + shoulderWidth/2 + 10} 165 
+                     C ${140 + shoulderWidth/2 + 15} 155, ${140 + shoulderWidth/2 + 15} 150 Z" 
+                  fill="url(#muscleGrad)"/>
           </g>
           
           <!-- Piernas (Cuádriceps) -->
-          <g style="opacity: ${m.legs.growth / 100 * 0.6}">
-            <path d="M 80 210 C 75 240, 75 270, 85 285 C 95 290, 100 270, 95 240 C 92 220, 85 215, 80 210 Z" fill="var(--accent-primary)"/>
-            <path d="M 160 210 C 165 240, 165 270, 155 285 C 145 290, 140 270, 145 240 C 148 220, 155 215, 160 210 Z" fill="var(--accent-primary)"/>
+          <g style="opacity: ${legsGrowth * 0.7}">
+            <path d="M ${140 - waistWidth/2 - 5} 220 
+                     C ${140 - thighWidth - 5} 240, ${140 - thighWidth} 270, ${140 - thighWidth + 5} 290 
+                     C ${140 - calfWidth} 310, ${140 - calfWidth - 5} 330, ${140 - 15} 340 
+                     C ${140 - 5} 330, ${140} 300, ${140 - 5} 270 
+                     C ${140 - 10} 240, ${140 - waistWidth/2} 230, ${140 - waistWidth/2 - 5} 220 Z" 
+                  fill="url(#muscleGrad)"/>
+            <path d="M ${140 + waistWidth/2 + 5} 220 
+                     C ${140 + thighWidth + 5} 240, ${140 + thighWidth} 270, ${140 + thighWidth - 5} 290 
+                     C ${140 + calfWidth} 310, ${140 + calfWidth + 5} 330, ${140 + 15} 340 
+                     C ${140 + 5} 330, ${140} 300, ${140 + 5} 270 
+                     C ${140 + 10} 240, ${140 + waistWidth/2} 230, ${140 + waistWidth/2 + 5} 220 Z" 
+                  fill="url(#muscleGrad)"/>
           </g>
           
-          <!-- Espalda (Trapecios/Dorsales - Visibles lateralmente) -->
-          <g style="opacity: ${m.back.growth / 100 * 0.5}">
-            <path d="M 85 105 L 75 120 L 80 145 L 95 145 L 90 120 Z" fill="var(--accent-primary)"/>
-            <path d="M 155 105 L 165 120 L 160 145 L 145 145 L 150 120 Z" fill="var(--accent-primary)"/>
+          <!-- Espalda (Trapecios/Dorsales) -->
+          <g style="opacity: ${backGrowth * 0.6}">
+            <path d="M ${140 - 35} 95 L ${140 - 45} 115 L ${140 - 40} 140 L ${140 - 25} 140 L ${140 - 30} 115 Z" fill="url(#muscleGrad)"/>
+            <path d="M ${140 + 35} 95 L ${140 + 45} 115 L ${140 + 40} 140 L ${140 + 25} 140 L ${140 + 30} 115 Z" fill="url(#muscleGrad)"/>
           </g>
         </g>
 
       </svg>
-      <div style="text-align:center; font-size:0.8rem; color:var(--text-muted); font-weight:700; margin-top:-5px; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">
-        Nivel ${lvl}
+      <div style="text-align:center; font-size:0.85rem; color:var(--text-muted); font-weight:700; margin-top:-5px; text-shadow: 0 1px 2px rgba(255,255,255,0.8); letter-spacing: 0.5px;">
+        NIVEL ${lvl}
       </div>
     </div>
   `;
