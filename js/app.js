@@ -1910,15 +1910,17 @@ function renderPerfil(container) {
           <div style="width:80px; height:80px; background:var(--bg-elevated); border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:2rem; border:2px solid var(--border-subtle);">👤</div>
            <h2>${state.userName || 'Usuario'}</h2>
           <p style="color:var(--text-muted); font-size:0.8rem;">Entrenando desde ${new Date(state.userProfile.joinedDate).toLocaleDateString()}</p>
-          <p style="color:var(--accent-primary); font-size:0.75rem; font-weight:700; margin-top:4px;">Nivel ${state.avatar.level} · ${state.avatar.xp} XP</p>
-       </div>
+           <p style="color:var(--accent-primary); font-size:0.75rem; font-weight:700; margin-top:4px;">Nivel ${state.avatar.level} · ${state.avatar.xp} XP</p>
+        </div>
 
-       <!-- Avatar Preview -->
-       <div style="padding:0 16px 16px; text-align:center;">
-          ${renderAvatarSVG()}
-       </div>
+        <!-- Avatar Preview (En mantenimiento) -->
+        <!--
+        <div style="padding:0 16px 16px; text-align:center;">
+           ${renderAvatarSVG()}
+        </div>
+        -->
 
-       <!-- Entrenamientos -->
+        <!-- Entrenamientos -->
        <div style="display:flex; flex-direction:column; gap:1px; background:rgba(0,0,0,0.05);">
          <div style="background:var(--bg-card); padding:12px 16px; border-bottom:0.5px solid var(--border-subtle);">
            <h2 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text-primary); text-transform:uppercase;">Entrenamientos</h2>
