@@ -925,7 +925,7 @@ function navigateToWorkout() {
   }
 
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function openDaySelector() {
@@ -1000,7 +1000,7 @@ function startSelectedDay(idx) {
     setTimeout(() => main.classList.remove('view-transition-enter'), 300);
   }
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 let explorarQuery = '';
@@ -1009,7 +1009,7 @@ function openExerciseExplorer() {
   state.previousView = state.currentView;
   state.currentView = 'exercise_explorer';
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function closeExerciseExplorer() {
@@ -1319,7 +1319,7 @@ function openExerciseDetailFromExplorar(exerciseId) {
   state.currentView = 'exercise_detail';
   saveState();
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function renderInicio(container) {
@@ -1419,7 +1419,7 @@ async function deleteWorkout(idx) {
 }
 
 document.addEventListener('click', () => {
-  document.querySelectorAll('.history-menu, .routine-menu').forEach(m => m.style.display = 'none');
+  closeAllMenus();
 });
 
 function toggleRoutineMenu(idx, btn) {
@@ -2004,7 +2004,7 @@ function renderPerfil(container) {
 function navigateToView(view) {
   state.currentView = view;
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function renderMeasures(container) {
@@ -2201,7 +2201,7 @@ window.openHistoryDetail = function(idx) {
   state.selectedHistoryIdx = idx;
   state.currentView = 'history_detail';
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 };
 
 window.closeHistoryDetail = function() {
@@ -2297,7 +2297,7 @@ function renderHistoryDetail(container) {
 function navigateHome() {
   state.currentView = 'home';
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 // ── Minimize / Resume Workout ──
@@ -2306,7 +2306,7 @@ function minimizeWorkout() {
     // No active session – just go home normally
     state.currentView = 'home';
     renderApp();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
     return;
   }
   // Snapshot the exact view so resume restores it correctly
@@ -2315,7 +2315,7 @@ function minimizeWorkout() {
   state.currentView = 'home';
   saveState();
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function resumeWorkout() {
@@ -2326,7 +2326,7 @@ function resumeWorkout() {
   state.activeTab = 'entreno';
   saveState();
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 // ── Floating Mini-Player ──
@@ -2411,7 +2411,7 @@ function openExerciseDetail(exerciseIndex) {
   state.currentView = 'exercise_detail';
   saveState();
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 // Abrir detalle desde el selector de ejercicios
@@ -2424,7 +2424,7 @@ function openExerciseSelectorToReplace(index) {
   state.previousView = state.currentView;
   state.currentView = 'exercise_selector';
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function showPlateCalculator(totalWeight) {
@@ -2470,7 +2470,7 @@ function openExerciseDetailFromSelector(exerciseId) {
   state.currentView = 'exercise_detail';
   saveState();
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function renderExerciseDetail(container) {
@@ -2611,7 +2611,7 @@ function navigateBackFromExerciseDetail() {
 
   saveState();
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function addExerciseFromDetailAndBack(exerciseId) {
@@ -2656,7 +2656,7 @@ function addExerciseFromDetailAndBack(exerciseId) {
     state.previousDay = null;
     saveState();
     renderApp();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTop();
     return;
   }
 
@@ -2668,7 +2668,7 @@ function addExerciseFromDetailAndBack(exerciseId) {
   state.previousDay = null;
   saveState();
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function showComingSoon(feature) {
@@ -2834,7 +2834,7 @@ function changeDay(index) {
   saveState();
   renderDayTabs();
   renderContent();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 // ── Contenido Principal (Workout) ──
@@ -3513,7 +3513,7 @@ function openProgramDetail(templateId) {
   state.selectedProgram = templateId;
   state.currentView = 'program_detail';
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function closeProgramDetail() {
@@ -3535,7 +3535,7 @@ function toggleRoutinesSection() {
 function openProgramSelector() {
   state.currentView = 'program_selector';
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function closeProgramSelector() {
@@ -4511,7 +4511,7 @@ function finishWorkout() {
   state.currentView = 'post_workout';
   renderApp();
   hapticFeedback('success');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 function submitPostWorkout() {
@@ -4704,7 +4704,7 @@ async function resetWorkout(skipConfirm = false) {
 
   saveState();
   renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scrollToTop();
 }
 
 // ── Toasts (iOS Style) ──
