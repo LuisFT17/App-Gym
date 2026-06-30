@@ -235,10 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // If no valid data, load fresh default routine
+  // If no valid data, load fresh empty routine
   if (!hasValidData) {
-    console.log('No valid saved data, loading default routine');
-    state.routine = JSON.parse(JSON.stringify(ROUTINE));
+    console.log('No valid saved data, loading empty routine');
+    state.routine = { days: [] };
     state.currentDay = 0;
     state.completedSets = {};
     state.history = [];
@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadState();
   }
 
-  if (!state.routine) state.routine = JSON.parse(JSON.stringify(ROUTINE));
+  if (!state.routine) state.routine = { days: [] };
 
   // SVGs globally available
   window.ICON_TRASH = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`;
@@ -523,7 +523,7 @@ function enterGym() {
         if (parsed.theme) state.theme = parsed.theme;
       } catch (e) {}
     }
-    if (!state.routine) state.routine = JSON.parse(JSON.stringify(ROUTINE));
+    if (!state.routine) state.routine = { days: [] };
   }
 
   state.currentView = 'home';
@@ -3361,6 +3361,53 @@ function startRoutineBuilder() {
 }
 
 const ROUTINE_TEMPLATES = {
+  classic_5days: {
+    id: 'template_classic_5days',
+    title: 'Clásica 5 Días (Empuje/Tirón/Pierna)',
+    days: [
+      { title: 'EMPUJE', exercises: [
+        { exerciseId: 'press_inclinado_maquina', sets: 3, reps: '6-10', notes: '' },
+        { exerciseId: 'press_pecho_maquina_plano', sets: 2, reps: '8-12', notes: '' },
+        { exerciseId: 'elevaciones_laterales_maquina', sets: 3, reps: '10-15', notes: '' },
+        { exerciseId: 'extension_triceps_polea', sets: 2, reps: '10-12', notes: '' },
+        { exerciseId: 'fondos_maquina', sets: 2, reps: '8-12', notes: '' },
+        { exerciseId: 'abdominal_maquina', sets: 2, reps: '12-15', notes: '' }
+      ]},
+      { title: 'TIRÓN', exercises: [
+        { exerciseId: 'jalon_pecho', sets: 3, reps: '8-10', notes: '' },
+        { exerciseId: 'pullover_polea', sets: 2, reps: '10-12', notes: '' },
+        { exerciseId: 'remo_sentado_v', sets: 2, reps: '8-12', notes: '' },
+        { exerciseId: 'curl_biceps_polea_barra', sets: 2, reps: '10-12', notes: '' },
+        { exerciseId: 'curl_martillo', sets: 2, reps: '10-12', notes: '' },
+        { exerciseId: 'hiperextension_lumbar', sets: 2, reps: '12-15', notes: '' }
+      ]},
+      { title: 'PIERNA', exercises: [
+        { exerciseId: 'prensa', sets: 3, reps: '6-10', notes: '' },
+        { exerciseId: 'curl_femoral', sets: 2, reps: '10-12', notes: '' },
+        { exerciseId: 'extension_cuadriceps', sets: 2, reps: '10-12', notes: '' },
+        { exerciseId: 'abduccion_cadera', sets: 2, reps: '12-15', notes: '' },
+        { exerciseId: 'aduccion_cadera', sets: 2, reps: '12-15', notes: '' },
+        { exerciseId: 'gemelo_pie', sets: 3, reps: '10-15', notes: '' }
+      ]},
+      { title: 'PECHO/ESPALDA', exercises: [
+        { exerciseId: 'press_inclinado_discos', sets: 3, reps: '8-10', notes: '' },
+        { exerciseId: 'aperturas_polea', sets: 1, reps: '12-15', notes: '' },
+        { exerciseId: 'remo_polea_abierto', sets: 2, reps: '8-12', notes: '' },
+        { exerciseId: 'remo_maquina_unilateral', sets: 2, reps: '8-12', notes: '' },
+        { exerciseId: 'face_pull', sets: 2, reps: '12-15', notes: '' },
+        { exerciseId: 'encogimientos_trapecio', sets: 2, reps: '12-15', notes: '' }
+      ]},
+      { title: 'BRAZOS/HOMBRO', exercises: [
+        { exerciseId: 'press_hombros_mancuernas', sets: 3, reps: '8-12', notes: '' },
+        { exerciseId: 'elevacion_lateral_polea', sets: 2, reps: '10-15', notes: '' },
+        { exerciseId: 'curl_bayesian', sets: 2, reps: '8-12', notes: '' },
+        { exerciseId: 'curl_martillo', sets: 2, reps: '10-12', notes: '' },
+        { exerciseId: 'triceps_polea_v', sets: 2, reps: '10-12', notes: '' },
+        { exerciseId: 'press_frances', sets: 2, reps: '10-12', notes: '' },
+        { exerciseId: 'curl_muneca', sets: 2, reps: '12-15', notes: '' }
+      ]}
+    ]
+  },
   fullbody: {
     id: 'template_fullbody',
     title: 'Full Body 3 Días',
