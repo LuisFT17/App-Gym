@@ -4963,23 +4963,7 @@ function renderNutritionTab(container) {
   const height = parseFloat(profile.height) || 175;
   const age = parseInt(profile.age) || 25;
 
-  const tmb = (10 * weight) + (6.25 * height) - (5 * age) + 5;
-  let tdee = tmb * 1.55;
-
-  let targetCals = tdee;
-  let split = { p: 30, c: 40, f: 30 };
-
-  if (profile.goals === 'gain') {
-    targetCals = tdee + 400;
-    split = { p: 25, c: 50, f: 25 };
-  } else if (profile.goals === 'lose') {
-    targetCals = tdee - 500;
-    split = { p: 40, c: 30, f: 30 };
-  }
-
-  const pTarget = Math.round((targetCals * (split.p / 100)) / 4);
-  const cTarget = Math.round((targetCals * (split.c / 100)) / 4);
-  const fTarget = Math.round((targetCals * (split.f / 100)) / 9);
+  const { targetCals, pGrams: pTarget, cGrams: cTarget, fGrams: fTarget } = calculateMacros(profile);
 
   // Fecha seleccionada
   const selectedDate = state.nutritionSelectedDate || new Date().toISOString().split('T')[0];
@@ -5338,32 +5322,7 @@ function deleteMeal(index) {
 
 function renderNutrition(container) {
   const profile = state.userProfile;
-  const weight = parseFloat(profile.weight) || 75;
-  const height = parseFloat(profile.height) || 175;
-  const age = parseInt(profile.age) || 25;
-
-  // Fórmula Mifflin-St Jeor para TMB
-  const tmb = (10 * weight) + (6.25 * height) - (5 * age) + 5;
-  // Multiplicador actividad moderada/alta asumiendo que entrenan
-  let tdee = tmb * 1.55;
-
-  let targetCals = tdee;
-  let split = { p: 30, c: 40, f: 30 };
-
-  if (profile.goals === 'gain') {
-    targetCals = tdee + 400; // Superávit
-    split = { p: 25, c: 50, f: 25 }; // Más carbohidratos
-  } else if (profile.goals === 'lose') {
-    targetCals = tdee - 500; // Déficit
-    split = { p: 40, c: 30, f: 30 }; // Más proteína
-  } else {
-    targetCals = tdee; // Mantenimiento
-    split = { p: 30, c: 40, f: 30 };
-  }
-
-  const pGrams = Math.round((targetCals * (split.p / 100)) / 4);
-  const cGrams = Math.round((targetCals * (split.c / 100)) / 4);
-  const fGrams = Math.round((targetCals * (split.f / 100)) / 9);
+  const { targetCals, pGrams, cGrams, fGrams } = calculateMacros(profile);
 
   container.innerHTML = `
     <div class="home-screen">
@@ -5430,4 +5389,31 @@ function getSetKey(exerciseIndex) {
 function getActiveExercises() {
   const isVacío = state.currentView === 'empty_workout';
   return isVacío ? state.emptyWorkout.exercises : state.routine.days[state.currentDay].exercises;
+}
+
+function calculateMacros(profile) {
+  const weight = parseFloat(profile.weight) || 75;
+  const height = parseFloat(profile.height) || 175;
+  const age = parseInt(profile.age) || 25;
+
+  const tmb = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+  let tdee = tmb * 1.55;
+
+  let targetCals = tdee;
+  let split = { p: 30, c: 40, f: 30 };
+
+  if (profile.goals === 'gain') {
+    targetCals = tdee + 400;
+    split = { p: 25, c: 50, f: 25 };
+  } else if (profile.goals === 'lose') {
+    targetCals = tdee - 500;
+    split = { p: 40, c: 30, f: 30 };
+  }
+
+  return {
+    targetCals,
+    pGrams: Math.round((targetCals * (split.p / 100)) / 4),
+    cGrams: Math.round((targetCals * (split.c / 100)) / 4),
+    fGrams: Math.round((targetCals * (split.f / 100)) / 9)
+  };
 }
