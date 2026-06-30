@@ -828,7 +828,7 @@ function renderHome() {
           <div style="font-size:1.2rem;">📊</div>
           <div style="flex:1;">
             <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary);">Último: ${lastWorkout.name}</div>
-            <div style="font-size:0.65rem; color:var(--text-muted);">${new Date(lastWorkout.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })} · ${formatTime(lastWorkout.duration)} · ${lastWorkout.volume >= 1000 ? (lastWorkout.volume / 1000).toFixed(1) + 't' : lastWorkout.volume + 'kg'}</div>
+            <div style="font-size:0.65rem; color:var(--text-muted);">${new Date(lastWorkout.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })} · ${formatTime(lastWorkout.duration)} · ${formatVolume(lastWorkout.volume)}</div>
           </div>
         </div>
       ` : ''}
@@ -1948,7 +1948,7 @@ function renderPerfil(container) {
                  <div style="font-size:0.65rem; color:var(--text-muted);">${new Date(session.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })} · ${formatTime(session.duration)}</div>
               </div>
               <div style="text-align:right; flex-shrink:0;">
-                 <div style="font-size:0.8rem; font-weight:800; color:var(--accent-primary);">${session.volume >= 1000 ? (session.volume / 1000).toFixed(1) + 't' : session.volume + 'kg'}</div>
+                 <div style="font-size:0.8rem; font-weight:800; color:var(--accent-primary);">${formatVolume(session.volume)}</div>
                  <div style="font-size:0.6rem; color:var(--text-muted); font-weight:600;">${session.sets} series</div>
               </div>
            </div>
@@ -2266,7 +2266,7 @@ function renderHistoryDetail(container) {
                 <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:700;">Duración</div>
              </div>
              <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
-                <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${session.volume >= 1000 ? (session.volume / 1000).toFixed(1) + 't' : session.volume + 'kg'}</div>
+                <div style="font-size:1.3rem; font-weight:800; color:var(--text-primary);">${formatVolume(session.volume)}</div>
                 <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:700;">Volumen</div>
              </div>
              <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
@@ -2378,12 +2378,6 @@ function teardownMiniPlayer() {
   }
   const container = document.getElementById('workoutMiniPlayer');
   if (container) container.remove();
-}
-
-function navigateHome() {
-  state.currentView = 'home';
-  renderApp();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ── Exercise Detail View ──
@@ -4587,7 +4581,7 @@ function renderPostWorkout() {
             <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:600;">Series</div>
           </div>
           <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
-            <div style="font-size:1.5rem; font-weight:800; color:var(--text-primary);">${session.volume >= 1000 ? (session.volume / 1000).toFixed(1) + 't' : session.volume + 'kg'}</div>
+            <div style="font-size:1.5rem; font-weight:800; color:var(--text-primary);">${formatVolume(session.volume)}</div>
             <div style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; margin-top:4px; font-weight:600;">Volumen</div>
           </div>
           <div style="background:var(--bg-surface); padding:14px; border-radius:var(--radius-md); text-align:center;">
@@ -5400,17 +5394,40 @@ function renderNutrition(container) {
           </div>
        </div>
 
-       <h3 style="font-weight:900; text-transform:uppercase; margin-bottom:10px;">ESTRATEGIA RECOMENDADA</h3>
-       <div style="display:flex; flex-direction:column; gap:10px;">
-          <div style="border:1px solid #000; background:#fff; padding:15px;">
-             <div style="font-weight:900; color:#ff0000; margin-bottom:5px;">PRE-ENTRENO (1-2H ANTES)</div>
-             <p style="font-size:0.8rem; color:#000; font-weight:700;">Carbohidratos de ratio rápido + Proteína ligera. Ejemplo: Plátano/fruta con scoop de proteína o crema de arroz.</p>
-          </div>
-          <div style="border:1px solid #000; background:#fff; padding:15px;">
-             <div style="font-weight:900; color:#ff0000; margin-bottom:5px;">POST-ENTRENO / COMIDA FUERTE</div>
-             <p style="font-size:0.8rem; color:#000; font-weight:700;">Mayor ingesta del día. Integra aprox. ${Math.round(cGrams * 0.4)}g de carbohidratos (arroces/pasta) y ${Math.round(pGrams * 0.4)}g de proteína animal/soja para reconstrucción de glucógeno.</p>
-          </div>
-       </div>
-    </div>
-  `;
+        <h3 style="font-weight:900; text-transform:uppercase; margin-bottom:10px;">ESTRATEGIA RECOMENDADA</h3>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+           <div style="border:1px solid #000; background:#fff; padding:15px;">
+              <div style="font-weight:900; color:#ff0000; margin-bottom:5px;">PRE-ENTRENO (1-2H ANTES)</div>
+              <p style="font-size:0.8rem; color:#000; font-weight:700;">Carbohidratos de ratio rápido + Proteína ligera. Ejemplo: Plátano/fruta con scoop de proteína o crema de arroz.</p>
+           </div>
+           <div style="border:1px solid #000; background:#fff; padding:15px;">
+              <div style="font-weight:900; color:#ff0000; margin-bottom:5px;">POST-ENTRENO / COMIDA FUERTE</div>
+              <p style="font-size:0.8rem; color:#000; font-weight:700;">Mayor ingesta del día. Integra aprox. ${Math.round(cGrams * 0.4)}g de carbohidratos (arroces/pasta) y ${Math.round(pGrams * 0.4)}g de proteína animal/soja para reconstrucción de glucógeno.</p>
+           </div>
+        </div>
+     </div>
+   `;
+}
+
+// ── UTILIDADES ──
+function formatVolume(kg) {
+  return kg >= 1000 ? (kg / 1000).toFixed(1) + 't' : kg + 'kg';
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeAllMenus() {
+  document.querySelectorAll('.history-menu, .routine-menu').forEach(m => m.style.display = 'none');
+}
+
+function getSetKey(exerciseIndex) {
+  const isVacío = state.currentView === 'empty_workout';
+  return isVacío ? `empty_ex${exerciseIndex}` : `day${state.currentDay}_ex${exerciseIndex}`;
+}
+
+function getActiveExercises() {
+  const isVacío = state.currentView === 'empty_workout';
+  return isVacío ? state.emptyWorkout.exercises : state.routine.days[state.currentDay].exercises;
 }
